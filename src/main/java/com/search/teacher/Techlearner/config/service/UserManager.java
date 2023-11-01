@@ -1,11 +1,13 @@
-package com.search.teacher.Techlearner.security;
+package com.search.teacher.Techlearner.config.service;
 
+import com.search.teacher.Techlearner.model.entities.User;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 
 public class UserManager implements UserDetails {
@@ -19,7 +21,9 @@ public class UserManager implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.getAuthorities();
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(user.getRole().getName().name()));
+        return authorities;
     }
 
     @Override
@@ -29,7 +33,7 @@ public class UserManager implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUsername();
+        return user.getEmail();
     }
 
     @Override

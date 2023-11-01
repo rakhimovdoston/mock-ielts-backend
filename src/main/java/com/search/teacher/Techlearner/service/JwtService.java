@@ -1,4 +1,4 @@
-package com.search.teacher.Techlearner.security;
+package com.search.teacher.Techlearner.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -6,7 +6,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
@@ -14,14 +14,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-@Service
+@Component
 public class JwtService {
 
-    @Value("${spring.security.jwt.secret-key}")
+//    @Value("${spring.security.jwt.secret-key}")
     private String secretKey;
-    @Value("${spring.security.jwt.expiration}")
+//    @Value("${spring.security.jwt.expiration}")
     private long jwtExpiration;
-    @Value("${spring.security.jwt.refresh-token.expiration}")
+//    @Value("${spring.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
 
     public String extractUsername(String token) {
