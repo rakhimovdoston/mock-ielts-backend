@@ -1,6 +1,7 @@
 package com.search.teacher.Techlearner.model.entities;
 
 import com.search.teacher.Techlearner.model.base.BaseEntity;
+import com.search.teacher.Techlearner.model.enums.Status;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -14,6 +15,8 @@ public class User extends BaseEntity {
     private String lastname;
     private String email;
     private String password;
+    private String code;
+    private Status status;
 
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id")
@@ -57,5 +60,21 @@ public class User extends BaseEntity {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 }

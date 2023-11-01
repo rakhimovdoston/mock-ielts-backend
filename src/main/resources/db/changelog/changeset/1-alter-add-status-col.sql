@@ -1,0 +1,5 @@
+ALTER TABLE users
+    ADD COLUMN status VARCHAR(30);
+
+ALTER TABLE users
+    ADD COLUMN code VARCHAR(10);
