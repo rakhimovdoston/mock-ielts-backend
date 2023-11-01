@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public JResponse registerUser(UserDto userDto) {
-        if (userRepository.existsByEmail(userDto.email())) {
+        if ( userRepository.existsByEmail(userDto.email()) ) {
             return JResponse.error(400, "This email has already been registered!");
         }
         User user = userDto.toUser();
@@ -48,15 +48,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public JResponse confirmationUser(ConfirmationRequest request) {
-        User user = userRepository.findByEmail(request.getEmail());
-        if (user == null) {
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if ( user == null ) {
             return JResponse.error(400, "This email has already been registered!");
         }
 
-        if (!DateUtils.isExpirationCode(user.getCreatedDate()))
-            return  JResponse.error(400, "The time to enter the code has expired.");
+        if ( !DateUtils.isExpirationCode(user.getCreatedDate()) )
+            return JResponse.error(400, "The time to enter the code has expired.");
 
-        if (user.getCode().equals(request.getCode())) {
+        if ( user.getCode().equals(request.getCode()) ) {
             return JResponse.error(400, "You have entered an incorrect code");
         }
 

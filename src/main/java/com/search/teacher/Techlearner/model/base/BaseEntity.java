@@ -1,5 +1,6 @@
 package com.search.teacher.Techlearner.model.base;
 
+import com.search.teacher.Techlearner.model.audit.UserAudit;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,7 @@ import java.util.Date;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public abstract class BaseEntity {
+public abstract class BaseEntity extends UserAudit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
