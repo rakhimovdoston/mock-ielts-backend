@@ -4,7 +4,7 @@ CREATE TABLE roles (
 );
 
 CREATE TABLE users (
-    id                  BIGINT NOT NULL PRIMARY KEY,
+    id                  SERIAL PRIMARY KEY,
     created_date        DATE,
     updated_date        DATE,
     active              BOOLEAN NOT NULL DEFAULT FALSE,

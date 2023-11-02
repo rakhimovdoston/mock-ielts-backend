@@ -2,10 +2,7 @@ package com.search.teacher.Techlearner.model.entities;
 
 import com.search.teacher.Techlearner.model.base.BaseEntity;
 import com.search.teacher.Techlearner.model.enums.Status;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
@@ -16,6 +13,7 @@ public class User extends BaseEntity {
     private String email;
     private String password;
     private String code;
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @ManyToOne

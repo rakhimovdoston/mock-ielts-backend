@@ -2,6 +2,7 @@ package com.search.teacher.Techlearner.controller;
 
 import com.search.teacher.Techlearner.dto.UserDto;
 import com.search.teacher.Techlearner.dto.request.ConfirmationRequest;
+import com.search.teacher.Techlearner.dto.request.ResendRequest;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.UserService;
 import jakarta.validation.Valid;
@@ -27,10 +28,14 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("resend-code")
+    public ResponseEntity<JResponse> resendEmail(@RequestBody @Valid ResendRequest request) {
+        return ResponseEntity.ok(userService.resendEmailCode(request));
+    }
+
     @PostMapping("confirmation-code")
     public ResponseEntity<JResponse> confirmationCode(@RequestBody @Valid ConfirmationRequest request) {
         JResponse response = userService.confirmationUser(request);
         return ResponseEntity.ok(response);
     }
-
 }

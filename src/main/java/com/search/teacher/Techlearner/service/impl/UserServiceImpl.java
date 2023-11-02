@@ -2,6 +2,7 @@ package com.search.teacher.Techlearner.service.impl;
 
 import com.search.teacher.Techlearner.dto.UserDto;
 import com.search.teacher.Techlearner.dto.request.ConfirmationRequest;
+import com.search.teacher.Techlearner.dto.request.ResendRequest;
 import com.search.teacher.Techlearner.dto.response.RegisterResponse;
 import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.enums.RoleType;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.Random;
 
 @Service
@@ -53,10 +55,10 @@ public class UserServiceImpl implements UserService {
             return JResponse.error(400, "This email has already been registered!");
         }
 
-        if (!DateUtils.isExpirationCode(user.getCreatedDate()))
+        if (!DateUtils.isExpirationCode(user.getUpdatedDate()))
             return  JResponse.error(400, "The time to enter the code has expired.");
 
-        if (user.getCode().equals(request.getCode())) {
+        if (!user.getCode().equals(request.getCode())) {
             return JResponse.error(400, "You have entered an incorrect code");
         }
 
@@ -65,6 +67,24 @@ public class UserServiceImpl implements UserService {
         user.setActive(true);
         userRepository.save(user);
         return JResponse.success("User is verified");
+    }
+
+    @Override
+    public JResponse resendEmailCode(ResendRequest request) {
+        User user = userRepository.findByEmail(request.getEmail());
+        if (user == null) {
+            return JResponse.error(400, "This email not exist!");
+        }
+
+        if (user.isActive() && user.getStatus() == Status.active) {
+            return JResponse.error(200, "This user already verified");
+        }
+        String code = getRandomCode(100000, 999999);
+        user.setCode(code);
+        user.setUpdatedDate(new Date());
+        userRepository.save(user);
+        mailSendService.sendConfirmRegister(user.getEmail(), code);
+        return JResponse.success(new RegisterResponse(user.getEmail()));
     }
 
     private String getRandomCode(int min, int max) {

@@ -6,4 +6,6 @@
 
     <include file="db/changelog/changeset/create-user-role.sql" />
     <include file="db/changelog/changeset/1-alter-add-status-col.sql" author="Doston" />
+    <include file="db/changelog/changeset/2-insert-role.sql" author="Doston" />
+    <include file="db/changelog/changeset/3-alter-user-table-date.sql" author="Doston" />
 </databaseChangeLog>
