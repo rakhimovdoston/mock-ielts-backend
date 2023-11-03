@@ -17,4 +17,11 @@ public class HtmlFileService {
         context.setVariable("code", code);
         return templateEngine.process("confirmation-code.html", context);
     }
+
+    public String confirmationForgotPasswordHtmlContent(String email, String code) {
+        Context context = new Context();
+        context.setVariable("email", email);
+        context.setVariable("code", code);
+        return templateEngine.process("confirmation-code.html", context);
+    }
 }
