@@ -1,16 +1,22 @@
 package com.search.teacher.Techlearner.controller;
 
+import com.search.teacher.Techlearner.dto.AuthenticationRequest;
 import com.search.teacher.Techlearner.dto.UserDto;
 import com.search.teacher.Techlearner.dto.request.ConfirmationRequest;
+import com.search.teacher.Techlearner.dto.request.ForgotPasswordReq;
 import com.search.teacher.Techlearner.dto.request.ResendRequest;
+import com.search.teacher.Techlearner.dto.response.AuthenticationResponse;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.WeakHashMap;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -28,6 +34,18 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("authenticate")
+    public ResponseEntity<JResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
+        return ResponseEntity.ok(JResponse.success(userService.authenticate(request)));
+    }
+
+
+    @PostMapping("forgot-password")
+    public ResponseEntity<JResponse> forgotPassword(@RequestBody ForgotPasswordReq request) {
+        return ResponseEntity.ok(userService.forgotPassword(request));
+    }
+
+
     @PostMapping("resend-code")
     public ResponseEntity<JResponse> resendEmail(@RequestBody @Valid ResendRequest request) {
         return ResponseEntity.ok(userService.resendEmailCode(request));
@@ -38,4 +56,5 @@ public class AuthController {
         JResponse response = userService.confirmationUser(request);
         return ResponseEntity.ok(response);
     }
+
 }

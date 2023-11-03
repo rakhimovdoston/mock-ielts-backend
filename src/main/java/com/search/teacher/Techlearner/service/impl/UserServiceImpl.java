@@ -1,8 +1,13 @@
 package com.search.teacher.Techlearner.service.impl;
 
+import com.search.teacher.Techlearner.config.service.UserManager;
+import com.search.teacher.Techlearner.dto.AuthenticationRequest;
 import com.search.teacher.Techlearner.dto.UserDto;
 import com.search.teacher.Techlearner.dto.request.ConfirmationRequest;
+import com.search.teacher.Techlearner.dto.request.ForgotPasswordReq;
 import com.search.teacher.Techlearner.dto.request.ResendRequest;
+import com.search.teacher.Techlearner.dto.request.ResetPasswordRequest;
+import com.search.teacher.Techlearner.dto.response.AuthenticationResponse;
 import com.search.teacher.Techlearner.dto.response.RegisterResponse;
 import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.enums.RoleType;
@@ -10,15 +15,27 @@ import com.search.teacher.Techlearner.model.enums.Status;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.RoleRepository;
 import com.search.teacher.Techlearner.repository.UserRepository;
+import com.search.teacher.Techlearner.service.JwtService;
+import com.search.teacher.Techlearner.service.UserSession;
 import com.search.teacher.Techlearner.service.mail.MailSendService;
 import com.search.teacher.Techlearner.service.UserService;
 import com.search.teacher.Techlearner.utils.DateUtils;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.util.StringUtils;
 
+import javax.naming.AuthenticationException;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Random;
 
@@ -30,10 +47,13 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final MailSendService mailSendService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final UserSession userSession;
 
     @Override
     public JResponse registerUser(UserDto userDto) {
-        if ( userRepository.existsByEmail(userDto.email()) ) {
+        if (userRepository.existsByEmail(userDto.email())) {
             return JResponse.error(400, "This email has already been registered!");
         }
         User user = userDto.toUser();
@@ -49,16 +69,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+        var user = userRepository.findByEmail(request.email()).orElseThrow();
+        var jwtToken = jwtService.generateToken(new UserManager(user));
+        var refreshToken = jwtService.generateRefreshToken(new UserManager(user));
+
+        return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
+    }
+
+    @Override
     public JResponse confirmationUser(ConfirmationRequest request) {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
-        if ( user == null ) {
+        if (user == null) {
             return JResponse.error(400, "This email has already been registered!");
         }
 
-        if ( !DateUtils.isExpirationCode(user.getCreatedDate()) )
+        if (!DateUtils.isExpirationCode(user.getCreatedDate()))
             return JResponse.error(400, "The time to enter the code has expired.");
 
-        if ( user.getCode().equals(request.getCode()) ) {
+        if (user.getCode().equals(request.getCode())) {
             return JResponse.error(400, "You have entered an incorrect code");
         }
 
@@ -76,15 +106,55 @@ public class UserServiceImpl implements UserService {
             return JResponse.error(400, "This email not exist!");
         }
 
-        if (user.isActive() && user.getStatus() == Status.active) {
+        if (user.isActive() && user.getStatus() == Status.active && !request.isForgotPassword()) {
             return JResponse.error(200, "This user already verified");
         }
         String code = getRandomCode(100000, 999999);
         user.setCode(code);
+        user.setForgotPassword(request.isForgotPassword());
         user.setUpdatedDate(new Date());
         userRepository.save(user);
-        mailSendService.sendConfirmRegister(user.getEmail(), code);
+        if (user.isForgotPassword()) {
+            mailSendService.sendConfirmForgot(user.getEmail(), code);
+        } else {
+            mailSendService.sendConfirmRegister(user.getEmail(), code);
+        }
         return JResponse.success(new RegisterResponse(user.getEmail()));
+    }
+
+    @Override
+    public JResponse resetPassword(ResetPasswordRequest req) {
+        User user = userSession.getUser();
+        boolean matches = passwordEncoder.matches(req.oldPassword(), req.newPassword());
+        if (matches) {
+            if (req.newPassword().equals(req.confirmPassword())) {
+                user.setPassword(passwordEncoder.encode(req.newPassword()));
+                userRepository.save(user);
+                return new JResponse(200, "Password updated");
+            } else {
+                return new JResponse(401, "non matched password");
+            }
+        }
+        return new JResponse(401, "Incorrect password");
+    }
+
+    @Override
+    public JResponse forgotPassword(ForgotPasswordReq request) {
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (user == null) {
+            return JResponse.error(400, "This email not exist!");
+        }
+
+        if (!StringUtils.isEmpty(user.getCode())) {
+            if (request.getPassword().equals(request.getConfirmPassword())) {
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                user.setCode(null);
+                user.setForgotPassword(false);
+                userRepository.save(user);
+                return JResponse.success("Password updated");
+            } else return JResponse.error(400, "Password non match");
+        }
+        return JResponse.error(400, "You should confirm your password");
     }
 
     private String getRandomCode(int min, int max) {

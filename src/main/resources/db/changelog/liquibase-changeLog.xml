@@ -4,8 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <include file="db/changelog/changeset/create-user-role.sql" />
-    <include file="db/changelog/changeset/1-alter-add-status-col.sql" author="Doston" />
-    <include file="db/changelog/changeset/2-insert-role.sql" author="Doston" />
-    <include file="db/changelog/changeset/3-alter-user-table-date.sql" author="Doston" />
+    <include file="db/changelog/changeset/create-user-role.sql"/>
+    <include file="db/changelog/changeset/1-alter-add-status-col.sql" author="Doston"/>
+    <include file="db/changelog/changeset/2-insert-role.sql" author="Doston"/>
+    <include file="db/changelog/changeset/3-alter-user-table-date.sql" author="Doston"/>
+    <include file="db/changelog/changeset/4-alter-user-table-forgot-password.sql" author="Nuriddin"/>
 </databaseChangeLog>

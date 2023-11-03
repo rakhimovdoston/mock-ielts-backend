@@ -17,6 +17,7 @@ public class MailServiceImpl implements MailSendService {
     private JavaMailSender emailSender;
 
     private final HtmlFileService htmlFileService;
+
     @Override
     public void sendConfirmRegister(String email, String code) {
         try {
@@ -26,6 +27,22 @@ public class MailServiceImpl implements MailSendService {
             helper.setFrom("rdoston22@gmail.com");
             helper.setTo(email);
             helper.setSubject("Your confirmation code for teacher search");
+            helper.setText(htmlContent, true);
+            emailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void sendConfirmForgot(String email, String code) {
+        try {
+            String htmlContent = htmlFileService.confirmationForgotPasswordHtmlContent(email, code);
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message);
+            helper.setFrom("rdoston22@gmail.com");
+            helper.setTo(email);
+            helper.setSubject("Your confirmation code for forgot password");
             helper.setText(htmlContent, true);
             emailSender.send(message);
         } catch (MessagingException e) {
