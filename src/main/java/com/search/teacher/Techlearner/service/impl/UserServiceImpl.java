@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public JResponse registerUser(UserDto userDto) {
-        if ( userRepository.existsByEmail(userDto.email()) ) {
+        if (userRepository.existsByEmail(userDto.email())) {
             return JResponse.error(400, "This email has already been registered!");
         }
         User user = userDto.toUser();
@@ -70,36 +70,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
-
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         var user = userRepository.findByEmail(request.email()).orElseThrow();
         var jwtToken = jwtService.generateToken(new UserManager(user));
         var refreshToken = jwtService.generateRefreshToken(new UserManager(user));
 
-        return AuthenticationResponse.builder()
-                .accessToken(jwtToken)
-                .refreshToken(refreshToken)
-                .build();
+        return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
     }
 
     @Override
     public JResponse confirmationUser(ConfirmationRequest request) {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
-        if ( user == null ) {
+        if (user == null) {
             return JResponse.error(400, "This email has already been registered!");
         }
 
-        if ( !DateUtils.isExpirationCode(user.getCreatedDate()) )
+        if (!DateUtils.isExpirationCode(user.getCreatedDate()))
             return JResponse.error(400, "The time to enter the code has expired.");
 
-        if ( user.getCode().equals(request.getCode()) ) {
+        if (user.getCode().equals(request.getCode())) {
             return JResponse.error(400, "You have entered an incorrect code");
         }
 
-        if ( !user.isForgotPassword() ) user.setCode(null);
+        user.setCode(null);
         user.setStatus(Status.active);
         user.setActive(true);
         userRepository.save(user);
@@ -109,12 +102,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public JResponse resendEmailCode(ResendRequest request) {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
-        if ( user == null ) {
+        if (user == null) {
             return JResponse.error(400, "This email not exist!");
         }
 
-
-        if ( user.isActive() && user.getStatus() == Status.active && !request.isForgotPassword() ) {
+        if (user.isActive() && user.getStatus() == Status.active && !request.isForgotPassword()) {
             return JResponse.error(200, "This user already verified");
         }
         String code = getRandomCode(100000, 999999);
@@ -122,7 +114,7 @@ public class UserServiceImpl implements UserService {
         user.setForgotPassword(request.isForgotPassword());
         user.setUpdatedDate(new Date());
         userRepository.save(user);
-        if ( user.isForgotPassword() ) {
+        if (user.isForgotPassword()) {
             mailSendService.sendConfirmForgot(user.getEmail(), code);
         } else {
             mailSendService.sendConfirmRegister(user.getEmail(), code);
@@ -134,8 +126,8 @@ public class UserServiceImpl implements UserService {
     public JResponse resetPassword(ResetPasswordRequest req) {
         User user = userSession.getUser();
         boolean matches = passwordEncoder.matches(req.oldPassword(), req.newPassword());
-        if ( matches ) {
-            if ( req.newPassword().equals(req.confirmPassword()) ) {
+        if (matches) {
+            if (req.newPassword().equals(req.confirmPassword())) {
                 user.setPassword(passwordEncoder.encode(req.newPassword()));
                 userRepository.save(user);
                 return new JResponse(200, "Password updated");
@@ -149,12 +141,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public JResponse forgotPassword(ForgotPasswordReq request) {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
-        if ( user == null ) {
+        if (user == null) {
             return JResponse.error(400, "This email not exist!");
         }
 
-        if ( !StringUtils.isEmpty(user.getCode()) ) {
-            if ( request.getPassword().equals(request.getConfirmPassword()) ) {
+        if (!StringUtils.isEmpty(user.getCode())) {
+            if (request.getPassword().equals(request.getConfirmPassword())) {
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
                 user.setCode(null);
                 user.setForgotPassword(false);

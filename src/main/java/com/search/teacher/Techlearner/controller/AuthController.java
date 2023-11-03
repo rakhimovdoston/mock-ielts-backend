@@ -35,14 +35,13 @@ public class AuthController {
     }
 
     @PostMapping("authenticate")
-    public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
-        return ResponseEntity.ok(userService.authenticate(request));
+    public ResponseEntity<JResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
+        return ResponseEntity.ok(JResponse.success(userService.authenticate(request)));
     }
 
 
     @PostMapping("forgot-password")
     public ResponseEntity<JResponse> forgotPassword(@RequestBody ForgotPasswordReq request) {
-
         return ResponseEntity.ok(userService.forgotPassword(request));
     }
 
@@ -57,4 +56,5 @@ public class AuthController {
         JResponse response = userService.confirmationUser(request);
         return ResponseEntity.ok(response);
     }
+
 }
