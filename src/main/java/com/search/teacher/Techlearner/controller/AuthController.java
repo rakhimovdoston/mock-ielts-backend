@@ -39,7 +39,6 @@ public class AuthController {
         return ResponseEntity.ok(JResponse.success(userService.authenticate(request)));
     }
 
-
     @PostMapping("forgot-password")
     public ResponseEntity<JResponse> forgotPassword(@RequestBody ForgotPasswordReq request) {
         return ResponseEntity.ok(userService.forgotPassword(request));

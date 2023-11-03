@@ -25,14 +25,12 @@ public class VerificationToken {
     private User user;
 
     public VerificationToken(String token, User user) {
-        super();
         this.token = token;
         this.user = user;
         this.expirationTime = this.getTokenExpirationTime();
     }
 
     public VerificationToken(String token) {
-        super();
         this.token = token;
         this.expirationTime = this.getTokenExpirationTime();
     }

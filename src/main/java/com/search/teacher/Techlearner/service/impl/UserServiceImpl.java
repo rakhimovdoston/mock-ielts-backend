@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
         }
         User user = userDto.toUser();
         user.setPassword(passwordEncoder.encode(userDto.password()));
-        user.setRole(roleRepository.findByName(RoleType.ROLE_STUDENT));
+        user.setRole(roleRepository.findByName(RoleType.getRoleByName(userDto.role())));
         user.setStatus(Status.confirm);
         String confirmationCode = getRandomCode(100000, 999999);
         user.setCode(confirmationCode);
@@ -74,7 +74,6 @@ public class UserServiceImpl implements UserService {
         var user = userRepository.findByEmail(request.email()).orElseThrow();
         var jwtToken = jwtService.generateToken(new UserManager(user));
         var refreshToken = jwtService.generateRefreshToken(new UserManager(user));
-
         return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
     }
 

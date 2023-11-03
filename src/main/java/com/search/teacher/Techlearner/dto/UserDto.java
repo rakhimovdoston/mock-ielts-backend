@@ -9,6 +9,8 @@ public record UserDto(Long id,
                       @NotNull
                       String email,
                       @NotNull
+                      String role,
+                      @NotNull
                       String password) {
 
     public User toUser() {
