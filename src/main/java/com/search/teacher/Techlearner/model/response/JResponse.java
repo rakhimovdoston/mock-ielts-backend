@@ -2,6 +2,8 @@ package com.search.teacher.Techlearner.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.Map;
+
 public class JResponse {
     private int code;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -9,7 +11,7 @@ public class JResponse {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Object data;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private Object error;
+    private Map<String, Object> error;
 
     public JResponse(int code, Object data) {
         this.code = code;
@@ -21,7 +23,7 @@ public class JResponse {
         this.message = message;
     }
 
-    public JResponse(int code, String message, Object error) {
+    public JResponse(int code, String message, Map<String, Object> error) {
         this.code = code;
         this.message = message;
         this.error = error;
@@ -35,7 +37,7 @@ public class JResponse {
         return new JResponse(200, data);
     }
 
-    public static JResponse error(int code, String message, Object error) {
+    public static JResponse error(int code, String message, Map<String, Object> error) {
         return new JResponse(code, message, error);
     }
 
@@ -67,11 +69,11 @@ public class JResponse {
         this.data = data;
     }
 
-    public Object getError() {
+    public Map<String, Object> getError() {
         return error;
     }
 
-    public void setError(Object error) {
+    public void setError(Map<String, Object> error) {
         this.error = error;
     }
 }

@@ -74,7 +74,7 @@ public class UserServiceImpl implements UserService {
         var user = userRepository.findByEmail(request.email()).orElseThrow();
         var jwtToken = jwtService.generateToken(new UserManager(user));
         var refreshToken = jwtService.generateRefreshToken(new UserManager(user));
-        return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
+        return AuthenticationResponse.builder().email(user.getEmail()).accessToken(jwtToken).refreshToken(refreshToken).build();
     }
 
     @Override
@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService {
         if (!DateUtils.isExpirationCode(user.getCreatedDate()))
             return JResponse.error(400, "The time to enter the code has expired.");
 
-        if (user.getCode().equals(request.getCode())) {
+        if (!user.getCode().equals(request.getCode())) {
             return JResponse.error(400, "You have entered an incorrect code");
         }
 

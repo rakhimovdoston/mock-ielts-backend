@@ -9,4 +9,8 @@
     <include file="db/changelog/changeset/2-insert-role.sql" author="Doston"/>
     <include file="db/changelog/changeset/3-alter-user-table-date.sql" author="Doston"/>
     <include file="db/changelog/changeset/4-alter-user-table-forgot-password.sql" author="Nuriddin"/>
+    <include file="db/changelog/changeset/5-create-table-learning-goals.sql" author="Doston" />
+    <include file="db/changelog/changeset/6-insert-goals-topics-table.sql" author="Doston" />
+    <include file="db/changelog/changeset/7-alter-interest-student-table.sql" author="Doston" />
+    <include file="db/changelog/changeset/8-alter-add-topics-user-table.sql" author="Doston" />
 </databaseChangeLog>
