@@ -1,5 +1,6 @@
 package com.search.teacher.Techlearner.model.entities;
 
+import com.search.teacher.Techlearner.model.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,13 +12,14 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
+@Table(name = "verification_token")
 @NoArgsConstructor
-public class VerificationToken {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long token_id;
+public class VerificationToken extends BaseEntity {
     private String token;
     private Date expirationTime;
+    private String refreshToken;
+    private String refreshExpirationTime;
+    @Transient
     private static final int EXPIRATION_TIME = 5;
 
     @OneToOne

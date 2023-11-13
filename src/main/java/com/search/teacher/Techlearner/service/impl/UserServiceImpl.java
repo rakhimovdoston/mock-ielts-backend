@@ -29,6 +29,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ import org.thymeleaf.util.StringUtils;
 import javax.naming.AuthenticationException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -71,10 +73,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-        var user = userRepository.findByEmail(request.email()).orElseThrow();
-        var jwtToken = jwtService.generateToken(new UserManager(user));
-        var refreshToken = jwtService.generateRefreshToken(new UserManager(user));
-        return AuthenticationResponse.builder().email(user.getEmail()).accessToken(jwtToken).refreshToken(refreshToken).build();
+
+        Optional<User> optionalUser = userRepository.findByEmail(request.email());
+        if (optionalUser.isEmpty())
+            throw new UsernameNotFoundException("Username or password incorrect");
+
+        String jwtToken = jwtService.generateToken(new UserManager(optionalUser.get()));
+        String refreshToken = jwtService.generateRefreshToken(new UserManager(optionalUser.get()));
+        return AuthenticationResponse.builder().email(optionalUser.get().getEmail()).accessToken(jwtToken).refreshToken(refreshToken).build();
     }
 
     @Override

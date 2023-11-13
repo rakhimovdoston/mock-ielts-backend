@@ -13,4 +13,5 @@
     <include file="db/changelog/changeset/6-insert-goals-topics-table.sql" author="Doston" />
     <include file="db/changelog/changeset/7-alter-interest-student-table.sql" author="Doston" />
     <include file="db/changelog/changeset/8-alter-add-topics-user-table.sql" author="Doston" />
+    <include file="db/changelog/changeset/9-create-teacher-table.sql" author="Doston" />
 </databaseChangeLog>

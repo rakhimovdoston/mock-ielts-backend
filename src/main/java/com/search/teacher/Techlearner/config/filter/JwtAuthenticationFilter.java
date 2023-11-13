@@ -1,32 +1,40 @@
 package com.search.teacher.Techlearner.config.filter;
 
+import com.google.gson.Gson;
 import com.search.teacher.Techlearner.config.service.CustomUserDetailsService;
+import com.search.teacher.Techlearner.model.entities.User;
+import com.search.teacher.Techlearner.model.enums.Status;
+import com.search.teacher.Techlearner.model.response.JResponse;
+import com.search.teacher.Techlearner.repository.UserRepository;
 import com.search.teacher.Techlearner.service.JwtService;
+import com.search.teacher.Techlearner.utils.GsonUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final JwtService jwtService;
-    private final CustomUserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         if (request.getServletPath().contains("/api/v1/auth")) {
             filterChain.doFilter(request, response);
             return;
@@ -40,23 +48,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         jwt = authHeader.substring(7);
         userEmail = jwtService.extractUsername(jwt);
-//        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-//            User userDetails = (User) this.userDetailsService.loadUserByUsername(userEmail);
-//            boolean isTokenValid = tokenRepository.findByToken(jwt)
-//                    .map(t -> !t.isExpired() && !t.isRevoked())
-//                    .orElse(false);
-//            if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid && userDetails.getStatus().equals(Status.ACTIVE)) {
-//                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-//                        userDetails,
-//                        null,
-//                        userDetails.getAuthorities()
-//                );
-//                authToken.setDetails(
-//                        new WebAuthenticationDetailsSource().buildDetails(request)
-//                );
-//                SecurityContextHolder.getContext().setAuthentication(authToken);
-//            }
-//        }
+        Optional<User> optionalUser = userRepository.findByEmail(userEmail);
+        if (optionalUser.isPresent() && SecurityContextHolder.getContext().getAuthentication() == null) {
+            User user = optionalUser.get();
+            if (user.getStatus().equals(Status.active)) {
+
+            } else if (user.getStatus().equals(Status.block)) {
+                GsonUtils.responseError(408, "Your account is temporarily blocked", response);
+                return;
+            } else {
+                GsonUtils.responseError(409, "Your account has not been activated", response);
+                return;
+            }
+        }
         filterChain.doFilter(request, response);
+        logger.info("Request keldi: " + request.getServletPath());
+        logger.info("Response Status code: " + response.getStatus());
     }
 }

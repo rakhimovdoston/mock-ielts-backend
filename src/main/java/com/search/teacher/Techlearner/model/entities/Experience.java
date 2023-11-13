@@ -12,7 +12,7 @@ public class Experience extends BaseEntity {
     private String title;
     private String companyName;
     private String entry;
-    private String end;
+    private String ends;
     private String description;
 
     @ManyToOne
@@ -43,12 +43,12 @@ public class Experience extends BaseEntity {
         this.entry = entry;
     }
 
-    public String getEnd() {
-        return end;
+    public String getEnds() {
+        return ends;
     }
 
-    public void setEnd(String end) {
-        this.end = end;
+    public void setEnds(String ends) {
+        this.ends = ends;
     }
 
     public String getDescription() {

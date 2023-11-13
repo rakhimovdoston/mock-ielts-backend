@@ -1,6 +1,5 @@
 package com.search.teacher.Techlearner.model.entities;
 
-import com.search.teacher.Techlearner.dto.request.ExperienceRequest;
 import com.search.teacher.Techlearner.model.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;

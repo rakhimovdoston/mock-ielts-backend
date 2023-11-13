@@ -33,6 +33,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<JResponse> exception(Exception e) {
-        return ResponseEntity.internalServerError().body(JResponse.error(500, e.getLocalizedMessage()));
+        return ResponseEntity.internalServerError().body(JResponse.error(500, e.getMessage()));
     }
 }

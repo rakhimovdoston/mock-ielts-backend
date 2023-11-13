@@ -41,6 +41,8 @@ dependencies {
     implementation group: 'com.vladmihalcea', name: 'hibernate-types-52', version: '2.12.1'
 //    implementation 'org.jetbrains:annotations:22.0.0'
 
+	implementation 'com.google.code.gson:gson:2.9.0'
+
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'

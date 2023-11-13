@@ -2,6 +2,7 @@ package com.search.teacher.Techlearner.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,12 +18,9 @@ import java.util.function.Function;
 @Component
 public class JwtService {
 
-//    @Value("${spring.security.jwt.secret-key}")
-    private String secretKey;
-//    @Value("${spring.security.jwt.expiration}")
-    private long jwtExpiration;
-//    @Value("${spring.security.jwt.refresh-token.expiration}")
-    private long refreshExpiration;
+    private String secretKey = "hjdjsdfjjksfd67236767hjsdhjhjHJHJJHjksjHDSAJHH877182";
+    private Long jwtExpiration = 1000 * 86400L;
+    private Long refreshExpiration = 7 * 86400 * 1000L;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -35,38 +33,28 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> map = new HashMap<>();
-        System.out.println(userDetails.getAuthorities());
         userDetails.getAuthorities().forEach(grantedAuthority -> map.put(String.valueOf(grantedAuthority.getAuthority()), String.valueOf(grantedAuthority.getAuthority())));
         return generateToken(map, userDetails);
     }
 
-    public String generateToken(
-            Map<String, Object> extraClaims,
-            UserDetails userDetails
-    ) {
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
-    public String generateRefreshToken(
-            UserDetails userDetails
-    ) {
+    public String generateRefreshToken(UserDetails userDetails) {
         Map<String, Object> map = new HashMap<>();
         userDetails.getAuthorities().forEach(grantedAuthority -> map.put(String.valueOf(grantedAuthority), String.valueOf(grantedAuthority)));
         return buildToken(map, userDetails, refreshExpiration);
     }
 
-    private String buildToken(
-            Map<String, Object> extraClaims,
-            UserDetails userDetails,
-            long expiration
-    ) {
+    private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignInKey()/*, SignatureAlgorithm.HS256*/)
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -94,7 +82,6 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 }
