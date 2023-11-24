@@ -14,4 +14,8 @@
     <include file="db/changelog/changeset/7-alter-interest-student-table.sql" author="Doston" />
     <include file="db/changelog/changeset/8-alter-add-topics-user-table.sql" author="Doston" />
     <include file="db/changelog/changeset/9-create-teacher-table.sql" author="Doston" />
+    <include file="db/changelog/changeset/10-drop-image-teacher.sql" author="Doston" />
+    <include file="db/changelog/changeset/11-alter-image-add-user.sql" author="Doston" />
+    <include file="db/changelog/changeset/12-alter-teacher-table.sql" author="Doston" />
+    <include file="db/changelog/changeset/13-alter-image-add-url-column.sql" author="Doston" />
 </databaseChangeLog>

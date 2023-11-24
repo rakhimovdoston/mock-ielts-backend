@@ -14,6 +14,9 @@ public class Education extends BaseEntity {
     private String name;
     private String url;
     private String faculty;
+    private String entry; //    date(2018-09-01)
+    private String end; // date(2022-07-01)
+    private String description;
     @Enumerated(EnumType.STRING)
     private Degree degree;
 

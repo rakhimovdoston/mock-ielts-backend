@@ -15,6 +15,8 @@ import java.util.List;
 @Getter
 @Setter
 public class Teacher extends BaseEntity {
+
+    private String title;
     private String email;
     private String firstname;
     private String lastname;
@@ -36,9 +38,6 @@ public class Teacher extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
-
-    @OneToMany
-    private List<Images> images = new ArrayList<>();
 
     @OneToMany
     private List<Education> educations = new ArrayList<>();

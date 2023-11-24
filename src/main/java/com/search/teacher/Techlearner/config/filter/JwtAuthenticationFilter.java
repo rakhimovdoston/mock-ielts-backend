@@ -16,13 +16,17 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -52,7 +56,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (optionalUser.isPresent() && SecurityContextHolder.getContext().getAuthentication() == null) {
             User user = optionalUser.get();
             if (user.getStatus().equals(Status.active)) {
-
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword(), List.of(new SimpleGrantedAuthority(user.getRole().getName().name())));
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.info("User authenticated");
             } else if (user.getStatus().equals(Status.block)) {
                 GsonUtils.responseError(408, "Your account is temporarily blocked", response);
                 return;

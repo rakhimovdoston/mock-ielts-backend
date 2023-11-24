@@ -5,7 +5,9 @@ import com.search.teacher.Techlearner.dto.response.TeacherResponse;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.TeacherService;
 import com.search.teacher.Techlearner.service.UserSession;
+import com.search.teacher.Techlearner.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +19,7 @@ public class TeacherController {
 
     private final TeacherService teacherService;
     private final UserSession userSession;
+    private final SecurityUtils securityUtils;
 
     @GetMapping("degree")
     public JResponse getDegree() {
@@ -28,11 +31,11 @@ public class TeacherController {
         return JResponse.success(teacherService.newTeacher(userSession.getUser(), request));
     }
 
-    @PostMapping("file")
+    @PostMapping(value = "file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<JResponse> uploadProfilePhoto(@RequestPart MultipartFile file) {
         if (file.isEmpty())
             return ResponseEntity.badRequest().body(JResponse.error(400, "File is empty"));
-        return ResponseEntity.ok(JResponse.success(teacherService.uploadFile(file)));
+        return ResponseEntity.ok(JResponse.success(teacherService.uploadFile(securityUtils.currentUser(), file)));
     }
 
     @GetMapping("profile/{id}")

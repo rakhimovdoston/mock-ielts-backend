@@ -14,10 +14,11 @@ import lombok.Setter;
 @Setter
 public class Images extends BaseEntity {
     private String contentType;
-    private String size;
+    private Long size;
     private String filename;
+    private String url;
 
     @ManyToOne
-    @JoinColumn(name = "teacher_id", referencedColumnName = "id")
-    private Teacher teacher;
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 }

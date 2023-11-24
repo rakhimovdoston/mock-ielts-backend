@@ -1,0 +1,6 @@
+ALTER TABLE teachers
+    ADD COLUMN title VARCHAR(250);
+
+
+ALTER TABLE images
+    ADD COLUMN size BIGINT;

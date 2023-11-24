@@ -1,5 +1,7 @@
 package com.search.teacher.Techlearner.service.impl;
 
+import com.search.teacher.Techlearner.dto.request.EducationRequest;
+import com.search.teacher.Techlearner.dto.request.ExperienceRequest;
 import com.search.teacher.Techlearner.dto.request.TeacherRequest;
 import com.search.teacher.Techlearner.dto.response.DescribeDto;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;
@@ -7,15 +9,12 @@ import com.search.teacher.Techlearner.dto.response.TeacherResponse;
 import com.search.teacher.Techlearner.exception.NotfoundException;
 import com.search.teacher.Techlearner.mapper.TeacherMapper;
 import com.search.teacher.Techlearner.mapper.TopicMapper;
-import com.search.teacher.Techlearner.model.entities.Images;
-import com.search.teacher.Techlearner.model.entities.Teacher;
-import com.search.teacher.Techlearner.model.entities.User;
+import com.search.teacher.Techlearner.model.entities.*;
 import com.search.teacher.Techlearner.model.enums.Degree;
 import com.search.teacher.Techlearner.model.response.JResponse;
-import com.search.teacher.Techlearner.repository.ImageRepository;
-import com.search.teacher.Techlearner.repository.TeacherRepository;
-import com.search.teacher.Techlearner.repository.TopicsRepository;
+import com.search.teacher.Techlearner.repository.*;
 import com.search.teacher.Techlearner.service.TeacherService;
+import com.search.teacher.Techlearner.service.upload.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +33,15 @@ public class TeacherServiceImpl implements TeacherService {
     private final ImageRepository imageRepository;
     private final TopicsRepository topicsRepository;
     private final TeacherMapper teacherMapper;
+    private final EducationRepository educationRepository;
+    private final ExperienceRepository experienceRepository;
+    private final FileUploadService fileUploadService;
     private final TopicMapper topicMapper;
 
     @Override
     public SaveResponse newTeacher(User user, TeacherRequest request) {
         Teacher teacher = new Teacher();
+        teacher.setTitle(request.getTitle());
         teacher.setPhoneNumber(request.getPhoneNumber());
         teacher.setFirstname(user.getFirstname());
         teacher.setLastname(user.getLastname());
@@ -48,19 +51,53 @@ public class TeacherServiceImpl implements TeacherService {
         teacher.setActive(true);
         teacher.setTopics(request.getTopics());
         teacherRepository.save(teacher);
-        List<Images> images = imageRepository.findAllByIdIn(request.getImages());
-        for (Images image: images) {
-            image.setTeacher(teacher);
-            imageRepository.save(image);
+        if (!request.getImages().isEmpty()) {
+            List<Images> images = imageRepository.findAllByIdIn(request.getImages());
+            for (Images image : images) {
+                image.setUser(user);
+                imageRepository.save(image);
+            }
         }
 
-
-        return null;
+        if (!request.getEducations().isEmpty()) {
+            for (EducationRequest educationRequest: request.getEducations()) {
+                Education education = new Education();
+                education.setDegree(Degree.getDegree(educationRequest.getDegree()));
+                education.setUrl(educationRequest.getUrl());
+                education.setName(educationRequest.getName());
+                education.setFaculty(educationRequest.getFaculty());
+                education.setEntry(educationRequest.getEntry());
+                education.setEnd(educationRequest.getEnd());
+                education.setTeacher(teacher);
+                educationRepository.save(education);
+            }
+        }
+        teacher.setCertificates(request.getCertificate());
+        if (!request.getExperiences().isEmpty()) {
+            for (ExperienceRequest experienceRequest: request.getExperiences()) {
+                Experience experience = new Experience();
+                experience.setDescription(experienceRequest.getDescription());
+                experience.setTitle(request.getTitle());
+                experience.setEnds(experienceRequest.getEnd());
+                experience.setEntry(experienceRequest.getEntry());
+                experience.setCompanyName(experienceRequest.getCompanyName());
+                experience.setTeacher(teacher);
+                experienceRepository.save(experience);
+            }
+        }
+        return new SaveResponse(teacher.getId());
     }
 
     @Override
-    public SaveResponse uploadFile(MultipartFile file) {
-        return null;
+    public SaveResponse uploadFile(User currentUser, MultipartFile file) {
+        Images image = new Images();
+        image.setActive(true);
+        image.setSize(file.getSize());
+        image.setContentType(file.getContentType());
+        fileUploadService.uploadImage(image, file);
+        image.setUser(currentUser);
+        imageRepository.save(image);
+        return new SaveResponse(image.getId());
     }
 
     @Override

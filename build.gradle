@@ -41,6 +41,10 @@ dependencies {
     implementation group: 'com.vladmihalcea', name: 'hibernate-types-52', version: '2.12.1'
 //    implementation 'org.jetbrains:annotations:22.0.0'
 
+//	Amazon Aws
+	implementation 'com.amazonaws:aws-java-sdk:1.12.594'
+
+
 	implementation 'com.google.code.gson:gson:2.9.0'
 
 	runtimeOnly 'org.postgresql:postgresql'

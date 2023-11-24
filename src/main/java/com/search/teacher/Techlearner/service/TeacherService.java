@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface TeacherService {
     SaveResponse newTeacher(User user, TeacherRequest request);
 
-    SaveResponse uploadFile(MultipartFile file);
+    SaveResponse uploadFile(User currentUser, MultipartFile file);
 
     JResponse allDegrees();
 
