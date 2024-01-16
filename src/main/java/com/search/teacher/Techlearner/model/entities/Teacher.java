@@ -23,7 +23,6 @@ public class Teacher extends BaseEntity {
     private String phoneNumber;
     private String description;
 
-
     @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private List<Long> topics = new ArrayList<>();

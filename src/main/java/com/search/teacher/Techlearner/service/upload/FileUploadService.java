@@ -24,6 +24,7 @@ public class FileUploadService {
         originalFilename = originalFilename.replaceAll(" ", "-");
         String filename = UUID.randomUUID() + "-" + originalFilename;
         String url = awsClientService.awsUpload(filename, file);
+        logger.info("Uploaded file to AWS: {}", filename);
         image.setFilename(filename);
         image.setUrl(url);
         return filename;

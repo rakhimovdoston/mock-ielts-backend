@@ -32,11 +32,10 @@ public class AwsClientService {
 
     @PostConstruct
     private void initAmazonService() {
-        AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
+//        AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
         this.amazonS3 = AmazonS3ClientBuilder
                 .standard()
                 .withRegion("us-east-1")
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .build();
     }
 
@@ -46,7 +45,6 @@ public class AwsClientService {
             ObjectMetadata objectMetadata = new ObjectMetadata();
             objectMetadata.setContentLength(file.getSize());
             objectMetadata.setContentType(file.getContentType());
-//            amazonS3.setObjectAcl(bucketName, "profile/" + filename, CannedAccessControlList.PublicRead);
             amazonS3.putObject(bucketName, "profile/" + filename, file.getInputStream(), objectMetadata);
             response = amazonS3.getUrl(bucketName, "profile/" + filename).toExternalForm();
             logger.info("File uploaded in aws s3");

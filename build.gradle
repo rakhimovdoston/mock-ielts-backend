@@ -11,6 +11,12 @@ java {
 	sourceCompatibility = '17'
 }
 
+jar {
+	manifest {
+		attributes 'Main-Class': "com.search.teacher.Techlearner.TechlearnerApplication"
+	}
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
