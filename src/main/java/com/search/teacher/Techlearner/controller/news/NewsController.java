@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class NewsController {
 
     @PostMapping
-    public ResponseEntity<JResponse> getAllNews() {
-        return ResponseEntity.ok(JResponse.success());
+    public JResponse getAllNews() {
+        return JResponse.success();
     }
 }
