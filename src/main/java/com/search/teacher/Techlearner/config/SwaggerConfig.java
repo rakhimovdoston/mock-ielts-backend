@@ -20,7 +20,8 @@ import org.springframework.context.annotation.Configuration;
     info = @Info(title = "Search Teacher"),
     security = @SecurityRequirement(name = "Authorization"),
     servers = {
-        @Server(url = "http://localhost:6464", description = "Local Server")
+        @Server(url = "http://localhost:6464", description = "Local Server"),
+        @Server(url = "http://ec2-54-242-242-208.compute-1.amazonaws.com:6464", description = "Prod Server")
     }
 )
 public class SwaggerConfig {

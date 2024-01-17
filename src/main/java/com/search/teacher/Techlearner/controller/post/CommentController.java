@@ -1,4 +1,4 @@
-package com.search.teacher.Techlearner.controller;
+package com.search.teacher.Techlearner.controller.post;
 
 import com.search.teacher.Techlearner.dto.request.CommentRequest;
 import com.search.teacher.Techlearner.model.response.JResponse;
@@ -19,6 +19,12 @@ public class CommentController {
     @PostMapping("save")
     public ResponseEntity<JResponse> saveComment(@Valid @RequestBody CommentRequest request) {
         JResponse response = commentService.createComment(securityUtils.currentUser(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("all")
+    public ResponseEntity<JResponse> getAllComments() {
+        JResponse response = commentService.getAllComments(securityUtils.getCurrentTeacher());
         return ResponseEntity.ok(response);
     }
 }

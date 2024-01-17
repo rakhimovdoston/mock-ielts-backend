@@ -35,6 +35,7 @@ public class TeacherController {
     public ResponseEntity<JResponse> uploadProfilePhoto(@RequestPart MultipartFile file) {
         if (file.isEmpty())
             return ResponseEntity.badRequest().body(JResponse.error(400, "File is empty"));
+
         return ResponseEntity.ok(JResponse.success(teacherService.uploadFile(securityUtils.currentUser(), file)));
     }
 

@@ -1,6 +1,8 @@
 package com.search.teacher.Techlearner.utils;
 
+import com.search.teacher.Techlearner.model.entities.Teacher;
 import com.search.teacher.Techlearner.model.entities.User;
+import com.search.teacher.Techlearner.repository.TeacherRepository;
 import com.search.teacher.Techlearner.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SecurityUtils {
     private final UserRepository userRepository;
+    private final TeacherRepository teacherRepository;
 
     public User currentUser() {
         User user = null;
@@ -20,5 +23,9 @@ public class SecurityUtils {
             user = userRepository.findByEmail(phoneNumber).orElse(null);
         }
         return user;
+    }
+
+    public Teacher getCurrentTeacher() {
+        return teacherRepository.findByUser(currentUser());
     }
 }

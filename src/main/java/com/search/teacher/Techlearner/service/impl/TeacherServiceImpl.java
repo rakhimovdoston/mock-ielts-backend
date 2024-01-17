@@ -122,4 +122,10 @@ public class TeacherServiceImpl implements TeacherService {
         response.setTopics(topics);
         return response;
     }
+
+    @Override
+    public Teacher findByIdAndActive(Long teacherId) {
+        return teacherRepository.findByIdAndActive(teacherId, true)
+                .orElseThrow(() -> new NotfoundException("Teacher not found this id: " + teacherId));
+    }
 }

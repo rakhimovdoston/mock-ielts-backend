@@ -32,7 +32,7 @@ public class AwsClientService {
 
     @PostConstruct
     private void initAmazonService() {
-//        AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
+        AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
         this.amazonS3 = AmazonS3ClientBuilder
                 .standard()
                 .withRegion("us-east-1")

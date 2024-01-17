@@ -3,6 +3,7 @@ package com.search.teacher.Techlearner.service;
 import com.search.teacher.Techlearner.dto.request.TeacherRequest;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;
 import com.search.teacher.Techlearner.dto.response.TeacherResponse;
+import com.search.teacher.Techlearner.model.entities.Teacher;
 import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,4 +16,6 @@ public interface TeacherService {
     JResponse allDegrees();
 
     TeacherResponse getTeacher(Long id);
+
+    Teacher findByIdAndActive(Long teacherId);
 }

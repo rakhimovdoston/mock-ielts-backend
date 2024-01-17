@@ -37,6 +37,10 @@ public class JResponse {
         return new JResponse(200, data);
     }
 
+    public static JResponse success() {
+        return new JResponse(200, "success");
+    }
+
     public static JResponse error(int code, String message, Map<String, Object> error) {
         return new JResponse(code, message, error);
     }
