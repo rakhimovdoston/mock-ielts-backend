@@ -1,9 +1,6 @@
 package com.search.teacher.Techlearner;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.env.Environment;
@@ -16,11 +13,7 @@ import java.util.Optional;
 @Slf4j
 public class TechlearnerApplication {
 
-	private final Environment env;
-	@Autowired
-	public TechlearnerApplication(Environment env) {
-		this.env = env;
-	}
+
 	public static void main(String[] args) {
 		SpringApplication application = new SpringApplication(TechlearnerApplication.class);
 		Environment environment = application.run(args).getEnvironment();

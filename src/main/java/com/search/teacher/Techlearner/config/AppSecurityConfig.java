@@ -33,7 +33,7 @@ public class AppSecurityConfig {
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomUserDetailsService customUserDetailsService;
 
-    private final String[] SWAGGER_URL = {"/v2/**",
+    private final String[] SWAGGER_URL = {
         "/v3/**",
         "/swagger-resources/**",
         "/swagger-ui/**"};
