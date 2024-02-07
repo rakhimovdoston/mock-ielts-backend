@@ -9,6 +9,9 @@ import com.search.teacher.Techlearner.dto.request.ResendRequest;
 import com.search.teacher.Techlearner.dto.request.ResetPasswordRequest;
 import com.search.teacher.Techlearner.dto.response.AuthenticationResponse;
 import com.search.teacher.Techlearner.dto.response.RegisterResponse;
+import com.search.teacher.Techlearner.exception.BadRequestException;
+import com.search.teacher.Techlearner.exception.NotfoundException;
+import com.search.teacher.Techlearner.model.entities.Role;
 import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.enums.RoleType;
 import com.search.teacher.Techlearner.model.enums.Status;
@@ -49,11 +52,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public JResponse registerUser(UserDto userDto) {
         if (userRepository.existsByEmail(userDto.email())) {
-            return JResponse.error(400, "This email has already been registered!");
+            throw new BadRequestException(JResponse.error(400, "This email has already been registered!"));
         }
         User user = userDto.toUser();
         user.setPassword(passwordEncoder.encode(userDto.password()));
-        user.setRole(roleRepository.findByName(RoleType.getRoleByName(userDto.role())));
+        Role role = roleRepository.findByName(RoleType.getRoleByName(userDto.role()));;
+        if (role == null)
+            throw  new NotfoundException("Role not found");
+        user.setRole(role);
         user.setStatus(Status.confirm);
         String confirmationCode = getRandomCode(100000, 999999);
         user.setCode(confirmationCode);

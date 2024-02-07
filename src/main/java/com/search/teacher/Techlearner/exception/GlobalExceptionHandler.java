@@ -21,6 +21,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(JResponse.error(404, e.getMessage()), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<JResponse> badRequest(BadRequestException e) {
+        if (e.getResponse() == null)
+            return new ResponseEntity<>(JResponse.error(404, e.getMessage()), HttpStatus.BAD_REQUEST);
+
+        return new ResponseEntity<>(e.getResponse(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler({ConstraintViolationException.class})
     public ResponseEntity<JResponse> handleConstraintViolation(ConstraintViolationException ex) {
         Map<String, Object> errors = new HashMap<>();
