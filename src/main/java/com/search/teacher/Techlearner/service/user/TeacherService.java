@@ -1,4 +1,4 @@
-package com.search.teacher.Techlearner.service;
+package com.search.teacher.Techlearner.service.user;
 
 import com.search.teacher.Techlearner.dto.request.TeacherRequest;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;

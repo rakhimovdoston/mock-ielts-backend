@@ -3,7 +3,7 @@ package com.search.teacher.Techlearner.controller;
 import com.search.teacher.Techlearner.dto.request.TeacherRequest;
 import com.search.teacher.Techlearner.dto.response.TeacherResponse;
 import com.search.teacher.Techlearner.model.response.JResponse;
-import com.search.teacher.Techlearner.service.TeacherService;
+import com.search.teacher.Techlearner.service.user.TeacherService;
 import com.search.teacher.Techlearner.service.UserSession;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;

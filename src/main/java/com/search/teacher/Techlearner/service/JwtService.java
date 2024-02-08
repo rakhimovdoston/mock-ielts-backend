@@ -1,11 +1,10 @@
 package com.search.teacher.Techlearner.service;
 
+import com.search.teacher.Techlearner.utils.DateUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +18,8 @@ import java.util.function.Function;
 public class JwtService {
 
     private String secretKey = "hjdjsdfjjksfd67236767hjsdhjhjHJHJJHjksjHDSAJHH877182";
-    private Long jwtExpiration = 1000 * 86400L;
-    private Long refreshExpiration = 7 * 86400 * 1000L;
+    public Long jwtExpiration = 1000 * 86400L;
+    public Long refreshExpiration = 7 * 86400 * 1000L;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -60,11 +59,11 @@ public class JwtService {
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        return (username.equals(userDetails.getUsername())) && isTokenExpired(token);
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+    public boolean isTokenExpired(String token) {
+        return !DateUtils.isExpirationToken(extractExpiration(token));
     }
 
     private Date extractExpiration(String token) {

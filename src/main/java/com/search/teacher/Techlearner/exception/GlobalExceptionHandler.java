@@ -5,6 +5,8 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -40,8 +42,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<JResponse> exception(Exception e) {
-        return ResponseEntity.internalServerError().body(JResponse.error(500, e.getMessage()));
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String message = "An error occurred while processing the request.";
+
+        if (e instanceof UsernameNotFoundException || e instanceof BadCredentialsException) {
+            status = HttpStatus.FORBIDDEN;
+            message = e.getMessage();
+        }
+        return ResponseEntity.status(status)
+                .body(JResponse.error(status.value(), message));
     }
 }

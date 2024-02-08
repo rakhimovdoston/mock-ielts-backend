@@ -18,7 +18,7 @@ import com.search.teacher.Techlearner.repository.DescribeRepository;
 import com.search.teacher.Techlearner.repository.GoalsRepository;
 import com.search.teacher.Techlearner.repository.TopicsRepository;
 import com.search.teacher.Techlearner.repository.UserRepository;
-import com.search.teacher.Techlearner.service.StudentService;
+import com.search.teacher.Techlearner.service.user.StudentService;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -127,5 +127,10 @@ public class StudentServiceImpl implements StudentService {
         response.setTopics(topicDtos);
         response.setGoals(goalDtos);
         return response;
+    }
+
+    @Override
+    public JResponse getUserInfo(User user) {
+        return JResponse.success(userMapper.toResponse(user));
     }
 }

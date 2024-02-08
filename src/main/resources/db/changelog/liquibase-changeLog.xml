@@ -19,4 +19,5 @@
     <include file="db/changelog/changeset/12-alter-teacher-table.sql" author="Doston" />
     <include file="db/changelog/changeset/13-alter-image-add-url-column.sql" author="Doston" />
     <include file="db/changelog/changeset/14-alter-image-table-add-type.sql" author="Doston" />
+    <include file="db/changelog/changeset/15-create-user-token.sql" author="Doston" />
 </databaseChangeLog>

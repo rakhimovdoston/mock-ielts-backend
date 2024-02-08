@@ -4,7 +4,8 @@ import com.search.teacher.Techlearner.dto.request.StudentRequest;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;
 import com.search.teacher.Techlearner.dto.response.StudentResponse;
 import com.search.teacher.Techlearner.model.response.JResponse;
-import com.search.teacher.Techlearner.service.StudentService;
+import com.search.teacher.Techlearner.service.user.StudentService;
+import com.search.teacher.Techlearner.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +15,16 @@ import java.util.Map;
 @RequestMapping("/api/v1/student")
 public class StudentController {
     private final StudentService studentService;
+    private final SecurityUtils securityUtils;
 
-    public StudentController(StudentService studentService) {
+    public StudentController(StudentService studentService, SecurityUtils securityUtils) {
         this.studentService = studentService;
+        this.securityUtils = securityUtils;
+    }
+
+    @GetMapping("info")
+    public JResponse getStudentData() {
+        return studentService.getUserInfo(securityUtils.currentUser());
     }
 
     @GetMapping("info-desc")

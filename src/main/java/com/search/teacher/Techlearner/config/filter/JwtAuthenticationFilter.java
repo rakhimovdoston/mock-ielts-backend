@@ -7,6 +7,7 @@ import com.search.teacher.Techlearner.model.enums.Status;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.UserRepository;
 import com.search.teacher.Techlearner.service.JwtService;
+import com.search.teacher.Techlearner.service.user.UserTokenService;
 import com.search.teacher.Techlearner.utils.GsonUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -34,27 +35,24 @@ import java.util.Optional;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final JwtService jwtService;
-    private final UserRepository userRepository;
+    private final UserTokenService userTokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        long start = System.currentTimeMillis();
         if (request.getServletPath().contains("/api/v1/auth")) {
             filterChain.doFilter(request, response);
             return;
         }
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        final String userEmail;
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
-        Optional<User> optionalUser = userRepository.findByEmail(userEmail);
-        if (optionalUser.isPresent() && SecurityContextHolder.getContext().getAuthentication() == null) {
-            User user = optionalUser.get();
+        User user = userTokenService.checkToken(jwt);
+        if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (user.getStatus().equals(Status.active)) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword(), List.of(new SimpleGrantedAuthority(user.getRole().getName().name())));
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -69,7 +67,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
-        logger.info("Request keldi: " + request.getServletPath());
-        logger.info("Response Status code: " + response.getStatus());
+        StringBuilder log = new StringBuilder();
+        log.append("{");
+        log.append("method:").append(request.getMethod()).append(", url:");
+        log.append(request.getRequestURI()).append(", status_code:");
+        log.append(response.getStatus()).append(", ");
+        log.append("ip: ").append(request.getRemoteAddr()).append(", ");
+        long duration = System.currentTimeMillis() - start;
+        log.append("duration:").append(duration).append("ms");
+        log.append("}");
+        logger.info("ApiFilter {}", log);
     }
 }

@@ -10,14 +10,12 @@ import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.CommentRepository;
 import com.search.teacher.Techlearner.service.CommentService;
-import com.search.teacher.Techlearner.service.TeacherService;
-import com.search.teacher.Techlearner.utils.SecurityUtils;
+import com.search.teacher.Techlearner.service.user.TeacherService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service

@@ -11,4 +11,8 @@ public class DateUtils {
         long createdDate = date.getTime();
         return (nowDate - createdDate) < EXPIRATION_CODE;
     }
+
+    public static boolean isExpirationToken(Date expirationDate) {
+        return expirationDate.after(new Date());
+    }
 }

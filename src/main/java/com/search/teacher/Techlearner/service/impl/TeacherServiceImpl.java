@@ -13,7 +13,7 @@ import com.search.teacher.Techlearner.model.entities.*;
 import com.search.teacher.Techlearner.model.enums.Degree;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.*;
-import com.search.teacher.Techlearner.service.TeacherService;
+import com.search.teacher.Techlearner.service.user.TeacherService;
 import com.search.teacher.Techlearner.service.upload.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,10 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service

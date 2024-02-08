@@ -19,9 +19,10 @@ import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.RoleRepository;
 import com.search.teacher.Techlearner.repository.UserRepository;
 import com.search.teacher.Techlearner.service.JwtService;
-import com.search.teacher.Techlearner.service.UserService;
+import com.search.teacher.Techlearner.service.user.UserService;
 import com.search.teacher.Techlearner.service.UserSession;
 import com.search.teacher.Techlearner.service.mail.MailSendService;
+import com.search.teacher.Techlearner.service.user.UserTokenService;
 import com.search.teacher.Techlearner.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -46,8 +47,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final MailSendService mailSendService;
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
     private final UserSession userSession;
+    private final UserTokenService userTokenService;
 
     @Override
     public JResponse registerUser(UserDto userDto) {
@@ -72,13 +73,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-
         Optional<User> optionalUser = userRepository.findByEmail(request.email());
         if (optionalUser.isEmpty()) throw new UsernameNotFoundException("Username or password incorrect");
 
-        String jwtToken = jwtService.generateToken(new UserManager(optionalUser.get()));
-        String refreshToken = jwtService.generateRefreshToken(new UserManager(optionalUser.get()));
-        return AuthenticationResponse.builder().email(optionalUser.get().getEmail()).accessToken(jwtToken).refreshToken(refreshToken).build();
+        return userTokenService.generateToken(optionalUser.get());
     }
 
     @Override
