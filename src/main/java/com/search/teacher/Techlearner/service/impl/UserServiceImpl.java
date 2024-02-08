@@ -56,9 +56,9 @@ public class UserServiceImpl implements UserService {
         }
         User user = userDto.toUser();
         user.setPassword(passwordEncoder.encode(userDto.password()));
-        Role role = roleRepository.findByName(RoleType.getRoleByName(userDto.role()));;
-        if (role == null)
-            throw  new NotfoundException("Role not found");
+        Role role = roleRepository.findByName(RoleType.getRoleByName(userDto.role()));
+        ;
+        if (role == null) throw new NotfoundException("Role not found");
         user.setRole(role);
         user.setStatus(Status.confirm);
         String confirmationCode = getRandomCode(100000, 999999);
@@ -74,8 +74,7 @@ public class UserServiceImpl implements UserService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
         Optional<User> optionalUser = userRepository.findByEmail(request.email());
-        if (optionalUser.isEmpty())
-            throw new UsernameNotFoundException("Username or password incorrect");
+        if (optionalUser.isEmpty()) throw new UsernameNotFoundException("Username or password incorrect");
 
         String jwtToken = jwtService.generateToken(new UserManager(optionalUser.get()));
         String refreshToken = jwtService.generateRefreshToken(new UserManager(optionalUser.get()));
@@ -86,14 +85,14 @@ public class UserServiceImpl implements UserService {
     public JResponse confirmationUser(ConfirmationRequest request) {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
         if (user == null) {
-            return JResponse.error(400, "This email has already been registered!");
+            throw new BadRequestException(JResponse.error(400, "This email has already been registered!"));
         }
 
         if (!DateUtils.isExpirationCode(user.getCreatedDate()))
-            return JResponse.error(400, "The time to enter the code has expired.");
+            throw new BadRequestException("The time to enter the code has expired.");
 
         if (!user.getCode().equals(request.getCode())) {
-            return JResponse.error(400, "You have entered an incorrect code");
+            throw new BadRequestException("You have entered an incorrect code");
         }
 
         user.setCode(null);
