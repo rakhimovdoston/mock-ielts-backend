@@ -13,9 +13,7 @@ public interface StudentService {
 
     JResponse saveStudent(StudentRequest requestBody);
 
-    SaveResponse updateStudent(StudentRequest request);
+    SaveResponse updateStudent(User currentUser, StudentRequest request);
 
-    StudentResponse getStudentById(Long id);
-
-    JResponse getUserInfo(User user);
+    StudentResponse getStudentById(User currentUser);
 }

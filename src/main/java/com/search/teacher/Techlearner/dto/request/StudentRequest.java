@@ -1,17 +1,22 @@
 package com.search.teacher.Techlearner.dto.request;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 public class StudentRequest {
     private Long id;
-    @NotNull
     private String email;
 
+    private String firstname;
+    private String lastname;
+    private String phoneNumber;
+
     private Long describeId;
-    private List<Long> topics;
-    private List<Long> goals;
+    private List<Long> topics = new ArrayList<>();
+    private List<Long> goals = new ArrayList<>();
 }

@@ -1,6 +1,5 @@
 package com.search.teacher.Techlearner.service.impl;
 
-import com.search.teacher.Techlearner.config.service.UserManager;
 import com.search.teacher.Techlearner.dto.AuthenticationRequest;
 import com.search.teacher.Techlearner.dto.UserDto;
 import com.search.teacher.Techlearner.dto.request.ConfirmationRequest;
@@ -18,10 +17,9 @@ import com.search.teacher.Techlearner.model.enums.Status;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.RoleRepository;
 import com.search.teacher.Techlearner.repository.UserRepository;
-import com.search.teacher.Techlearner.service.JwtService;
-import com.search.teacher.Techlearner.service.user.UserService;
 import com.search.teacher.Techlearner.service.UserSession;
 import com.search.teacher.Techlearner.service.mail.MailSendService;
+import com.search.teacher.Techlearner.service.user.UserService;
 import com.search.teacher.Techlearner.service.user.UserTokenService;
 import com.search.teacher.Techlearner.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
@@ -58,7 +57,6 @@ public class UserServiceImpl implements UserService {
         User user = userDto.toUser();
         user.setPassword(passwordEncoder.encode(userDto.password()));
         Role role = roleRepository.findByName(RoleType.getRoleByName(userDto.role()));
-        ;
         if (role == null) throw new NotfoundException("Role not found");
         user.setRole(role);
         user.setStatus(Status.confirm);

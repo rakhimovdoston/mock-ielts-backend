@@ -43,6 +43,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<JResponse> exception(Exception e) {
+        e.printStackTrace();
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         String message = "An error occurred while processing the request.";
 

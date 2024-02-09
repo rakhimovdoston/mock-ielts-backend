@@ -39,7 +39,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        long start = System.currentTimeMillis();
         if (request.getServletPath().contains("/api/v1/auth")) {
             filterChain.doFilter(request, response);
             return;
@@ -67,15 +66,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
-        StringBuilder log = new StringBuilder();
-        log.append("{");
-        log.append("method:").append(request.getMethod()).append(", url:");
-        log.append(request.getRequestURI()).append(", status_code:");
-        log.append(response.getStatus()).append(", ");
-        log.append("ip: ").append(request.getRemoteAddr()).append(", ");
-        long duration = System.currentTimeMillis() - start;
-        log.append("duration:").append(duration).append("ms");
-        log.append("}");
-        logger.info("ApiFilter {}", log);
     }
 }

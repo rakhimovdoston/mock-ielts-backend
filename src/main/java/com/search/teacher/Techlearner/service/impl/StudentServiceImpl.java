@@ -78,28 +78,29 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public SaveResponse updateStudent(StudentRequest request) {
-        Optional<User> optionalUser = userRepository.findById(request.getId());
-        if (optionalUser.isEmpty()) {
-            throw new NotfoundException("Not found student");
+    public SaveResponse updateStudent(User currentUser, StudentRequest request) {
+        if (!request.getTopics().isEmpty())
+            currentUser.setTopics(request.getTopics());
+
+        if (request.getFirstname() != null)
+            currentUser.setFirstname(request.getFirstname());
+
+        if (request.getLastname() != null)
+            currentUser.setLastname(request.getLastname());
+
+        if (request.getDescribeId() != null) {
+            Optional<Describe> describe = describeRepository.findById(request.getDescribeId());
+            describe.ifPresent(currentUser::setDescribe);
         }
-        User user = optionalUser.get();
-        user.setTopics(request.getTopics());
-        Describe describe = describeRepository.findById(request.getDescribeId()).get();
-        user.setDescribe(describe);
-        user.setGoals(request.getGoals());
-        userRepository.save(user);
-        return new SaveResponse(user.getId());
+        if (!request.getGoals().isEmpty())
+            currentUser.setGoals(request.getGoals());
+
+        userRepository.save(currentUser);
+        return new SaveResponse(currentUser.getId());
     }
 
     @Override
-    public StudentResponse getStudentById(Long id) {
-        Optional<User> optionalUser = userRepository.findById(id);
-        if (optionalUser.isEmpty()) {
-            throw new NotfoundException("Not found user");
-        }
-
-        User user = optionalUser.get();
+    public StudentResponse getStudentById(User user) {
         StudentResponse response = userMapper.toResponse(user);
         List<Describe> describes = describeRepository.findAll();
         List<Topics> topics = topicsRepository.findAll();
@@ -108,10 +109,11 @@ public class StudentServiceImpl implements StudentService {
         List<DescribeDto> goalDtos = goalsMapper.toListDto(goals);
         List<DescribeDto> topicDtos = topicMapper.toListDto(topics);
 
-        describeDtos = describeDtos.stream().peek(describe -> {
-            if (describe.getId().equals(user.getDescribe().getId()))
-                describe.setActive(true);
-        }).collect(Collectors.toList());
+        if (user.getDescribe() != null)
+            describeDtos = describeDtos.stream().peek(describe -> {
+                if (describe.getId().equals(user.getDescribe().getId()))
+                    describe.setActive(true);
+            }).collect(Collectors.toList());
 
         goalDtos = goalDtos.stream().peek(goal -> {
             if (user.getGoals().contains(goal.getId()))
@@ -127,10 +129,5 @@ public class StudentServiceImpl implements StudentService {
         response.setTopics(topicDtos);
         response.setGoals(goalDtos);
         return response;
-    }
-
-    @Override
-    public JResponse getUserInfo(User user) {
-        return JResponse.success(userMapper.toResponse(user));
     }
 }

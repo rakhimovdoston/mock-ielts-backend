@@ -22,11 +22,6 @@ public class StudentController {
         this.securityUtils = securityUtils;
     }
 
-    @GetMapping("info")
-    public JResponse getStudentData() {
-        return studentService.getUserInfo(securityUtils.currentUser());
-    }
-
     @GetMapping("info-desc")
     public JResponse infoDescription() {
         Map<String, Object> map = studentService.infoDescription();
@@ -39,14 +34,14 @@ public class StudentController {
     }
 
     @PutMapping("update")
-    public JResponse updateStudent(@RequestBody @Valid StudentRequest request) {
-        SaveResponse response = studentService.updateStudent(request);
+    public JResponse updateStudent(@RequestBody StudentRequest request) {
+        SaveResponse response = studentService.updateStudent(securityUtils.currentUser(), request);
         return JResponse.success(response);
     }
 
-    @GetMapping("/{id}")
-    public JResponse getStudent(@PathVariable("id") Long id) {
-        StudentResponse response = studentService.getStudentById(id);
+    @GetMapping("get")
+    public JResponse getStudent() {
+        StudentResponse response = studentService.getStudentById(securityUtils.currentUser());
         return JResponse.success(response);
     }
 }
