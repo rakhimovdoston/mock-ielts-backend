@@ -9,7 +9,6 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TeacherMapper {
     @Mapping(target = "topics", ignore = true)
-    @Mapping(target = "certificates", ignore = true)
     @Mapping(target = "experiences", ignore = true)
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "educations", ignore = true)

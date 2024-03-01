@@ -12,5 +12,6 @@ public interface UserMapper {
     @Mapping(target = "describes", ignore = true)
     @Mapping(target = "goals", ignore = true)
     @Mapping(target = "topics", ignore = true)
+    @Mapping(target = "role", ignore = true)
     StudentResponse toResponse(User user);
 }

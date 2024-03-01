@@ -22,7 +22,7 @@ public class UserSession {
     }
 
     public User getUser() {
-        return userRepo.findByEmail(getUsername()).orElse(null);
+        return userRepo.findByEmail(getUsername());
     }
 
     public Optional<UsernamePasswordAuthenticationToken> getPrincipal() {

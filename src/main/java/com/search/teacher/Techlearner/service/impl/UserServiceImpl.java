@@ -1,5 +1,6 @@
 package com.search.teacher.Techlearner.service.impl;
 
+import com.search.teacher.Techlearner.config.rabbit.RabbitMqProducer;
 import com.search.teacher.Techlearner.dto.AuthenticationRequest;
 import com.search.teacher.Techlearner.dto.UserDto;
 import com.search.teacher.Techlearner.dto.request.ConfirmationRequest;
@@ -8,6 +9,7 @@ import com.search.teacher.Techlearner.dto.request.ResendRequest;
 import com.search.teacher.Techlearner.dto.request.ResetPasswordRequest;
 import com.search.teacher.Techlearner.dto.response.AuthenticationResponse;
 import com.search.teacher.Techlearner.dto.response.RegisterResponse;
+import com.search.teacher.Techlearner.dto.response.SaveResponse;
 import com.search.teacher.Techlearner.exception.BadRequestException;
 import com.search.teacher.Techlearner.exception.NotfoundException;
 import com.search.teacher.Techlearner.model.entities.Role;
@@ -18,13 +20,14 @@ import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.RoleRepository;
 import com.search.teacher.Techlearner.repository.UserRepository;
 import com.search.teacher.Techlearner.service.UserSession;
-import com.search.teacher.Techlearner.service.mail.MailSendService;
 import com.search.teacher.Techlearner.service.user.UserService;
 import com.search.teacher.Techlearner.service.user.UserTokenService;
 import com.search.teacher.Techlearner.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,7 +35,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
@@ -44,10 +47,11 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final MailSendService mailSendService;
     private final AuthenticationManager authenticationManager;
     private final UserSession userSession;
     private final UserTokenService userTokenService;
+    private final RabbitMqProducer rabbitMqProducer;
+    private final CacheManager cacheManager;
 
     @Override
     public JResponse registerUser(UserDto userDto) {
@@ -64,22 +68,22 @@ public class UserServiceImpl implements UserService {
         user.setCode(confirmationCode);
         userRepository.save(user);
         logger.info("User saved: {}", user.getId());
-        mailSendService.sendConfirmRegister(user.getEmail(), confirmationCode);
+        rabbitMqProducer.sendNotificationToEmail(user.getEmail(), confirmationCode);
         return JResponse.success(new RegisterResponse(user.getEmail()));
     }
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-        Optional<User> optionalUser = userRepository.findByEmail(request.email());
-        if (optionalUser.isEmpty()) throw new UsernameNotFoundException("Username or password incorrect");
+        User user = userRepository.findByEmail(request.email());
+        if (user == null) throw new UsernameNotFoundException("Username or password incorrect");
 
-        return userTokenService.generateToken(optionalUser.get());
+        return userTokenService.generateToken(user);
     }
 
     @Override
     public JResponse confirmationUser(ConfirmationRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        User user = userRepository.findByEmail(request.getEmail());
         if (user == null) {
             throw new BadRequestException(JResponse.error(400, "This email has already been registered!"));
         }
@@ -95,12 +99,12 @@ public class UserServiceImpl implements UserService {
         user.setStatus(Status.active);
         user.setActive(true);
         userRepository.save(user);
-        return JResponse.success("User is verified");
+        return JResponse.success(new SaveResponse(user.getId()));
     }
 
     @Override
     public JResponse resendEmailCode(ResendRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        User user = userRepository.findByEmail(request.getEmail());
         if (user == null) {
             return JResponse.error(400, "This email not exist!");
         }
@@ -114,9 +118,9 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedDate(new Date());
         userRepository.save(user);
         if (user.isForgotPassword()) {
-            mailSendService.sendConfirmForgot(user.getEmail(), code);
+            rabbitMqProducer.sendForgotPasswordEmail(user.getEmail(), code);
         } else {
-            mailSendService.sendConfirmRegister(user.getEmail(), code);
+            rabbitMqProducer.sendNotificationToEmail(user.getEmail(), code);
         }
         return JResponse.success(new RegisterResponse(user.getEmail()));
     }
@@ -139,7 +143,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public JResponse forgotPassword(ForgotPasswordReq request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        User user = userRepository.findByEmail(request.getEmail());
         if (user == null) {
             return JResponse.error(400, "This email not exist!");
         }

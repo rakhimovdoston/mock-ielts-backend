@@ -15,5 +15,5 @@ public class StudentResponse {
     private List<DescribeDto> describes;
     private List<DescribeDto> topics;
     private List<DescribeDto> goals;
-
+    private String role;
 }

@@ -1,61 +1,75 @@
 package com.search.teacher.Techlearner.service.mail;
 
+import com.search.teacher.Techlearner.model.entities.User;
+import com.search.teacher.Techlearner.repository.UserRepository;
 import com.search.teacher.Techlearner.service.html.HtmlFileService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.CharEncoding;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
-import java.io.File;
 
 @Service
 @RequiredArgsConstructor
 public class MailServiceImpl implements MailSendService {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     private JavaMailSender emailSender;
 
     private final HtmlFileService htmlFileService;
+    private final UserRepository userRepository;
 
     @Override
     public void sendConfirmRegister(String email, String code) {
-        try {
-            String htmlContent = htmlFileService.confirmationHtmlContent(email, code);
-            MimeMessage message = emailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, CharEncoding.UTF_8);
-            helper.setFrom("rdoston22@gmail.com");
-            helper.setTo(email);
-            helper.setSubject("Your confirmation code for teacher search");
-            helper.setText(htmlContent, true);
-            ClassPathResource resource = new ClassPathResource("static/images/header_logo.png");
-            helper.addInline("header_logo", resource);
-            emailSender.send(message);
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            logger.info("{} does not exist.", email);
+            return;
         }
+        String htmlContent = htmlFileService.confirmationHtmlContent(email, code);
+        sendEmail(htmlContent,
+                email,
+                "Your confirmation code for teacher search",
+                "static/images/header_logo.png",
+                "header_logo",
+                true);
     }
 
     @Override
     public void sendConfirmForgot(String email, String code) {
+        String htmlContent = htmlFileService.confirmationForgotPasswordHtmlContent(email, code);
+        sendEmail(htmlContent,
+                email,
+                "Your confirmation code for forgot password",
+                "static/images/header_logo.png",
+                "header_logo",
+                true);
+    }
+
+    private void sendEmail(String htmlContent, String receiverEmail, String subject, String imageUrl, String contentId, boolean multipart) {
+
         try {
-            String htmlContent = htmlFileService.confirmationForgotPasswordHtmlContent(email, code);
             MimeMessage message = emailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, CharEncoding.UTF_8);
+            MimeMessageHelper helper = new MimeMessageHelper(message, multipart, CharEncoding.UTF_8);
             helper.setFrom("rdoston22@gmail.com");
-            helper.setTo(email);
-            helper.setSubject("Your confirmation code for forgot password");
+            helper.setTo(receiverEmail);
+            helper.setSubject(subject);
             helper.setText(htmlContent, true);
-            ClassPathResource resource = new ClassPathResource("static/images/header_logo.png");
-            helper.addInline("header_logo", resource);
+            if (imageUrl != null && contentId != null) {
+                ClassPathResource resource = new ClassPathResource(imageUrl);
+                helper.addInline(contentId, resource);
+            }
             emailSender.send(message);
+            logger.info("Email sent.");
         } catch (MessagingException e) {
-            throw new RuntimeException(e);
+            logger.error("Send email error: {}", e.getMessage());
         }
     }
 }

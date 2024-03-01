@@ -38,10 +38,4 @@ public class StudentController {
         SaveResponse response = studentService.updateStudent(securityUtils.currentUser(), request);
         return JResponse.success(response);
     }
-
-    @GetMapping("get")
-    public JResponse getStudent() {
-        StudentResponse response = studentService.getStudentById(securityUtils.currentUser());
-        return JResponse.success(response);
-    }
 }

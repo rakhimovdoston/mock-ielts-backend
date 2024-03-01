@@ -106,17 +106,18 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public TeacherResponse getTeacher(Long id) {
-        Optional<Teacher> optionalTeacher = teacherRepository.findById(id);
-        if (optionalTeacher.isEmpty())
-            throw new NotfoundException("Teacher not found this id: " + id);
-        Teacher teacher = optionalTeacher.get();
+    public TeacherResponse getTeacher(User currentUser) {
+        Teacher teacher = teacherRepository.findByUser(currentUser);
+        if (teacher == null)
+            throw new NotfoundException("Teacher not found");
         TeacherResponse response = teacherMapper.toResponse(teacher);
         List<DescribeDto> topics = topicMapper.toListDto(topicsRepository.findAll());
         topics = topics.stream().peek(topic -> {
             if (teacher.getTopics().contains(topic.getId()))
                 topic.setActive(true);
         }).collect(Collectors.toList());
+
+
         response.setTopics(topics);
         return response;
     }
@@ -125,5 +126,16 @@ public class TeacherServiceImpl implements TeacherService {
     public Teacher findByIdAndActive(Long teacherId) {
         return teacherRepository.findByIdAndActive(teacherId, true)
                 .orElseThrow(() -> new NotfoundException("Teacher not found this id: " + teacherId));
+    }
+
+    @Override
+    public SaveResponse updateTeacher(User user, TeacherRequest request) {
+        return null;
+    }
+
+    @Override
+    public JResponse allTopics() {
+        List<Topics> topics = topicsRepository.findAll();
+        return JResponse.success(topics);
     }
 }

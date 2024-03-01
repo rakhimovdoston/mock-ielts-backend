@@ -15,7 +15,11 @@ public interface TeacherService {
 
     JResponse allDegrees();
 
-    TeacherResponse getTeacher(Long id);
+    TeacherResponse getTeacher(User currentUser);
 
     Teacher findByIdAndActive(Long teacherId);
+
+    SaveResponse updateTeacher(User user, TeacherRequest request);
+
+    JResponse allTopics();
 }

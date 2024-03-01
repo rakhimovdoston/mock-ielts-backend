@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +17,7 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 
-public class User extends BaseEntity {
+public class User extends BaseEntity implements Serializable {
 
     private String firstname;
     private String lastname;

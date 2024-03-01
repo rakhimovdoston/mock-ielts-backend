@@ -25,8 +25,8 @@ public class UserTokenService {
         userToken.setAccessToken(jwtToken);
         userToken.setRefreshToken(refreshToken);
         userToken.setUser(user);
-        userToken.setExpireDate(new Date(jwtService.jwtExpiration));
-        userToken.setRefreshExpireDate(new Date(jwtService.refreshExpiration));
+        userToken.setExpireDate(new Date(new Date().getTime() + jwtService.jwtExpiration));
+        userToken.setRefreshExpireDate(new Date(new Date().getTime() + jwtService.refreshExpiration));
         userTokenRepository.save(userToken);
         return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
     }
@@ -36,7 +36,7 @@ public class UserTokenService {
             return null;
         String phoneNumber = jwtService.extractUsername(jwt);
         UserToken userToken = userTokenRepository.findByAccessToken(jwt);
-        if (userToken == null || DateUtils.isExpirationToken(userToken.getExpireDate())) {
+        if (userToken == null || !DateUtils.isExpirationToken(userToken.getExpireDate())) {
             return null;
         }
         User user = userToken.getUser();

@@ -1,7 +1,8 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.1.5'
+	id 'org.springframework.boot' version '3.2.3'
 	id 'io.spring.dependency-management' version '1.1.3'
+	id "io.sentry.jvm.gradle" version "4.3.0"
 }
 
 group = 'com.search.teacher'
@@ -35,6 +36,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	testImplementation 'org.springframework.amqp:spring-rabbit-test'
+
+//	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+
 	implementation 'org.liquibase:liquibase-core'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
@@ -44,16 +52,14 @@ dependencies {
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
-    implementation group: 'com.vladmihalcea', name: 'hibernate-types-52', version: '2.12.1'
-//    implementation 'org.jetbrains:annotations:22.0.0'
-
+//    implementation group: 'com.vladmihalcea', name: 'hibernate-types-52', version: '2.12.1'
 //	Amazon Aws
 	implementation 'com.amazonaws:aws-java-sdk:1.12.594'
 
 
 	implementation 'com.google.code.gson:gson:2.9.0'
 
-	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'org.postgresql:postgresql:42.6.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 }

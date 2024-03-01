@@ -13,8 +13,8 @@ public class TeacherRequest {
     private String title;
     private String description;
     private String phoneNumber;
-    private List<Long> topics;
-    private List<Long> images;
+    private List<Long> topics = new ArrayList<>();
+    private List<Long> images = new ArrayList<>();
     private List<EducationRequest> educations = new ArrayList<>();
     private List<String> certificate = new ArrayList<>(); // IELTS, TOEFL and other
     private List<ExperienceRequest> experiences = new ArrayList<>();

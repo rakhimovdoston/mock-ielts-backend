@@ -8,6 +8,7 @@ import org.springframework.core.env.Environment;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Optional;
+import io.sentry.Sentry;
 
 @SpringBootApplication
 @Slf4j
@@ -18,6 +19,10 @@ public class TechlearnerApplication {
 		SpringApplication application = new SpringApplication(TechlearnerApplication.class);
 		Environment environment = application.run(args).getEnvironment();
 		logApplicationStartup(environment);
+		Sentry.init(options -> {
+			options.setDsn("https://614fda0be9685744eafb6d3b066a98aa@o4506320331014144.ingest.sentry.io/4506796302991360");
+			options.setTracesSampleRate(1.0);
+		});
 	}
 
 	private static void logApplicationStartup(Environment env) {

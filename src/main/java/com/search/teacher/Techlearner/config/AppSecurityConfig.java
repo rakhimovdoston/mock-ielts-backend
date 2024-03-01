@@ -6,6 +6,8 @@ import com.search.teacher.Techlearner.config.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -17,12 +19,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.net.Proxy;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,7 +60,8 @@ public class AppSecurityConfig {
                 authorize ->
                     authorize
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/teachers/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/test/**").permitAll()
+                        .requestMatchers("/api/v1/test/**").permitAll()
                         .requestMatchers(SWAGGER_URL).permitAll()
                         .anyRequest().authenticated()
             )
@@ -97,7 +103,6 @@ public class AppSecurityConfig {
         return corsConfigurationSource;
     }
 
-//    Swagger config
     @Bean
     public WebMvcConfigurer configurer() {
         return new WebMvcConfigurer() {
@@ -109,5 +114,15 @@ public class AppSecurityConfig {
                 registry.addMapping("/swagger-resources/**");
             }
         };
+    }
+
+    @Bean
+    public RestClient restClient() {
+        SimpleClientHttpRequestFactory clientHttpRequestFactory = new SimpleClientHttpRequestFactory();
+        clientHttpRequestFactory.setConnectTimeout(Duration.ofMillis(30000));
+        clientHttpRequestFactory.setReadTimeout(Duration.ofMillis(60000));
+        return  RestClient.builder()
+                .requestFactory(clientHttpRequestFactory)
+                .build();
     }
 }

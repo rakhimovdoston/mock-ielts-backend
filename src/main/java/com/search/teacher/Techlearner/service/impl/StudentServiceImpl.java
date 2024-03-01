@@ -65,7 +65,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public JResponse saveStudent(StudentRequest requestBody) {
-        User user = userRepository.findByEmail(requestBody.getEmail()).orElse(null);
+        User user = userRepository.findByEmail(requestBody.getEmail());
         if (user == null) {
             return JResponse.error(400, "User not found");
         }
@@ -128,6 +128,7 @@ public class StudentServiceImpl implements StudentService {
         response.setDescribes(describeDtos);
         response.setTopics(topicDtos);
         response.setGoals(goalDtos);
+        response.setRole(user.getRole().getName().getValue());
         return response;
     }
 }
