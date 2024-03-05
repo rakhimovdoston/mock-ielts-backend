@@ -1,5 +1,6 @@
 package com.search.teacher.Techlearner.service.impl;
 
+import com.search.teacher.Techlearner.components.Constants;
 import com.search.teacher.Techlearner.dto.request.EducationRequest;
 import com.search.teacher.Techlearner.dto.request.ExperienceRequest;
 import com.search.teacher.Techlearner.dto.request.TeacherRequest;
@@ -18,6 +19,7 @@ import com.search.teacher.Techlearner.service.upload.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -123,8 +125,9 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
+    @Cacheable(cacheNames = Constants.TEACHER_BY_ID, key = "#teacherId")
     public Teacher findByIdAndActive(Long teacherId) {
-        return teacherRepository.findByIdAndActive(teacherId, true)
+        return Optional.of(teacherRepository.findByIdAndActive(teacherId, true))
                 .orElseThrow(() -> new NotfoundException("Teacher not found this id: " + teacherId));
     }
 

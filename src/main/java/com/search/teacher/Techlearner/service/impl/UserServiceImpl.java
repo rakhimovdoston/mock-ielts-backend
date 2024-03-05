@@ -1,5 +1,6 @@
 package com.search.teacher.Techlearner.service.impl;
 
+import com.search.teacher.Techlearner.components.Constants;
 import com.search.teacher.Techlearner.config.rabbit.RabbitMqProducer;
 import com.search.teacher.Techlearner.dto.AuthenticationRequest;
 import com.search.teacher.Techlearner.dto.UserDto;
@@ -26,8 +27,8 @@ import com.search.teacher.Techlearner.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,9 +36,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
-import java.util.Collection;
 import java.util.Date;
-import java.util.Optional;
+import java.util.List;
 import java.util.Random;
 
 @Service
@@ -85,7 +85,7 @@ public class UserServiceImpl implements UserService {
     public JResponse confirmationUser(ConfirmationRequest request) {
         User user = userRepository.findByEmail(request.getEmail());
         if (user == null) {
-            throw new BadRequestException(JResponse.error(400, "This email has already been registered!"));
+            throw new NotfoundException("This email not found user");
         }
 
         if (!DateUtils.isExpirationCode(user.getCreatedDate()))
@@ -158,6 +158,20 @@ public class UserServiceImpl implements UserService {
             } else return JResponse.error(400, "Password non match");
         }
         return JResponse.error(400, "You should confirm your password");
+    }
+
+    @Override
+    @Cacheable(cacheNames = Constants.USER_EMAIL)
+    public List<User> getAllUsers() {
+        logger.info("Get all users");
+        return userRepository.findAll();
+    }
+
+    @Override
+    @Cacheable(cacheNames = Constants.USER_EMAIL, key = "#email")
+    public User getUserByEmail(String email) {
+        logger.info("Get user by email: {}", email);
+        return userRepository.findByEmail(email);
     }
 
     private String getRandomCode(int min, int max) {

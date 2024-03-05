@@ -20,7 +20,5 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Role role = roleService.getRoleByName(RoleType.ROLE_STUDENT);
-
     }
 }

@@ -7,7 +7,10 @@ import com.search.teacher.Techlearner.dto.request.ForgotPasswordReq;
 import com.search.teacher.Techlearner.dto.request.ResendRequest;
 import com.search.teacher.Techlearner.dto.request.ResetPasswordRequest;
 import com.search.teacher.Techlearner.dto.response.AuthenticationResponse;
+import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.response.JResponse;
+
+import java.util.List;
 
 public interface UserService {
 
@@ -22,4 +25,8 @@ public interface UserService {
     JResponse resetPassword(ResetPasswordRequest req);
 
     JResponse forgotPassword(ForgotPasswordReq request);
+
+    List<User> getAllUsers();
+
+    User getUserByEmail(String email);
 }

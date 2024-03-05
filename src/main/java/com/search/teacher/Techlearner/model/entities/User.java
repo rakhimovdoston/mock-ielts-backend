@@ -43,7 +43,4 @@ public class User extends BaseEntity implements Serializable {
     @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private List<Long> goals = new ArrayList<>();
-
-    @OneToMany
-    private List<Images> images = new ArrayList<>();
 }

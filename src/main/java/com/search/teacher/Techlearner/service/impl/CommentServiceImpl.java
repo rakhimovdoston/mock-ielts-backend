@@ -9,6 +9,7 @@ import com.search.teacher.Techlearner.model.entities.Teacher;
 import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.CommentRepository;
+import com.search.teacher.Techlearner.repository.ImageRepository;
 import com.search.teacher.Techlearner.service.CommentService;
 import com.search.teacher.Techlearner.service.user.TeacherService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class CommentServiceImpl implements CommentService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final CommentRepository commentRepository;
     private final TeacherService teacherService;
+    private final ImageRepository imageRepository;
     private final CommentMapper commentMapper;
 
     @Override
@@ -48,7 +50,7 @@ public class CommentServiceImpl implements CommentService {
                     commentDto.setId(commentDto.getId());
                     User user = comment.getUser();
                     commentDto.setUserEmail(user.getEmail());
-                    List<Images> images = user.getImages();
+                    List<Images> images = imageRepository.findByUser(user);
                     if (!images.isEmpty())
                         commentDto.setUserProfileImage(images.get(0).getUrl());
                     return commentDto;

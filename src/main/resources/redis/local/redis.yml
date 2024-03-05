@@ -1,0 +1,11 @@
+singleServerConfig:
+  idleConnectionTimeout: 10000
+  connectTimeout: 2000
+  timeout: 20000
+  retryAttempts: 1
+  retryInterval: 1000
+  subscriptionsPerConnection: 5
+  address: redis://127.0.0.1:6379
+  connectionMinimumIdleSize: 10
+  connectionPoolSize: 64
+codec: !<org.redisson.codec.JsonJacksonCodec> {}
