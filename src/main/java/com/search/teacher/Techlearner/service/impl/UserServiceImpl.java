@@ -167,13 +167,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll();
     }
 
-    @Override
-    @Cacheable(cacheNames = Constants.USER_EMAIL, key = "#email")
-    public User getUserByEmail(String email) {
-        logger.info("Get user by email: {}", email);
-        return userRepository.findByEmail(email);
-    }
-
     private String getRandomCode(int min, int max) {
         Random random = new Random();
         return String.valueOf(random.nextInt(min, max));

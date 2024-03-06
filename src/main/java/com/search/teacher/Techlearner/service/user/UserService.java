@@ -27,6 +27,4 @@ public interface UserService {
     JResponse forgotPassword(ForgotPasswordReq request);
 
     List<User> getAllUsers();
-
-    User getUserByEmail(String email);
 }
