@@ -1,6 +1,7 @@
 package com.search.teacher.Techlearner.repository;
 
 import com.search.teacher.Techlearner.components.Constants;
+import com.search.teacher.Techlearner.exception.NotfoundException;
 import com.search.teacher.Techlearner.model.entities.Teacher;
 import com.search.teacher.Techlearner.model.entities.User;
 import org.springframework.cache.annotation.Cacheable;
@@ -15,4 +16,12 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long> {
 
     @Cacheable(cacheNames = Constants.TEACHER_BY_USER, key = "#user.id")
     Teacher findByUser(User user);
+
+
+    default Teacher findNotFoundTeacher(Long id, boolean active) {
+        Teacher teacher = this.findByIdAndActive(id, active);
+        if (teacher == null)
+            throw new NotfoundException("Teacher not found this id: " + id);
+        return teacher;
+    }
 }

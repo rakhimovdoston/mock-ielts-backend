@@ -127,8 +127,7 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     @Cacheable(cacheNames = Constants.TEACHER_BY_ID, key = "#teacherId")
     public Teacher findByIdAndActive(Long teacherId) {
-        return Optional.of(teacherRepository.findByIdAndActive(teacherId, true))
-                .orElseThrow(() -> new NotfoundException("Teacher not found this id: " + teacherId));
+        return teacherRepository.findNotFoundTeacher(teacherId, true);
     }
 
     @Override

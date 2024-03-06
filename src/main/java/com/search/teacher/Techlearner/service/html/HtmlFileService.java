@@ -15,13 +15,13 @@ public class HtmlFileService {
         Context context = new Context();
         context.setVariable("email", email);
         context.setVariable("code", code);
-        return templateEngine.process("confirmation-code.html", context);
+        return templateEngine.process("email-verification.html", context);
     }
 
     public String confirmationForgotPasswordHtmlContent(String email, String code) {
         Context context = new Context();
         context.setVariable("email", email);
         context.setVariable("code", code);
-        return templateEngine.process("confirmation-code.html", context);
+        return templateEngine.process("forgot-password.html", context);
     }
 }

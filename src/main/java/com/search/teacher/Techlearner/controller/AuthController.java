@@ -40,7 +40,6 @@ public class AuthController {
         return ResponseEntity.ok(userService.forgotPassword(request));
     }
 
-
     @PostMapping("resend-code")
     public ResponseEntity<JResponse> resendEmail(@RequestBody @Valid ResendRequest request) {
         return ResponseEntity.ok(userService.resendEmailCode(request));

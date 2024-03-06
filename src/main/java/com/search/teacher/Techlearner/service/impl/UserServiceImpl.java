@@ -96,8 +96,10 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setCode(null);
-        user.setStatus(Status.active);
-        user.setActive(true);
+        if (!request.isForgotPassword()) {
+            user.setStatus(Status.active);
+            user.setActive(true);
+        }
         userRepository.save(user);
         return JResponse.success(new SaveResponse(user.getId()));
     }
