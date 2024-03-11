@@ -88,8 +88,8 @@ public class UserServiceImpl implements UserService {
             throw new NotfoundException("This email not found user");
         }
 
-        if (!DateUtils.isExpirationCode(user.getCreatedDate()))
-            throw new BadRequestException("The time to enter the code has expired.");
+//        if (DateUtils.isExpirationCode(user.getUpdatedDate()))
+//            throw new BadRequestException("The time to enter the code has expired.");
 
         if (!user.getCode().equals(request.getCode())) {
             throw new BadRequestException("You have entered an incorrect code");
@@ -99,6 +99,8 @@ public class UserServiceImpl implements UserService {
         if (!request.isForgotPassword()) {
             user.setStatus(Status.active);
             user.setActive(true);
+        } else {
+            user.setForgotPassword(false);
         }
         userRepository.save(user);
         return JResponse.success(new SaveResponse(user.getId()));
@@ -112,7 +114,7 @@ public class UserServiceImpl implements UserService {
         }
 
         if (user.isActive() && user.getStatus() == Status.active && !request.isForgotPassword()) {
-            return JResponse.error(200, "This user already verified");
+            return JResponse.error(400, "This user already verified");
         }
         String code = getRandomCode(100000, 999999);
         user.setCode(code);
@@ -150,14 +152,14 @@ public class UserServiceImpl implements UserService {
             return JResponse.error(400, "This email not exist!");
         }
 
-        if (!StringUtils.isEmpty(user.getCode())) {
+        if (StringUtils.isEmpty(user.getCode())) {
             if (request.getPassword().equals(request.getConfirmPassword())) {
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
-                user.setCode(null);
                 user.setForgotPassword(false);
                 userRepository.save(user);
-                return JResponse.success("Password updated");
-            } else return JResponse.error(400, "Password non match");
+                return JResponse.success();
+            } else
+                return JResponse.error(400, "Password non match");
         }
         return JResponse.error(400, "You should confirm your password");
     }

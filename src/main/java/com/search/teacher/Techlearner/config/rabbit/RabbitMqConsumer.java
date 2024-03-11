@@ -22,12 +22,12 @@ public class RabbitMqConsumer {
     @RabbitListener(bindings = @QueueBinding(value = @Queue(durable = "false", value = EMAIL_SEND_NOTIFICATION_MESSAGE),
                     exchange = @Exchange(durable = "false", value = SEND_EMAIL_NOTIFICATION_EXCHANGE), key = EMAIL_SEND_NOTIFICATION_MESSAGE), containerFactory = "rabbitListenerContainerFactory")
     public void sendEmailMessage(EmailPayload emailPayload) {
-        mailSendService.sendConfirmRegister(emailPayload.getEmail(), emailPayload.getCode());
+        mailSendService.sendConfirmRegister(emailPayload);
     }
 
     @RabbitListener(bindings = @QueueBinding(value = @Queue(durable = "false", value = FORGOT_PASSWORD_SEND_NOTIFICATION_MESSAGE),
             exchange = @Exchange(durable = "false", value = SEND_FORGOT_PASSWORD_EMAIL_EXCHANGE), key = FORGOT_PASSWORD_SEND_NOTIFICATION_MESSAGE), containerFactory = "rabbitListenerContainerFactory")
     public void sendForgotPassword(EmailPayload emailPayload) {
-        mailSendService.sendConfirmForgot(emailPayload.getEmail(), emailPayload.getCode());
+        mailSendService.sendConfirmForgot(emailPayload);
     }
 }

@@ -1,5 +1,6 @@
 package com.search.teacher.Techlearner.service.mail;
 
+import com.search.teacher.Techlearner.config.rabbit.EmailPayload;
 import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.repository.UserRepository;
 import com.search.teacher.Techlearner.service.html.HtmlFileService;
@@ -27,15 +28,15 @@ public class MailServiceImpl implements MailSendService {
     private final UserRepository userRepository;
 
     @Override
-    public void sendConfirmRegister(String email, String code) {
-        User user = userRepository.findByEmail(email);
+    public void sendConfirmRegister(EmailPayload emailPayload) {
+        User user = userRepository.findByEmail(emailPayload.getEmail());
         if (user == null) {
-            logger.info("{} does not exist.", email);
+            logger.info("{} does not exist.", emailPayload.getEmail());
             return;
         }
-        String htmlContent = htmlFileService.confirmationHtmlContent(email, code);
+        String htmlContent = htmlFileService.confirmationHtmlContent(emailPayload.getEmail(), emailPayload.getCode());
         sendEmail(htmlContent,
-                email,
+                emailPayload.getEmail(),
                 "Your confirmation code for teacher search",
                 "static/images/header_logo.png",
                 "header_logo",
@@ -43,10 +44,15 @@ public class MailServiceImpl implements MailSendService {
     }
 
     @Override
-    public void sendConfirmForgot(String email, String code) {
-        String htmlContent = htmlFileService.confirmationForgotPasswordHtmlContent(email, code);
+    public void sendConfirmForgot(EmailPayload emailPayload) {
+        User user = userRepository.findByEmail(emailPayload.getEmail());
+        if (user == null) {
+            logger.info("{} does not exist.", emailPayload.getEmail());
+            return;
+        }
+        String htmlContent = htmlFileService.confirmationForgotPasswordHtmlContent(emailPayload.getEmail(), emailPayload.getCode());
         sendEmail(htmlContent,
-                email,
+                emailPayload.getEmail(),
                 "Your confirmation code for forgot password",
                 "static/images/header_logo.png",
                 "header_logo",

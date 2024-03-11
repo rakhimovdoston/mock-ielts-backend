@@ -9,5 +9,5 @@ import lombok.Setter;
 public class ResendRequest {
     @NotNull
     private String email;
-    private boolean isForgotPassword;
+    private boolean forgotPassword;
 }

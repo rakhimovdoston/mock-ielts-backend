@@ -5,8 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ConfirmationRequest {
-    private String email;
+public class ConfirmationRequest extends ResendRequest {
     private String code;
-    private boolean isForgotPassword;
 }

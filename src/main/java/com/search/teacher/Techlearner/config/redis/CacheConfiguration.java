@@ -57,6 +57,7 @@ public class CacheConfiguration {
         config.put(Constants.ROLE_NAME, new CacheConfig(Duration.ofDays(CACHE_15_DAYS).toMillis(), 0));
         config.put(Constants.TEACHER_BY_ID, new CacheConfig(Duration.ofHours(3 * CACHE_1_HOUR).toMillis(), 0));
         config.put(Constants.TEACHER_BY_USER, new CacheConfig(Duration.ofHours(3 * CACHE_1_HOUR).toMillis(), 0));
+        config.put(Constants.QUESTION_CACHE, new CacheConfig(Duration.ofDays(3 * CACHE_1_DAY).toMillis(), 0));
         return new RedissonSpringCacheManager(redissonClient, config);
     }
 

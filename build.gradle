@@ -44,6 +44,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.redisson:redisson-spring-boot-starter:3.27.1'
 
+//	Excel
+	implementation 'org.apache.poi:poi:5.2.5'
+	implementation 'org.apache.poi:poi-ooxml:5.2.5'
+
 //	redisson client
 	implementation 'org.redisson:redisson:3.27.0'
 
