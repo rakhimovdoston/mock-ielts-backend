@@ -21,4 +21,7 @@
     <include file="db/changelog/changeset/14-alter-image-table-add-type.sql" author="Doston" />
     <include file="db/changelog/changeset/15-create-user-token.sql" author="Doston" />
     <include file="db/changelog/changeset/16-create-question-table.sql" author="Doston" />
+    <include file="db/changelog/changeset/17-create-question-history-table.sql" author="Doston" />
+    <include file="db/changelog/changeset/18-create-question-category.sql" author="Doston" />
+    <include file="/db/changelog/changeset/19-alter-table-question-add-column.sql" author="Doston" />
 </databaseChangeLog>

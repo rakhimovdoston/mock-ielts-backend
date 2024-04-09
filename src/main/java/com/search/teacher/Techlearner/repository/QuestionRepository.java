@@ -16,4 +16,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     @Cacheable(cacheNames = Constants.QUESTION_CACHE, key = "#id")
     Question findByIdAndActiveIsTrue(Long id);
+
+    List<Question> findAllByActiveIsTrueAndIdIn(List<Long> ids);
 }

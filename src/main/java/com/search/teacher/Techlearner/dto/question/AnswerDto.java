@@ -7,5 +7,10 @@ import lombok.Setter;
 @Setter
 public class AnswerDto {
     private Long id;
+
     private String name;
+
+    private boolean correct;
+
+    private boolean clientAnswer = false;
 }
