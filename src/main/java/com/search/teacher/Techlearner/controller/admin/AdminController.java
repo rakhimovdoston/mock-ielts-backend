@@ -1,6 +1,7 @@
 package com.search.teacher.Techlearner.controller.admin;
 
 import com.search.teacher.Techlearner.model.response.JResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/v1/admin")
+@Tag(name = "Admin Controller")
 public class AdminController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());

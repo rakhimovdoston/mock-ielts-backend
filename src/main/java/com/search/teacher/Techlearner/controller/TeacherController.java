@@ -6,6 +6,7 @@ import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.user.TeacherService;
 import com.search.teacher.Techlearner.service.UserSession;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/teachers")
 @RequiredArgsConstructor
+@Tag(name = "Teacher Controller")
 public class TeacherController {
 
     private final TeacherService teacherService;

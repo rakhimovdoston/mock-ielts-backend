@@ -4,12 +4,14 @@ import com.search.teacher.Techlearner.dto.response.StudentResponse;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.user.StudentService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/user")
+@Tag(name = "User Controller")
 public class UserController {
     private final StudentService studentService;
     private final SecurityUtils securityUtils;

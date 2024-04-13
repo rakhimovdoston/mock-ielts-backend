@@ -7,6 +7,7 @@ import com.search.teacher.Techlearner.dto.request.ForgotPasswordReq;
 import com.search.teacher.Techlearner.dto.request.ResendRequest;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.user.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Authentication Controller")
 public class AuthController {
 
     private final UserService userService;

@@ -7,6 +7,7 @@ import com.search.teacher.Techlearner.dto.question.QuestionSearchFilter;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.question.QuestionService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/question")
 @RequiredArgsConstructor
+@Tag(name = "Question Controller")
 public class QuestionController {
 
     private final QuestionService questionService;

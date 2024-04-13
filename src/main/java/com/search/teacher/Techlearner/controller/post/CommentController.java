@@ -4,6 +4,7 @@ import com.search.teacher.Techlearner.dto.request.CommentRequest;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.CommentService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/comment")
 @RequiredArgsConstructor
+@Tag(name = "Comment Controller")
 public class CommentController {
 
     private final SecurityUtils securityUtils;

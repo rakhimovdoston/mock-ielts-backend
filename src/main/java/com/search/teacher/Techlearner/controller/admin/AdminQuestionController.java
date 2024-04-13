@@ -4,6 +4,10 @@ import com.search.teacher.Techlearner.dto.question.QuestionDto;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.question.QuestionService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.models.annotations.OpenAPI30;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/admin/question")
 @RequiredArgsConstructor
+@Tag(name = "Admin Question Controller")
 public class AdminQuestionController {
 
     private final QuestionService questionService;
@@ -24,6 +29,7 @@ public class AdminQuestionController {
     }
 
     @PostMapping("external")
+    @Operation(summary = "call api from external api for")
     public JResponse newQuestionsFromExternal() {
         return questionService.externalQuestionRun();
     }
