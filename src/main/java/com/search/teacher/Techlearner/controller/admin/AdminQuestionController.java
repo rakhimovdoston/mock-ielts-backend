@@ -23,6 +23,11 @@ public class AdminQuestionController {
         return questionService.saveQuestion(securityUtils.currentUser(), questionDto);
     }
 
+    @PostMapping("external")
+    public JResponse newQuestionsFromExternal() {
+        return questionService.externalQuestionRun();
+    }
+
     @PutMapping("update/")
     public JResponse updateQuestion(@RequestBody QuestionDto questionDto) {
         return questionService.updateQuestion(securityUtils.currentUser(), questionDto);

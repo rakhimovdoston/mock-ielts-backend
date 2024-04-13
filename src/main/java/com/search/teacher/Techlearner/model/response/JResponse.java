@@ -49,6 +49,10 @@ public class JResponse {
         return new JResponse(code, message);
     }
 
+    public boolean isSuccess() {
+        return code == 200 && data != null;
+    }
+
     public int getCode() {
         return code;
     }

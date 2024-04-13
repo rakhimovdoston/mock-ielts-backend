@@ -23,4 +23,6 @@ public interface QuestionService {
     int getCountAllQuestion(QuestionSearchFilter questionSearchFilter);
 
     List<QuestionDto> checkAnswers(User user, AnswerList checker);
+
+    JResponse externalQuestionRun();
 }

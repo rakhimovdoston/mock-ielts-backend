@@ -1,28 +1,37 @@
 package com.search.teacher.Techlearner.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.search.teacher.Techlearner.dto.QuestionExternal;
 import com.search.teacher.Techlearner.dto.question.*;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;
 import com.search.teacher.Techlearner.mapper.AnswerMapper;
 import com.search.teacher.Techlearner.mapper.QuestionMapper;
-import com.search.teacher.Techlearner.model.entities.Answer;
-import com.search.teacher.Techlearner.model.entities.Question;
-import com.search.teacher.Techlearner.model.entities.QuestionHistory;
-import com.search.teacher.Techlearner.model.entities.User;
+import com.search.teacher.Techlearner.model.entities.*;
+import com.search.teacher.Techlearner.model.enums.Difficulty;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.AnswerRepository;
+import com.search.teacher.Techlearner.repository.QCategoryRepository;
 import com.search.teacher.Techlearner.repository.QuestionHistoryRepository;
 import com.search.teacher.Techlearner.repository.QuestionRepository;
 import com.search.teacher.Techlearner.service.excel.ExcelService;
+import com.search.teacher.Techlearner.service.http.HttpClientService;
 import com.search.teacher.Techlearner.service.question.QuestionDBService;
 import com.search.teacher.Techlearner.service.question.QuestionService;
+import com.search.teacher.Techlearner.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +45,9 @@ public class QuestionServiceImpl implements QuestionService {
     private final ExcelService excelService;
     private final QuestionDBService questionDBService;
     private final QuestionHistoryRepository questionHistoryRepository;
+    private final HttpClientService httpClientService;
+    private final QCategoryRepository qCategoryRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<QuestionDto> getAllQuestion(QuestionSearchFilter questionSearchFilter) {
@@ -59,6 +71,69 @@ public class QuestionServiceImpl implements QuestionService {
         questionHistory.setCorrectCount(count);
         questionHistoryRepository.save(questionHistory);
         return questionResponse;
+    }
+
+    @Override
+    public JResponse externalQuestionRun() {
+        JResponse jResponse = httpClientService.questionFromExternal();
+        if (!jResponse.isSuccess())
+            return jResponse;
+        JsonNode response = (JsonNode) jResponse.getData();
+        Integer responseCode = response.has("response_code") ? response.get("response_code").asInt() : -1;
+        if (responseCode == -1)
+            return JResponse.error(500, "Internal Error");
+
+        ArrayNode arrayNode = (ArrayNode) response.get("results");
+        List<QuestionExternal> questionExternals = null;
+        try {
+            questionExternals = JsonUtils.convertFromJsonToList(arrayNode.toPrettyString(), new TypeReference<List<QuestionExternal>>() {
+            });
+        } catch (IOException e) {
+            logger.error("Converting Error: {}", e.getMessage());
+            questionExternals = new ArrayList<>();
+        }
+        if (questionExternals.isEmpty())
+            return JResponse.error(500, "Internal Error");
+
+        for (QuestionExternal questionExternal: questionExternals) {
+            Question question = new Question();
+            question.setUserId(getRandomNumber());
+            question.setName(questionExternal.getQuestion());
+            question.setDifficulty(Difficulty.getValue(questionExternal.getDifficulty()));
+            question.setAnswers(new ArrayList<>());
+            question.setCategory(getQuestionCategory(questionExternal.getCategory()));
+            questionRepository.save(question);
+            Answer answer = new Answer();
+            answer.setCorrect(true);
+            answer.setName(questionExternal.getCorrectAnswer());
+            answer.setQuestion(question);
+            question.getAnswers().add(answer);
+            for (String incorrectAnswer: questionExternal.getIncorrectAnswers()) {
+                Answer inAnswer = new Answer();
+                inAnswer.setCorrect(false);
+                inAnswer.setName(incorrectAnswer);
+                inAnswer.setQuestion(question);
+                question.getAnswers().add(inAnswer);
+            }
+            questionRepository.save(question);
+        }
+        return JResponse.success();
+    }
+
+    private Long getRandomNumber() {
+        Random random = new Random();
+        int randomNumber = random.nextInt(1, 999999);
+        return (long) randomNumber;
+    }
+
+    private QCategory getQuestionCategory(String category) {
+        QCategory qCategory = qCategoryRepository.findByName(category);
+        if (qCategory == null) {
+            qCategory = new QCategory();
+            qCategory.setName(category);
+            qCategoryRepository.save(qCategory);
+        }
+        return qCategory;
     }
 
     @Override
