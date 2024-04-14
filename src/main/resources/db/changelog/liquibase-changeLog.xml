@@ -25,4 +25,5 @@
     <include file="db/changelog/changeset/18-create-question-category.sql" author="Doston" />
     <include file="/db/changelog/changeset/19-alter-table-question-add-column.sql" author="Doston" />
     <include file="/db/changelog/changeset/20-alter-all-table-date.sql" author="Doston" />
+    <include file="/db/changelog/changeset/21-alter-question-history-table.sql" author="Doston" />
 </databaseChangeLog>

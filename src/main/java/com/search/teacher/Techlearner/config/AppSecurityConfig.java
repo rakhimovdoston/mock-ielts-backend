@@ -39,9 +39,9 @@ public class AppSecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
 
     private final String[] SWAGGER_URL = {
-        "/v3/**",
-        "/swagger-resources/**",
-        "/swagger-ui/**"};
+            "/v3/**",
+            "/swagger-resources/**",
+            "/swagger-ui/**"};
 
     private final List<String> ALLOW_METHODS = List.of("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS");
 
@@ -54,19 +54,20 @@ public class AppSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests(
-                authorize ->
-                    authorize
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/admin/question/**").permitAll()
-                        .requestMatchers(SWAGGER_URL).permitAll()
-                        .anyRequest().authenticated()
-            )
-            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .exceptionHandling(exceptionHandlingConfig -> exceptionHandlingConfig.authenticationEntryPoint(authenticationEntryPoint));
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(
+                        authorize ->
+                                authorize
+                                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+                                        .requestMatchers("/api/v1/admin/question/**").permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/api/v1/question/**").permitAll()
+                                        .requestMatchers(SWAGGER_URL).permitAll()
+                                        .anyRequest().authenticated()
+                )
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exceptionHandlingConfig -> exceptionHandlingConfig.authenticationEntryPoint(authenticationEntryPoint));
         return http.build();
     }
 
@@ -120,7 +121,7 @@ public class AppSecurityConfig {
         SimpleClientHttpRequestFactory clientHttpRequestFactory = new SimpleClientHttpRequestFactory();
         clientHttpRequestFactory.setConnectTimeout(Duration.ofMillis(30000));
         clientHttpRequestFactory.setReadTimeout(Duration.ofMillis(60000));
-        return  RestClient.builder()
+        return RestClient.builder()
                 .requestFactory(clientHttpRequestFactory)
                 .build();
     }

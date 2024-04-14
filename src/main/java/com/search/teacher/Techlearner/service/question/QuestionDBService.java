@@ -3,6 +3,7 @@ package com.search.teacher.Techlearner.service.question;
 import com.search.teacher.Techlearner.dto.question.AnswerDto;
 import com.search.teacher.Techlearner.dto.question.QuestionDto;
 import com.search.teacher.Techlearner.dto.question.QuestionSearchFilter;
+import com.search.teacher.Techlearner.model.enums.Difficulty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -30,10 +31,11 @@ public class QuestionDBService {
                select 
                    q.id as question_id, 
                    q.name as question_name, 
+                   q.difficulty as question_difficulty,
                    ans.name as answer_name, 
                    ans.id as answer_id from questions q 
                left join answers ans on q.id = ans.question_id
-               ans where q.active is true 
+               where q.active is true 
                """ + filter(questionSearchFilter, isPageable) + ";";
         return jdbcTemplate.query(query, new ResultSetExtractor<List<QuestionDto>>() {
 
@@ -46,6 +48,7 @@ public class QuestionDBService {
                     if (question == null) {
                         question = new QuestionDto();
                         question.setId(questionId);
+                        question.setDifficulty(Difficulty.getValue(rs.getString("question_difficulty")));
                         question.setName(rs.getString("question_name"));
                         question.setAnswers(new ArrayList<>());
                         questionList.put(questionId, question);
@@ -75,7 +78,7 @@ public class QuestionDBService {
                     .append(" OFFSET ")
                     .append(questionSearchFilter.getPage())
                     .append(" ROW FETCH FIRST ")
-                    .append(questionSearchFilter.getSize())
+                    .append(4 * questionSearchFilter.getSize())
                     .append(" ROW ONLY ");
         }
         return builder.toString();

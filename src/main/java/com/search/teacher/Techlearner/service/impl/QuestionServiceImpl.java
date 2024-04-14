@@ -60,28 +60,29 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public List<QuestionDto> checkAnswers(User user, AnswerList checker) {
-        List<Question> questions = questionRepository.findAllByActiveIsTrueAndIdIn(checker.getQuestions().stream().map(ClientAnswer::getQuestionId).collect(Collectors.toList()));
+    public CheckQuestionResponse checkAnswers(User user, AnswerList checker) {
+        List<Long> questionIds = checker.getQuestions().stream().map(ClientAnswer::getQuestionId).toList();
+        List<Question> questions = questionRepository.findAllByActiveIsTrueAndIdIn(questionIds);
         List<QuestionDto> questionResponse = questionMapper.toListDto(questions);
         QuestionHistory questionHistory = new QuestionHistory();
         questionHistory.setRequest(checker.getQuestions());
+        questionHistory.setQuestionIds(questionIds);
         questionHistory.setUser(user);
         questionHistory.setDate(new Date());
         int count = getCorrectCount(questionResponse, checker.getQuestions());
         questionHistory.setCorrectCount(count);
         questionHistoryRepository.save(questionHistory);
-        return questionResponse;
+        return new CheckQuestionResponse(questionResponse, questionHistory);
+
     }
 
     @Override
     public JResponse externalQuestionRun() {
         JResponse jResponse = httpClientService.questionFromExternal();
-        if (!jResponse.isSuccess())
-            return jResponse;
+        if (!jResponse.isSuccess()) return jResponse;
         JsonNode response = (JsonNode) jResponse.getData();
         Integer responseCode = response.has("response_code") ? response.get("response_code").asInt() : -1;
-        if (responseCode == -1)
-            return JResponse.error(500, "Internal Error");
+        if (responseCode == -1) return JResponse.error(500, "Internal Error");
 
         ArrayNode arrayNode = (ArrayNode) response.get("results");
         List<QuestionExternal> questionExternals = null;
@@ -92,11 +93,11 @@ public class QuestionServiceImpl implements QuestionService {
             logger.error("Converting Error: {}", e.getMessage());
             questionExternals = new ArrayList<>();
         }
-        if (questionExternals.isEmpty())
-            return JResponse.error(500, "Internal Error");
+        if (questionExternals.isEmpty()) return JResponse.error(500, "Internal Error");
 
-        for (QuestionExternal questionExternal: questionExternals) {
+        for (QuestionExternal questionExternal : questionExternals) {
             Question question = new Question();
+            question.setActive(true);
             question.setUserId(getRandomNumber());
             question.setName(questionExternal.getQuestion());
             question.setDifficulty(Difficulty.getValue(questionExternal.getDifficulty()));
@@ -108,7 +109,7 @@ public class QuestionServiceImpl implements QuestionService {
             answer.setName(questionExternal.getCorrectAnswer());
             answer.setQuestion(question);
             question.getAnswers().add(answer);
-            for (String incorrectAnswer: questionExternal.getIncorrectAnswers()) {
+            for (String incorrectAnswer : questionExternal.getIncorrectAnswers()) {
                 Answer inAnswer = new Answer();
                 inAnswer.setCorrect(false);
                 inAnswer.setName(incorrectAnswer);
@@ -118,6 +119,12 @@ public class QuestionServiceImpl implements QuestionService {
             questionRepository.save(question);
         }
         return JResponse.success();
+    }
+
+    @Override
+    public List<QCategory> getCategories() {
+        List<QCategory> categories = qCategoryRepository.findAll();
+        return categories;
     }
 
     private Long getRandomNumber() {
@@ -151,8 +158,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public JResponse updateQuestion(User currentUser, QuestionDto questionDto) {
         Question question = questionRepository.findByIdAndActiveIsTrue(questionDto.getId());
-        if (question == null)
-            return JResponse.error(400, "No such question found");
+        if (question == null) return JResponse.error(400, "No such question found");
 
         List<Answer> answers = answerRepository.findAllByIdInAndQuestion(questionDto.getAnswers().stream().map(AnswerDto::getId).collect(Collectors.toList()), question);
         if (answers.isEmpty()) {
@@ -207,8 +213,7 @@ public class QuestionServiceImpl implements QuestionService {
         for (AnswerDto answer : answers) {
             if (answer.getId().equals(answerId)) {
                 answer.setClientAnswer(true);
-                if (answer.isCorrect())
-                    return true;
+                if (answer.isCorrect()) return true;
             }
         }
         return false;
@@ -216,16 +221,14 @@ public class QuestionServiceImpl implements QuestionService {
 
     private QuestionDto getQuestionAnswer(Long questionId, List<QuestionDto> questions) {
         for (QuestionDto question : questions) {
-            if (question.getId().equals(questionId))
-                return question;
+            if (question.getId().equals(questionId)) return question;
         }
         return null;
     }
 
     private Answer getAnswers(List<Answer> answers, Long id) {
         for (Answer answer : answers) {
-            if (answer.getId().equals(id))
-                return answer;
+            if (answer.getId().equals(id)) return answer;
         }
         return null;
     }

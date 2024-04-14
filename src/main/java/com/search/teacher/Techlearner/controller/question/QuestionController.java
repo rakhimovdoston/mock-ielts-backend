@@ -13,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/question")
@@ -24,6 +26,11 @@ public class QuestionController {
     private final QuestionService questionService;
     private final SecurityUtils securityUtils;
 
+    @GetMapping("get-categories")
+    public JResponse getAllQuestionCategories() {
+        return JResponse.success(questionService.getCategories());
+    }
+
     @PostMapping("all")
     public ResponseEntity<JResponse> getAllQuestion(@RequestBody QuestionSearchFilter questionSearchFilter) {
         int count = questionService.getCountAllQuestion(questionSearchFilter);
@@ -31,6 +38,10 @@ public class QuestionController {
         if (questions == null || questions.isEmpty())
             return new ResponseEntity<>(JResponse.error(404, "Not found questions"), HttpStatus.NOT_FOUND);
 
+        Collections.shuffle(questions);
+        for (QuestionDto question: questions) {
+            Collections.shuffle(question.getAnswers());
+        }
         PaginationResponse response = new PaginationResponse();
         response.setCurrentPage(questionSearchFilter.getPage());
         response.setCurrentSize(questions.size());
