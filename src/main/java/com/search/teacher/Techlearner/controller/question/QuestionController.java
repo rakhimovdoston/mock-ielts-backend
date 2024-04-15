@@ -9,11 +9,13 @@ import com.search.teacher.Techlearner.service.question.QuestionService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,5 +56,16 @@ public class QuestionController {
     @PostMapping("check-answers")
     public ResponseEntity<JResponse> checkAnswers(@RequestBody AnswerList checker) {
         return ResponseEntity.ok(JResponse.success(questionService.checkAnswers(securityUtils.currentUser(), checker)));
+    }
+
+    @GetMapping("history")
+    public JResponse getUserQuestionHistory(@RequestParam(name = "beginDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date beginDate,
+                                            @RequestParam(name = "endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate) {
+        return questionService.getQuestionHistories(securityUtils.currentUser(), beginDate, endDate);
+    }
+
+    @GetMapping("history/{requestId}")
+    public JResponse getHistoryByRequestId(@PathVariable("requestId") String requestId) {
+        return questionService.questionHistoryByRequestId(securityUtils.currentUser(), requestId);
     }
 }

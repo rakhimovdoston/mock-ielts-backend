@@ -1,5 +1,6 @@
 package com.search.teacher.Techlearner.dto.question;
 
+import com.search.teacher.Techlearner.model.entities.Answer;
 import lombok.Getter;
 import lombok.Setter;
 

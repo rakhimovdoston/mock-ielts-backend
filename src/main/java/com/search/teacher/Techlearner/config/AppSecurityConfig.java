@@ -60,7 +60,7 @@ public class AppSecurityConfig {
                         authorize ->
                                 authorize
                                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
-                                        .requestMatchers("/api/v1/admin/question/**").permitAll()
+                                        .requestMatchers( "/api/v1/question/**").permitAll()
                                         .requestMatchers(HttpMethod.POST, "/api/v1/question/**").permitAll()
                                         .requestMatchers(SWAGGER_URL).permitAll()
                                         .anyRequest().authenticated()

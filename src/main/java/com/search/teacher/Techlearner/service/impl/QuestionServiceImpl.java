@@ -73,7 +73,6 @@ public class QuestionServiceImpl implements QuestionService {
         questionHistory.setCorrectCount(count);
         questionHistoryRepository.save(questionHistory);
         return new CheckQuestionResponse(questionResponse, questionHistory);
-
     }
 
     @Override
@@ -123,24 +122,32 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public List<QCategory> getCategories() {
-        List<QCategory> categories = qCategoryRepository.findAll();
-        return categories;
+        return qCategoryRepository.findAll();
     }
 
-    private Long getRandomNumber() {
-        Random random = new Random();
-        int randomNumber = random.nextInt(1, 999999);
-        return (long) randomNumber;
-    }
-
-    private QCategory getQuestionCategory(String category) {
-        QCategory qCategory = qCategoryRepository.findByName(category);
-        if (qCategory == null) {
-            qCategory = new QCategory();
-            qCategory.setName(category);
-            qCategoryRepository.save(qCategory);
+    @Override
+    public JResponse getQuestionHistories(User user, Date beginDate, Date endDate) {
+        List<QuestionHistory> questionHistories = questionHistoryRepository.findAllByDateBetween(beginDate, endDate);
+        if (questionHistories.isEmpty())
+            return JResponse.error(404, "You haven't taken a test yet. You need to take the test at least 1 time to see the results.");
+        List<QuestionHistoryResponse> responses = new ArrayList<>();
+        for (QuestionHistory questionHistory : questionHistories) {
+            QuestionHistoryResponse response = new QuestionHistoryResponse(questionHistory);
+            response.setQuestions(getQuestionByRequest(questionHistory.getRequest()));
+            responses.add(response);
         }
-        return qCategory;
+        return JResponse.success(responses);
+    }
+
+    @Override
+    public JResponse questionHistoryByRequestId(User user, String requestId) {
+        QuestionHistory questionHistory = questionHistoryRepository.findByRequestId(requestId);
+        if (questionHistory == null) {
+            return JResponse.error(404, "Not found this request Id: " + requestId + ", Please using another request Id");
+        }
+        QuestionHistoryResponse response = new QuestionHistoryResponse(questionHistory);
+        response.setQuestions(getQuestionByRequest(questionHistory.getRequest()));
+        return JResponse.success(response);
     }
 
     @Override
@@ -231,5 +238,63 @@ public class QuestionServiceImpl implements QuestionService {
             if (answer.getId().equals(id)) return answer;
         }
         return null;
+    }
+
+    private List<QuestionDto> getQuestionByRequest(List<ClientAnswer> request) {
+        List<QuestionDto> questionsResponse = new ArrayList<>();
+        List<Question> questions = questionRepository.findAllByActiveIsTrueAndIdIn(request.stream().map(ClientAnswer::getQuestionId).toList());
+        for (Question question : questions) {
+            QuestionDto responseQuest = new QuestionDto();
+            responseQuest.setId(question.getId());
+            responseQuest.setName(question.getName());
+            responseQuest.setCategory(question.getCategory());
+            responseQuest.setDifficulty(question.getDifficulty());
+            List<AnswerDto> answers = new ArrayList<>();
+            for (Answer answer : question.getAnswers()) {
+                AnswerDto dto = new AnswerDto();
+                dto.setId(answer.getId());
+                dto.setName(answer.getName());
+                dto.setCorrect(checkCorrectAnswer(answer, request, question));
+                dto.setClientAnswer(isClientAnswer(answer, request, question));
+                answers.add(dto);
+            }
+            responseQuest.setAnswers(answers);
+            questionsResponse.add(responseQuest);
+        }
+        return questionsResponse;
+    }
+
+    private boolean checkCorrectAnswer(Answer answer, List<ClientAnswer> request, Question question) {
+        for (ClientAnswer clientAnswer : request) {
+            if (clientAnswer.getQuestionId().equals(question.getId())) {
+                return clientAnswer.getAnswerId().equals(answer.getId()) && answer.isCorrect();
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isClientAnswer(Answer answer, List<ClientAnswer> request, Question question) {
+        for (ClientAnswer clientAnswer : request) {
+            if (clientAnswer.getQuestionId().equals(question.getId()))
+                return clientAnswer.getAnswerId().equals(answer.getId());
+        }
+        return false;
+    }
+
+    private Long getRandomNumber() {
+        Random random = new Random();
+        int randomNumber = random.nextInt(1, 999999);
+        return (long) randomNumber;
+    }
+
+    private QCategory getQuestionCategory(String category) {
+        QCategory qCategory = qCategoryRepository.findByName(category);
+        if (qCategory == null) {
+            qCategory = new QCategory();
+            qCategory.setName(category);
+            qCategoryRepository.save(qCategory);
+        }
+        return qCategory;
     }
 }

@@ -10,6 +10,7 @@ import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Date;
 import java.util.List;
 
 public interface QuestionService {
@@ -30,4 +31,8 @@ public interface QuestionService {
     JResponse externalQuestionRun();
 
     List<QCategory> getCategories();
+
+    JResponse getQuestionHistories(User user, Date beginDate, Date endDate);
+
+    JResponse questionHistoryByRequestId(User user, String requestId);
 }

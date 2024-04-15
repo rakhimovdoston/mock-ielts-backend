@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "questions_history")
+@Table(name = "question_history")
 public class QuestionHistory extends BaseEntity {
 
     @Column(columnDefinition = "jsonb")
