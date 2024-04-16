@@ -127,9 +127,10 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public JResponse getQuestionHistories(User user, Date beginDate, Date endDate) {
-        List<QuestionHistory> questionHistories = questionHistoryRepository.findAllByDateBetween(beginDate, endDate);
+        List<QuestionHistory> questionHistories = questionHistoryRepository.findAllByUserAndDateBetween(user, beginDate, endDate);
         if (questionHistories.isEmpty())
-            return JResponse.error(404, "You haven't taken a test yet. You need to take the test at least 1 time to see the results.");
+            return JResponse.error(404, "You have not completed any tests on these dates, please enter other dates.");
+
         List<QuestionHistoryResponse> responses = new ArrayList<>();
         for (QuestionHistory questionHistory : questionHistories) {
             QuestionHistoryResponse response = new QuestionHistoryResponse(questionHistory);
@@ -141,9 +142,9 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public JResponse questionHistoryByRequestId(User user, String requestId) {
-        QuestionHistory questionHistory = questionHistoryRepository.findByRequestId(requestId);
+        QuestionHistory questionHistory = questionHistoryRepository.findByUserAndRequestId(user, requestId);
         if (questionHistory == null) {
-            return JResponse.error(404, "Not found this request Id: " + requestId + ", Please using another request Id");
+            return JResponse.error(404, "You do not found this request Id: " + requestId + ", Please using another request Id");
         }
         QuestionHistoryResponse response = new QuestionHistoryResponse(questionHistory);
         response.setQuestions(getQuestionByRequest(questionHistory.getRequest()));
@@ -220,7 +221,10 @@ public class QuestionServiceImpl implements QuestionService {
         for (AnswerDto answer : answers) {
             if (answer.getId().equals(answerId)) {
                 answer.setClientAnswer(true);
-                if (answer.isCorrect()) return true;
+                if (answer.isCorrect()) {
+                    answer.setCorrect(true);
+                    return true;
+                }
             }
         }
         return false;
@@ -254,7 +258,7 @@ public class QuestionServiceImpl implements QuestionService {
                 AnswerDto dto = new AnswerDto();
                 dto.setId(answer.getId());
                 dto.setName(answer.getName());
-                dto.setCorrect(checkCorrectAnswer(answer, request, question));
+                dto.setCorrect(answer.isCorrect());
                 dto.setClientAnswer(isClientAnswer(answer, request, question));
                 answers.add(dto);
             }
@@ -262,16 +266,6 @@ public class QuestionServiceImpl implements QuestionService {
             questionsResponse.add(responseQuest);
         }
         return questionsResponse;
-    }
-
-    private boolean checkCorrectAnswer(Answer answer, List<ClientAnswer> request, Question question) {
-        for (ClientAnswer clientAnswer : request) {
-            if (clientAnswer.getQuestionId().equals(question.getId())) {
-                return clientAnswer.getAnswerId().equals(answer.getId()) && answer.isCorrect();
-            }
-        }
-
-        return false;
     }
 
     private boolean isClientAnswer(Answer answer, List<ClientAnswer> request, Question question) {
