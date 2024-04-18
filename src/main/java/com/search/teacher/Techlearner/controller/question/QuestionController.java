@@ -36,7 +36,7 @@ public class QuestionController {
     @PostMapping("all")
     public ResponseEntity<JResponse> getAllQuestion(@RequestBody QuestionSearchFilter questionSearchFilter) {
         int count = questionService.getCountAllQuestion(questionSearchFilter);
-        List<QuestionDto> questions = questionService.getAllQuestion(questionSearchFilter);
+        List<QuestionDto> questions = questionService.getAllQuestion(securityUtils.currentUser(), questionSearchFilter);
         if (questions == null || questions.isEmpty())
             return new ResponseEntity<>(JResponse.error(404, "Not found questions"), HttpStatus.NOT_FOUND);
 

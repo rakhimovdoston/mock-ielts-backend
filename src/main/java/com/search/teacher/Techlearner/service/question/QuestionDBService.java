@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,9 @@ public class QuestionDBService {
     private JdbcTemplate jdbcTemplate;
 
     @Transactional(readOnly = true)
-    public List<QuestionDto> getQuestionsByFilter(QuestionSearchFilter questionSearchFilter, boolean isPageable) {
+    public List<QuestionDto> getQuestionsByFilter(QuestionSearchFilter questionSearchFilter, List<Long> questionIds, boolean isPageable) {
+        String concatIds = questionIds.stream().map(String::valueOf)
+                .collect(Collectors.joining(", "));
         String query = """
                select 
                    q.id as question_id, 
@@ -36,7 +39,7 @@ public class QuestionDBService {
                    ans.id as answer_id from questions q 
                left join answers ans on q.id = ans.question_id
                where q.active is true 
-               """ + filter(questionSearchFilter, isPageable) + ";";
+               """ + "and q.id not in (" + concatIds + ") " + filter(questionSearchFilter, isPageable) + ";";
         return jdbcTemplate.query(query, new ResultSetExtractor<List<QuestionDto>>() {
 
             @Override

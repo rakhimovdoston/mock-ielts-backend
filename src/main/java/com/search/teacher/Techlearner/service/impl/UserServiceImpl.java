@@ -88,8 +88,8 @@ public class UserServiceImpl implements UserService {
             throw new NotfoundException("This email not found user");
         }
 
-//        if (DateUtils.isExpirationCode(user.getUpdatedDate()))
-//            throw new BadRequestException("The time to enter the code has expired.");
+        if (DateUtils.isExpirationCode(user.getUpdatedDate()))
+            throw new BadRequestException("The time to enter the code has expired.");
 
         if (!user.getCode().equals(request.getCode())) {
             throw new BadRequestException("You have entered an incorrect code");

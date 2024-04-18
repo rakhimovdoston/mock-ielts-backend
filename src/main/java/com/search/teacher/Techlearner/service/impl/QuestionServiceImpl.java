@@ -28,10 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,8 +47,14 @@ public class QuestionServiceImpl implements QuestionService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<QuestionDto> getAllQuestion(QuestionSearchFilter questionSearchFilter) {
-        return questionDBService.getQuestionsByFilter(questionSearchFilter, true);
+    public List<QuestionDto> getAllQuestion(User currentUser, QuestionSearchFilter questionSearchFilter) {
+        List<QuestionHistory> questionHistories = questionHistoryRepository.findAllByUser(currentUser);
+        Set<Long> ids = new HashSet<>();
+        for (QuestionHistory questionHistory: questionHistories) {
+            ids.addAll(questionHistory.getQuestionIds());
+        }
+
+        return questionDBService.getQuestionsByFilter(questionSearchFilter, ids.stream().toList(), true);
     }
 
     @Override

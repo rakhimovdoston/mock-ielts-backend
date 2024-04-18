@@ -15,4 +15,6 @@ public interface QuestionHistoryRepository extends JpaRepository<QuestionHistory
     QuestionHistory findByRequestId(String requestId);
     List<QuestionHistory> findAllByUserAndDateBetween(User user, Date beginDate, Date endDate);
     List<QuestionHistory> findAllByDateBetween(Date beginDate, Date endDate);
+
+    List<QuestionHistory> findAllByUser(User user);
 }

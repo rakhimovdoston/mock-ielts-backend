@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.List;
 
 public interface QuestionService {
-    List<QuestionDto> getAllQuestion(QuestionSearchFilter questionSearchFilter);
+    List<QuestionDto> getAllQuestion(User currentUser, QuestionSearchFilter questionSearchFilter);
 
     JResponse saveQuestion(User currentUser, QuestionDto questionDto);
 
