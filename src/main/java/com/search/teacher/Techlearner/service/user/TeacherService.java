@@ -8,6 +8,8 @@ import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface TeacherService {
     SaveResponse newTeacher(User user, TeacherRequest request);
 
@@ -22,4 +24,6 @@ public interface TeacherService {
     SaveResponse updateTeacher(User user, TeacherRequest request);
 
     JResponse allTopics();
+
+    void updateRatingTeacher(Teacher teacher, List<Double> ratings);
 }

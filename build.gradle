@@ -50,6 +50,7 @@ dependencies {
 
 //	redisson client
 	implementation 'org.redisson:redisson:3.27.0'
+	implementation "io.minio:minio:8.5.9"
 
 	implementation 'org.liquibase:liquibase-core'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'

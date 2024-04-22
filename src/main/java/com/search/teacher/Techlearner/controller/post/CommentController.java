@@ -1,6 +1,7 @@
 package com.search.teacher.Techlearner.controller.post;
 
 import com.search.teacher.Techlearner.dto.request.CommentRequest;
+import com.search.teacher.Techlearner.dto.request.RatingRequest;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.CommentService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
@@ -26,7 +27,12 @@ public class CommentController {
 
     @GetMapping("all")
     public ResponseEntity<JResponse> getAllComments() {
-        JResponse response = commentService.getAllComments(securityUtils.getCurrentTeacher());
+        JResponse response = commentService.getAllCommentsByUser(securityUtils.currentUser());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("add-rating")
+    public JResponse giveRating(@Valid @RequestBody RatingRequest request) {
+        return commentService.giveRating(securityUtils.currentUser(), request);
     }
 }

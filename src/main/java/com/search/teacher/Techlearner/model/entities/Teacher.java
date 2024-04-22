@@ -17,19 +17,20 @@ import java.util.List;
 public class Teacher extends BaseEntity {
 
     private String title;
+    private String profession;
     private String email;
     private String firstname;
     private String lastname;
     private String phoneNumber;
     private String description;
+    private Double rating;
 
     @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private List<Long> topics = new ArrayList<>();
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private List<String> certificates;
+    @OneToMany(mappedBy = "teacher")
+    private List<Certificate> certificates;
 
     @OneToMany
     private List<Experience> experiences = new ArrayList<>();

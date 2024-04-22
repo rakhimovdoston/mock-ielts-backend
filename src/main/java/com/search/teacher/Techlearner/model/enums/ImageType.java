@@ -3,5 +3,14 @@ package com.search.teacher.Techlearner.model.enums;
 public enum ImageType {
     CERTIFICATE,
     PHOTO,
-    PROFILE_PICTURE,
+    PROFILE_PICTURE;
+
+    public static ImageType getValue(String type) {
+        for (ImageType imageType : ImageType.values()) {
+            if (imageType.toString().equals(type)) {
+                return imageType;
+            }
+        }
+        return ImageType.PHOTO;
+    }
 }

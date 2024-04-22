@@ -39,7 +39,7 @@ public class QuestionDBService {
                    ans.id as answer_id from questions q 
                left join answers ans on q.id = ans.question_id
                where q.active is true 
-               """ + "and q.id not in (" + concatIds + ") " + filter(questionSearchFilter, isPageable) + ";";
+               """ + oldQuestions(concatIds) + filter(questionSearchFilter, isPageable) + ";";
         return jdbcTemplate.query(query, new ResultSetExtractor<List<QuestionDto>>() {
 
             @Override
@@ -68,6 +68,10 @@ public class QuestionDBService {
                 return new ArrayList<>(questionList.values());
             }
         });
+    }
+
+    private String oldQuestions(String questionIds) {
+        return !questionIds.equals("") ? " and q.id not in (" + questionIds + ") ": " ";
     }
 
     private String filter(QuestionSearchFilter questionSearchFilter, boolean isPageable) {

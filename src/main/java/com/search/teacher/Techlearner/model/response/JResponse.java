@@ -50,7 +50,11 @@ public class JResponse {
     }
 
     public boolean isSuccess() {
-        return code == 200 && data != null;
+        return code == 200;
+    }
+
+    public boolean isError() {
+        return code != 200;
     }
 
     public int getCode() {

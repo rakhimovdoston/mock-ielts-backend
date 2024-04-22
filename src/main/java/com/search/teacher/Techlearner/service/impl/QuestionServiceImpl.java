@@ -53,7 +53,6 @@ public class QuestionServiceImpl implements QuestionService {
         for (QuestionHistory questionHistory: questionHistories) {
             ids.addAll(questionHistory.getQuestionIds());
         }
-
         return questionDBService.getQuestionsByFilter(questionSearchFilter, ids.stream().toList(), true);
     }
 

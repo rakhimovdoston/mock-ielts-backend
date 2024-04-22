@@ -4,6 +4,7 @@ import com.search.teacher.Techlearner.config.service.UserManager;
 import com.search.teacher.Techlearner.dto.response.AuthenticationResponse;
 import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.entities.UserToken;
+import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.UserTokenRepository;
 import com.search.teacher.Techlearner.service.JwtService;
 import com.search.teacher.Techlearner.utils.DateUtils;
@@ -18,7 +19,7 @@ public class UserTokenService {
     private final JwtService jwtService;
     private final UserTokenRepository userTokenRepository;
 
-    public AuthenticationResponse generateToken(User user) {
+    public JResponse generateToken(User user) {
         String jwtToken = jwtService.generateToken(new UserManager((user)));
         String refreshToken = jwtService.generateRefreshToken(new UserManager((user)));
         UserToken userToken = new UserToken();
@@ -28,7 +29,7 @@ public class UserTokenService {
         userToken.setExpireDate(new Date(new Date().getTime() + jwtService.jwtExpiration));
         userToken.setRefreshExpireDate(new Date(new Date().getTime() + jwtService.refreshExpiration));
         userTokenRepository.save(userToken);
-        return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
+        return JResponse.success(AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).build());
     }
 
     public User checkToken(String jwt) {

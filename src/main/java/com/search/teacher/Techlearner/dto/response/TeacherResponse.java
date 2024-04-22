@@ -17,6 +17,8 @@ public class TeacherResponse {
     private String description;
     private String firstname;
     private String lastname;
+    private Double rating;
+    private String profession;
     private String email;
     private String phoneNumber;
     private List<DescribeDto> topics = new ArrayList<>();

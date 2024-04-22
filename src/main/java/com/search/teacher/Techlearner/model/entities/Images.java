@@ -15,6 +15,7 @@ public class Images extends BaseEntity {
     private Long size;
     private String filename;
     private String url;
+    private String bucket;
     @Enumerated(EnumType.STRING)
     private ImageType type;
 

@@ -16,7 +16,7 @@ public interface UserService {
 
     JResponse registerUser(UserDto userDto);
 
-    AuthenticationResponse authenticate(AuthenticationRequest request);
+    JResponse authenticate(AuthenticationRequest request);
 
     JResponse confirmationUser(ConfirmationRequest request);
 

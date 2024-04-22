@@ -4,6 +4,7 @@ import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.enums.Status;
 import com.search.teacher.Techlearner.service.user.UserTokenService;
 import com.search.teacher.Techlearner.utils.GsonUtils;
+import com.search.teacher.Techlearner.utils.ResponseMessage;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,12 +51,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword(), List.of(new SimpleGrantedAuthority(user.getRole().getName().name())));
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                logger.info("User authenticated");
             } else if (user.getStatus().equals(Status.block)) {
-                GsonUtils.responseError(408, "Your account is temporarily blocked", response);
+                GsonUtils.responseError(409, ResponseMessage.USER_BLOCKED, response);
                 return;
             } else {
-                GsonUtils.responseError(409, "Your account has not been activated", response);
+                GsonUtils.responseError(410, ResponseMessage.USER_NOT_ACTIVATED, response);
                 return;
             }
         }

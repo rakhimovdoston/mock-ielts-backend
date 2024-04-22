@@ -34,7 +34,7 @@ public class AuthController {
 
     @PostMapping("authenticate")
     public ResponseEntity<JResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
-        return ResponseEntity.ok(JResponse.success(userService.authenticate(request)));
+        return ResponseEntity.ok(userService.authenticate(request));
     }
 
     @PostMapping("forgot-password")

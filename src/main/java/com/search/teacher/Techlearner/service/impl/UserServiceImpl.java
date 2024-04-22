@@ -24,10 +24,10 @@ import com.search.teacher.Techlearner.service.UserSession;
 import com.search.teacher.Techlearner.service.user.UserService;
 import com.search.teacher.Techlearner.service.user.UserTokenService;
 import com.search.teacher.Techlearner.utils.DateUtils;
+import com.search.teacher.Techlearner.utils.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,7 +51,6 @@ public class UserServiceImpl implements UserService {
     private final UserSession userSession;
     private final UserTokenService userTokenService;
     private final RabbitMqProducer rabbitMqProducer;
-    private final CacheManager cacheManager;
 
     @Override
     public JResponse registerUser(UserDto userDto) {
@@ -73,11 +72,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+    public JResponse authenticate(AuthenticationRequest request) {
         User user = userRepository.findByEmail(request.email());
-        if (user == null) throw new UsernameNotFoundException("Username or password incorrect");
-
+        if (user == null) return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+        if (user.getStatus().equals(Status.block)) {
+            return JResponse.error(409, ResponseMessage.USER_BLOCKED);
+        }
+        if (!user.isActive() || !user.getStatus().equals(Status.active)) {
+            return JResponse.error(410, ResponseMessage.USER_NOT_ACTIVATED);
+        }
         return userTokenService.generateToken(user);
     }
 
@@ -88,7 +91,7 @@ public class UserServiceImpl implements UserService {
             throw new NotfoundException("This email not found user");
         }
 
-        if (DateUtils.isExpirationCode(user.getUpdatedDate()))
+        if (!DateUtils.isExpirationCode(user.getUpdatedDate()))
             throw new BadRequestException("The time to enter the code has expired.");
 
         if (!user.getCode().equals(request.getCode())) {

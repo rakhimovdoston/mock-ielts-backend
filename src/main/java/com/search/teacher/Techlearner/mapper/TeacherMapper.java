@@ -12,5 +12,6 @@ public interface TeacherMapper {
     @Mapping(target = "experiences", ignore = true)
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "educations", ignore = true)
+    @Mapping(target = "certificates", ignore = true)
     TeacherResponse toResponse(Teacher teacher);
 }

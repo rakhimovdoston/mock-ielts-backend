@@ -74,7 +74,6 @@ public class TeacherServiceImpl implements TeacherService {
                 educationRepository.save(education);
             }
         }
-        teacher.setCertificates(request.getCertificate());
         if (!request.getExperiences().isEmpty()) {
             for (ExperienceRequest experienceRequest: request.getExperiences()) {
                 Experience experience = new Experience();
@@ -118,8 +117,6 @@ public class TeacherServiceImpl implements TeacherService {
             if (teacher.getTopics().contains(topic.getId()))
                 topic.setActive(true);
         }).collect(Collectors.toList());
-
-
         response.setTopics(topics);
         return response;
     }
@@ -139,5 +136,12 @@ public class TeacherServiceImpl implements TeacherService {
     public JResponse allTopics() {
         List<Topics> topics = topicsRepository.findAll();
         return JResponse.success(topics);
+    }
+
+    @Override
+    public void updateRatingTeacher(Teacher teacher, List<Double> ratings) {
+        double sumRatings = ratings.stream().mapToDouble(rating -> rating).sum();
+        teacher.setRating(sumRatings / ratings.size());
+        teacherRepository.save(teacher);
     }
 }

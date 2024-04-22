@@ -27,4 +27,10 @@
     <include file="/db/changelog/changeset/20-alter-all-table-date.sql" author="Doston" />
     <include file="/db/changelog/changeset/21-alter-question-history-table.sql" author="Doston" />
     <include file="/db/changelog/changeset/22-alter-table-question-history.sql" author="Doston" />
+    <include file="/db/changelog/changeset/23-create-rating-table.sql" author="Doston" />
+    <include file="/db/changelog/changeset/24-alter-teacher-table.sql" author="Doston" />
+    <include file="/db/changelog/changeset/25-create-category-table.sql" author="Doston" />
+    <include file="/db/changelog/changeset/26-create-cource-table.sql" author="Doston" />
+    <include file="/db/changelog/changeset/27-add-certificate-table.sql" author="Doston" />
+    <include file="/db/changelog/changeset/28-alter-image-table-add-new-column.sql" author="Doston" />
 </databaseChangeLog>

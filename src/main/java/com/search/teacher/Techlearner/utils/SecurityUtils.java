@@ -26,6 +26,6 @@ public class SecurityUtils {
     }
 
     public Teacher getCurrentTeacher() {
-        return teacherRepository.findByUser(currentUser());
+        return teacherRepository.findTeacherByUser(currentUser());
     }
 }
