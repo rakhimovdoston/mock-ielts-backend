@@ -6,12 +6,14 @@ import com.search.teacher.Techlearner.dto.course.LessonDto;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.course.CourseService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/course/")
 @RequiredArgsConstructor
+@Tag(name = "Course Controller")
 public class CourseController {
 
     private final CourseService courseService;

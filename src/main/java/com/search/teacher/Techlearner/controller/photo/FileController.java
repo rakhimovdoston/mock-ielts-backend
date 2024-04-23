@@ -3,6 +3,7 @@ package com.search.teacher.Techlearner.controller.photo;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.upload.ImageService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/file/")
+@Tag(name = "File Service")
 public class FileController {
     private final ImageService imageService;
     private final SecurityUtils securityUtils;

@@ -37,14 +37,6 @@ public class TeacherController {
         return JResponse.success(teacherService.newTeacher(securityUtils.currentUser(), request));
     }
 
-    @PostMapping(value = "file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<JResponse> uploadProfilePhoto(@RequestPart MultipartFile file) {
-        if (file.isEmpty())
-            return ResponseEntity.badRequest().body(JResponse.error(400, "File is empty"));
-
-        return ResponseEntity.ok(JResponse.success(teacherService.uploadFile(securityUtils.currentUser(), file)));
-    }
-
     @PostMapping("update")
     public JResponse updateTeacher(@RequestBody TeacherRequest request) {
         return JResponse.success(teacherService.updateTeacher(securityUtils.currentUser(), request));
