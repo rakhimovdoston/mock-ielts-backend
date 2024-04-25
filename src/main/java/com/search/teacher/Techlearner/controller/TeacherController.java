@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/teachers")
+@RequestMapping("/api/v1/teachers/")
 @RequiredArgsConstructor
 @Tag(name = "Teacher Controller")
 public class TeacherController {
@@ -27,6 +27,11 @@ public class TeacherController {
     @PostMapping("add-certificate")
     public JResponse addCertificate(@RequestBody AddCertificate certificateRequest) {
         return teacherService.addCertificate(securityUtils.getCurrentTeacher(), certificateRequest);
+    }
+
+    @DeleteMapping("delete-certificate/{certificateId}")
+    public JResponse deleteCertificate(@PathVariable Long certificateId) {
+        return teacherService.deleteCertificate(securityUtils.getCurrentTeacher(), certificateId);
     }
 
     @GetMapping("topic-info")

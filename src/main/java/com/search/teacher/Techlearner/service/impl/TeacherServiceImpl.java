@@ -157,6 +157,7 @@ public class TeacherServiceImpl implements TeacherService {
         Images image = imageRepository.findByIdAndUser(certificateRequest.getImageId(), teacher.getUser());
         if (image == null) return JResponse.error(404, ResponseMessage.IMAGE_NOT_FOUND);
         Certificate certificate = new Certificate();
+        certificate.setActive(true);
         certificate.setCertificateType(certificateRequest.getCertificateType());
         certificate.setTeacher(teacher);
         certificate.setImage(image);
@@ -172,6 +173,14 @@ public class TeacherServiceImpl implements TeacherService {
         certificate.setTestType(certificateRequest.getTestType());
         certificateRepository.save(certificate);
         return JResponse.success(certificate);
+    }
+
+    @Override
+    public JResponse deleteCertificate(Teacher currentTeacher, Long certificateId) {
+        Certificate certificate = certificateRepository.findByActiveIsTrueAndIdAndTeacher(certificateId, currentTeacher);
+        if (certificate == null) return JResponse.error(404, ResponseMessage.CERTIFICATE_NOT_FOUND);
+        certificateRepository.delete(certificate);
+        return JResponse.success();
     }
 
     private double getCertificateOverall(AddCertificate certificateRequest) {

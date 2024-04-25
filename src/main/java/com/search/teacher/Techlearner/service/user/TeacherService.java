@@ -29,4 +29,6 @@ public interface TeacherService {
     void updateRatingTeacher(Teacher teacher, List<Double> ratings);
 
     JResponse addCertificate(Teacher currentTeacher, AddCertificate certificateRequest);
+
+    JResponse deleteCertificate(Teacher currentTeacher, Long certificateId);
 }
