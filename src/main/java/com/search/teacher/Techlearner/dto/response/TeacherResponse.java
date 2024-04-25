@@ -3,6 +3,7 @@ package com.search.teacher.Techlearner.dto.response;
 import com.search.teacher.Techlearner.dto.ImageDto;
 import com.search.teacher.Techlearner.dto.request.EducationRequest;
 import com.search.teacher.Techlearner.dto.request.ExperienceRequest;
+import com.search.teacher.Techlearner.dto.response.teacher.CertificateResponse;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,6 +25,6 @@ public class TeacherResponse {
     private List<DescribeDto> topics = new ArrayList<>();
     private List<ImageDto> images = new ArrayList<>();
     private List<EducationRequest> educations = new ArrayList<>();
-    private List<String> certificates = new ArrayList<>();
+    private List<CertificateResponse> certificates = new ArrayList<>();
     private List<ExperienceRequest> experiences = new ArrayList<>();
 }

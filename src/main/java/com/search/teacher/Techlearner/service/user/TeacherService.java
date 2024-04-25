@@ -14,8 +14,6 @@ import java.util.List;
 public interface TeacherService {
     SaveResponse newTeacher(User user, TeacherRequest request);
 
-    SaveResponse uploadFile(User currentUser, MultipartFile file);
-
     JResponse allDegrees();
 
     TeacherResponse getTeacher(User currentUser);

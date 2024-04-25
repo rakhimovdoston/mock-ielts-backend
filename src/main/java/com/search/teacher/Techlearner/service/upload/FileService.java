@@ -6,6 +6,7 @@ import com.search.teacher.Techlearner.model.entities.User;
 import com.search.teacher.Techlearner.model.enums.ImageType;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.ImageRepository;
+import com.search.teacher.Techlearner.utils.ResponseMessage;
 import com.search.teacher.Techlearner.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ImageService {
+public class FileService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ImageRepository imageRepository;
     private final MinioUploadService minioUploadService;
@@ -30,7 +31,7 @@ public class ImageService {
         images.setType(imageType);
         images.setUser(user);
         images.setSize(file.getSize());
-        images.setContentType(images.getContentType());
+        images.setContentType(file.getContentType());
         String filename = getFilename(file.getOriginalFilename());
         images.setFilename(filename);
         images.setBucket(Utils.getBucketWithType(imageType));
@@ -45,7 +46,7 @@ public class ImageService {
     public byte[] downloadImage(User user, String filename) {
         Images images = imageRepository.findByUserAndFilename(user, filename);
         if (images == null) {
-            throw new NotfoundException("Not found Image this filename");
+            throw new NotfoundException(ResponseMessage.IMAGE_NOT_FOUND);
         }
         return minioUploadService.downloadImage(images);
     }
@@ -53,5 +54,9 @@ public class ImageService {
     private String getFilename(String originalFilename) {
         String filename = originalFilename.replaceAll(" ", "");
         return filename.substring(0, filename.lastIndexOf(".")) + UUID.randomUUID() + "." + filename.substring(filename.lastIndexOf(".") + 1);
+    }
+
+    public JResponse uploadFile(MultipartFile file) {
+        return null;
     }
 }

@@ -12,4 +12,6 @@ public class ResponseMessage {
 
     public static final String IMAGE_NOT_FOUND = "The image you are looking for does not exist";
     public static final String CERTIFICATE_NOT_FOUND = "The certificate you are looking for does not exist";
+
+    public static final String CONTENT_TYPE_INVALID = "The uploaded file does not belong to this type, file types are";
 }

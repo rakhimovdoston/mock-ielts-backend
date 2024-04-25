@@ -8,7 +8,9 @@ import com.search.teacher.Techlearner.dto.request.teacher.TeacherRequest;
 import com.search.teacher.Techlearner.dto.response.DescribeDto;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;
 import com.search.teacher.Techlearner.dto.response.TeacherResponse;
+import com.search.teacher.Techlearner.dto.response.teacher.CertificateResponse;
 import com.search.teacher.Techlearner.exception.NotfoundException;
+import com.search.teacher.Techlearner.mapper.CertificateMapper;
 import com.search.teacher.Techlearner.mapper.TeacherMapper;
 import com.search.teacher.Techlearner.mapper.TopicMapper;
 import com.search.teacher.Techlearner.model.entities.*;
@@ -25,6 +27,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +44,8 @@ public class TeacherServiceImpl implements TeacherService {
     private final FileUploadService fileUploadService;
     private final TopicMapper topicMapper;
     private final CertificateRepository certificateRepository;
+    private final DescribeRepository describeRepository;
+    private final CertificateMapper certificateMapper;
 
     @Override
     public SaveResponse newTeacher(User user, TeacherRequest request) {
@@ -99,18 +104,6 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public SaveResponse uploadFile(User currentUser, MultipartFile file) {
-        Images image = new Images();
-        image.setActive(true);
-        image.setSize(file.getSize());
-        image.setContentType(file.getContentType());
-        fileUploadService.uploadImage(image, file);
-        image.setUser(currentUser);
-        imageRepository.save(image);
-        return new SaveResponse(image.getId());
-    }
-
-    @Override
     public JResponse allDegrees() {
         return JResponse.success(Degree.values());
     }
@@ -125,6 +118,7 @@ public class TeacherServiceImpl implements TeacherService {
             if (teacher.getTopics().contains(topic.getId())) topic.setActive(true);
         }).collect(Collectors.toList());
         response.setTopics(topics);
+        response.setCertificates(teacherCertificates(teacher));
         return response;
     }
 
@@ -181,6 +175,12 @@ public class TeacherServiceImpl implements TeacherService {
         if (certificate == null) return JResponse.error(404, ResponseMessage.CERTIFICATE_NOT_FOUND);
         certificateRepository.delete(certificate);
         return JResponse.success();
+    }
+
+    public List<CertificateResponse> teacherCertificates(Teacher teacher) {
+        List<Certificate> certificates = certificateRepository.findAllByActiveIsTrueAndTeacher(teacher);
+        if (certificates.isEmpty()) return new ArrayList<>();
+        return certificateMapper.toResponseList(certificates);
     }
 
     private double getCertificateOverall(AddCertificate certificateRequest) {

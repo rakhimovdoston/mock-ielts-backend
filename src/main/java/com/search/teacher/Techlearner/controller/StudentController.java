@@ -2,15 +2,13 @@ package com.search.teacher.Techlearner.controller;
 
 import com.search.teacher.Techlearner.dto.request.StudentRequest;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;
-import com.search.teacher.Techlearner.dto.response.StudentResponse;
 import com.search.teacher.Techlearner.model.response.JResponse;
-import com.search.teacher.Techlearner.service.upload.ImageService;
+import com.search.teacher.Techlearner.service.upload.FileService;
 import com.search.teacher.Techlearner.service.user.StudentService;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -20,12 +18,12 @@ import java.util.Map;
 public class StudentController {
     private final StudentService studentService;
     private final SecurityUtils securityUtils;
-    private final ImageService imageService;
+    private final FileService fileService;
 
-    public StudentController(StudentService studentService, SecurityUtils securityUtils, ImageService imageService) {
+    public StudentController(StudentService studentService, SecurityUtils securityUtils, FileService fileService) {
         this.studentService = studentService;
         this.securityUtils = securityUtils;
-        this.imageService = imageService;
+        this.fileService = fileService;
     }
 
     @GetMapping("info-desc")
