@@ -20,10 +20,9 @@ public class CourseController {
     private final SecurityUtils securityUtils;
 
     @GetMapping("all")
-    public JResponse getAllCourses(
-            @RequestParam(name = "category", required = false) String category,
-            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(name = "size", required = false, defaultValue = "10") int size) {
+    public JResponse getAllCourses(@RequestParam(name = "category", required = false) String category,
+                                   @RequestParam(name = "page", required = false, defaultValue = "0") int page,
+                                   @RequestParam(name = "size", required = false, defaultValue = "10") int size) {
         CourseFilter filter = new CourseFilter();
         filter.setCategory(category);
         filter.setPage(page);
@@ -42,12 +41,15 @@ public class CourseController {
     }
 
     @PostMapping("{courseId}/lessons/add")
-    public JResponse addLesson(@PathVariable(name = "courseId") Long courseId, @RequestBody LessonDto lesson) {
+    public JResponse addLesson(@PathVariable(name = "courseId") Long courseId,
+                               @RequestBody LessonDto lesson) {
         return courseService.addLessonToCourse(courseId, securityUtils.getCurrentTeacher(), lesson);
     }
 
     @PutMapping("{courseId}/lesson/update/{lessonId}")
-    public JResponse updateCourseLesson(@PathVariable(name = "courseId") Long courseId, @PathVariable(name = "lessonId") Long lessonId, @RequestBody LessonDto lesson) {
+    public JResponse updateCourseLesson(@PathVariable(name = "courseId") Long courseId,
+                                        @PathVariable(name = "lessonId") Long lessonId,
+                                        @RequestBody LessonDto lesson) {
         return courseService.updateLesson(courseId, lessonId, securityUtils.getCurrentTeacher(), lesson);
     }
 

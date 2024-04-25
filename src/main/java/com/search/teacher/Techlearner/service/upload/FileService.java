@@ -57,6 +57,6 @@ public class FileService {
     }
 
     public JResponse uploadFile(MultipartFile file) {
-        return null;
+        return JResponse.success();
     }
 }

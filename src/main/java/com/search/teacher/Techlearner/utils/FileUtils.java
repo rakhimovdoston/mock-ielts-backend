@@ -2,7 +2,7 @@ package com.search.teacher.Techlearner.utils;
 
 public class FileUtils {
     public static final String[] PHOTO_CONTENTS = {"JPG", "JPEG", "PNG", "GIF"};
-    public static final String[] VIDEO_CONTENTS = {"mp4", "avi"};
+    public static final String[] VIDEO_CONTENTS = {"MP$", "AVI"};
     public static final String[] PDF_CONTENTS = {"PDF"};
 
     public static String errorMessage(String message, String[] photoContents) {
