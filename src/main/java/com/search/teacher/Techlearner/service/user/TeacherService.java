@@ -1,6 +1,7 @@
 package com.search.teacher.Techlearner.service.user;
 
-import com.search.teacher.Techlearner.dto.request.TeacherRequest;
+import com.search.teacher.Techlearner.dto.request.teacher.AddCertificate;
+import com.search.teacher.Techlearner.dto.request.teacher.TeacherRequest;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;
 import com.search.teacher.Techlearner.dto.response.TeacherResponse;
 import com.search.teacher.Techlearner.model.entities.Teacher;
@@ -26,4 +27,6 @@ public interface TeacherService {
     JResponse allTopics();
 
     void updateRatingTeacher(Teacher teacher, List<Double> ratings);
+
+    JResponse addCertificate(Teacher currentTeacher, AddCertificate certificateRequest);
 }

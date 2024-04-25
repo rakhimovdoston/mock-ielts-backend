@@ -1,17 +1,14 @@
 package com.search.teacher.Techlearner.controller;
 
-import com.search.teacher.Techlearner.dto.request.TeacherRequest;
+import com.search.teacher.Techlearner.dto.request.teacher.TeacherRequest;
+import com.search.teacher.Techlearner.dto.request.teacher.AddCertificate;
 import com.search.teacher.Techlearner.dto.response.TeacherResponse;
 import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.service.user.TeacherService;
-import com.search.teacher.Techlearner.service.UserSession;
 import com.search.teacher.Techlearner.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/teachers")
@@ -25,6 +22,11 @@ public class TeacherController {
     @GetMapping("degree")
     public JResponse getDegree() {
         return teacherService.allDegrees();
+    }
+
+    @PostMapping("add-certificate")
+    public JResponse addCertificate(@RequestBody AddCertificate certificateRequest) {
+        return teacherService.addCertificate(securityUtils.getCurrentTeacher(), certificateRequest);
     }
 
     @GetMapping("topic-info")

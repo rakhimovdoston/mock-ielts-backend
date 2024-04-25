@@ -49,7 +49,7 @@ public class MinioUploadService {
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .build();
             ObjectWriteResponse response = minioClient.putObject(args);
-            return response.etag();
+            return response.bucket() + "/" + response.object();
         } catch (Exception e) {
             logger.error("Upload image failed: {}", e.getMessage());
         }

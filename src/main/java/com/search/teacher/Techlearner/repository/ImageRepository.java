@@ -15,4 +15,6 @@ public interface ImageRepository extends JpaRepository<Images, Long> {
     List<Images> findByUser(User user);
 
     Images findByUserAndFilename(User user, String filename);
+
+    Images findByIdAndUser(Long id, User user);
 }

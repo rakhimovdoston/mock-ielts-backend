@@ -1,5 +1,7 @@
-package com.search.teacher.Techlearner.dto.request;
+package com.search.teacher.Techlearner.dto.request.teacher;
 
+import com.search.teacher.Techlearner.dto.request.EducationRequest;
+import com.search.teacher.Techlearner.dto.request.ExperienceRequest;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,6 +18,6 @@ public class TeacherRequest {
     private List<Long> topics = new ArrayList<>();
     private List<Long> images = new ArrayList<>();
     private List<EducationRequest> educations = new ArrayList<>();
-    private List<String> certificate = new ArrayList<>(); // IELTS, TOEFL and other
+    private List<AddCertificate> certificate = new ArrayList<>(); // IELTS, TOEFL and other
     private List<ExperienceRequest> experiences = new ArrayList<>();
 }

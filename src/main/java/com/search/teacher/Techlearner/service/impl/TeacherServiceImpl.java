@@ -3,7 +3,8 @@ package com.search.teacher.Techlearner.service.impl;
 import com.search.teacher.Techlearner.components.Constants;
 import com.search.teacher.Techlearner.dto.request.EducationRequest;
 import com.search.teacher.Techlearner.dto.request.ExperienceRequest;
-import com.search.teacher.Techlearner.dto.request.TeacherRequest;
+import com.search.teacher.Techlearner.dto.request.teacher.AddCertificate;
+import com.search.teacher.Techlearner.dto.request.teacher.TeacherRequest;
 import com.search.teacher.Techlearner.dto.response.DescribeDto;
 import com.search.teacher.Techlearner.dto.response.SaveResponse;
 import com.search.teacher.Techlearner.dto.response.TeacherResponse;
@@ -16,6 +17,7 @@ import com.search.teacher.Techlearner.model.response.JResponse;
 import com.search.teacher.Techlearner.repository.*;
 import com.search.teacher.Techlearner.service.user.TeacherService;
 import com.search.teacher.Techlearner.service.upload.FileUploadService;
+import com.search.teacher.Techlearner.utils.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +40,7 @@ public class TeacherServiceImpl implements TeacherService {
     private final ExperienceRepository experienceRepository;
     private final FileUploadService fileUploadService;
     private final TopicMapper topicMapper;
+    private final CertificateRepository certificateRepository;
 
     @Override
     public SaveResponse newTeacher(User user, TeacherRequest request) {
@@ -62,7 +64,7 @@ public class TeacherServiceImpl implements TeacherService {
         }
 
         if (!request.getEducations().isEmpty()) {
-            for (EducationRequest educationRequest: request.getEducations()) {
+            for (EducationRequest educationRequest : request.getEducations()) {
                 Education education = new Education();
                 education.setDegree(Degree.getDegree(educationRequest.getDegree()));
                 education.setUrl(educationRequest.getUrl());
@@ -74,8 +76,15 @@ public class TeacherServiceImpl implements TeacherService {
                 educationRepository.save(education);
             }
         }
+
+        if (!request.getCertificate().isEmpty()) {
+            for (AddCertificate newCertificate : request.getCertificate()) {
+                addCertificate(teacher, newCertificate);
+            }
+        }
+
         if (!request.getExperiences().isEmpty()) {
-            for (ExperienceRequest experienceRequest: request.getExperiences()) {
+            for (ExperienceRequest experienceRequest : request.getExperiences()) {
                 Experience experience = new Experience();
                 experience.setDescription(experienceRequest.getDescription());
                 experience.setTitle(request.getTitle());
@@ -109,13 +118,11 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     public TeacherResponse getTeacher(User currentUser) {
         Teacher teacher = teacherRepository.findByUser(currentUser);
-        if (teacher == null)
-            throw new NotfoundException("Teacher not found");
+        if (teacher == null) throw new NotfoundException("Teacher not found");
         TeacherResponse response = teacherMapper.toResponse(teacher);
         List<DescribeDto> topics = topicMapper.toListDto(topicsRepository.findAll());
         topics = topics.stream().peek(topic -> {
-            if (teacher.getTopics().contains(topic.getId()))
-                topic.setActive(true);
+            if (teacher.getTopics().contains(topic.getId())) topic.setActive(true);
         }).collect(Collectors.toList());
         response.setTopics(topics);
         return response;
@@ -143,5 +150,36 @@ public class TeacherServiceImpl implements TeacherService {
         double sumRatings = ratings.stream().mapToDouble(rating -> rating).sum();
         teacher.setRating(sumRatings / ratings.size());
         teacherRepository.save(teacher);
+    }
+
+    @Override
+    public JResponse addCertificate(Teacher teacher, AddCertificate certificateRequest) {
+        Images image = imageRepository.findByIdAndUser(certificateRequest.getImageId(), teacher.getUser());
+        if (image == null) return JResponse.error(404, ResponseMessage.IMAGE_NOT_FOUND);
+        Certificate certificate = new Certificate();
+        certificate.setCertificateType(certificateRequest.getCertificateType());
+        certificate.setTeacher(teacher);
+        certificate.setImage(image);
+        certificate.setUrl(image.getUrl());
+        certificate.setReading(certificateRequest.getReading());
+        certificate.setListening(certificateRequest.getListening());
+        certificate.setWriting(certificateRequest.getWriting());
+        certificate.setSpeaking(certificateRequest.getSpeaking());
+        double overall = getCertificateOverall(certificateRequest);
+        if (overall == 0 || overall != certificateRequest.getOverall())
+            return JResponse.error(400, "Please enter your Certificate results correctly");
+        certificate.setOverall(overall);
+        certificate.setTestType(certificateRequest.getTestType());
+        certificateRepository.save(certificate);
+        return JResponse.success(certificate);
+    }
+
+    private double getCertificateOverall(AddCertificate certificateRequest) {
+        double overall = (certificateRequest.getListening() + certificateRequest.getReading() + certificateRequest.getWriting() + certificateRequest.getSpeaking()) / 4;
+        double difference = overall - Math.floor(overall);
+        if (difference >= 0.75) overall = Math.ceil(overall);
+        else if (difference >= 0.26) overall = difference + Math.floor(overall);
+        else overall = Math.floor(overall);
+        return overall;
     }
 }

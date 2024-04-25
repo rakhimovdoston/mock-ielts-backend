@@ -9,4 +9,6 @@ public class ResponseMessage {
     public static final String COURSE_NOT_FOUND = "The course you are looking for is not available in your courses";
     public static final String LESSON_NOT_FOUND = "The lesson you are looking for is not available in this course";
     public static final String OPERATION_SUCCESSFUL = "Operation successful";
+
+    public static final String IMAGE_NOT_FOUND = "The image you are looking for does not exist";
 }
