@@ -3,6 +3,7 @@ package com.search.teacher.model.enums;
 public enum ImageType {
     CERTIFICATE,
     PHOTO,
+    LOGO,
     PROFILE_PICTURE;
 
     public static ImageType getValue(String type) {

@@ -1,11 +1,14 @@
 package com.search.teacher.model.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum RoleType {
     ROLE_STUDENT("Student"),
     ROLE_TEACHER("Teacher"),
     ROLE_ADMIN("Admin");
 
-    private String value;
+    private final String value;
 
     RoleType(String value) {
         this.value = value;
@@ -20,7 +23,4 @@ public enum RoleType {
         return null;
     }
 
-    public String getValue() {
-        return value;
-    }
 }

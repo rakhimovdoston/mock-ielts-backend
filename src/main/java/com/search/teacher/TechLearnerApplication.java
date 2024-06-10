@@ -21,10 +21,7 @@ public class TechLearnerApplication {
 		SpringApplication application = new SpringApplication(TechLearnerApplication.class);
 		Environment environment = application.run(args).getEnvironment();
 		logApplicationStartup(environment);
-		Sentry.init(options -> {
-			options.setDsn("https://614fda0be9685744eafb6d3b066a98aa@o4506320331014144.ingest.sentry.io/4506796302991360");
-			options.setTracesSampleRate(1.0);
-		});
+
 	}
 
 	private static void logApplicationStartup(Environment env) {

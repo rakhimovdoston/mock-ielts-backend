@@ -54,4 +54,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status)
                 .body(JResponse.error(status.value(), message));
     }
+
+    @ExceptionHandler(InvalidFileTypeException.class)
+    public ResponseEntity<String> handleInvalidFileTypeException(InvalidFileTypeException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
 }

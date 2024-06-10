@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.search.teacher.exception.NotfoundException;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -32,7 +33,7 @@ public class FileService {
         images.setUser(user);
         images.setSize(file.getSize());
         images.setContentType(file.getContentType());
-        String filename = getFilename(file.getOriginalFilename());
+        String filename = getFilename(Objects.requireNonNull(file.getOriginalFilename()));
         images.setFilename(filename);
         images.setBucket(Utils.getBucketWithType(imageType));
         imageRepository.save(images);
