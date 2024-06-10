@@ -26,12 +26,6 @@ public class StudentController {
         this.fileService = fileService;
     }
 
-    @GetMapping("info-desc")
-    public JResponse infoDescription() {
-        Map<String, Object> map = studentService.infoDescription();
-        return JResponse.success(map);
-    }
-
     @PostMapping("save")
     public JResponse saveStudent(@RequestBody @Valid StudentRequest requestBody) {
         return studentService.saveStudent(requestBody);

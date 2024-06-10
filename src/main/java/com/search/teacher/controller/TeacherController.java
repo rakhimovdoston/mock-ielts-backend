@@ -19,11 +19,6 @@ public class TeacherController {
     private final TeacherService teacherService;
     private final SecurityUtils securityUtils;
 
-    @GetMapping("degree")
-    public JResponse getDegree() {
-        return teacherService.allDegrees();
-    }
-
     @PostMapping("add-certificate")
     public JResponse addCertificate(@RequestBody AddCertificate certificateRequest) {
         return teacherService.addCertificate(securityUtils.getCurrentTeacher(), certificateRequest);
@@ -32,11 +27,6 @@ public class TeacherController {
     @DeleteMapping("delete-certificate/{certificateId}")
     public JResponse deleteCertificate(@PathVariable Long certificateId) {
         return teacherService.deleteCertificate(securityUtils.getCurrentTeacher(), certificateId);
-    }
-
-    @GetMapping("topic-info")
-    public JResponse getTopics() {
-        return teacherService.allTopics();
     }
 
     @PostMapping("new")

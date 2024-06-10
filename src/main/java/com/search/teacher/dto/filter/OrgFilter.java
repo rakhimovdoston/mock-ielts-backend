@@ -1,4 +1,4 @@
-package com.search.teacher.filter;
+package com.search.teacher.dto.filter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModel;
@@ -13,8 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 @ApiModel(description = "Organization parameters")
 @ToString(onlyExplicitlyIncluded = true, doNotUseGetters = true)
 public class OrgFilter extends PageFilter {
-
-
 
     @ApiModelProperty(value = "The Search Key filter")
     @ToString.Include

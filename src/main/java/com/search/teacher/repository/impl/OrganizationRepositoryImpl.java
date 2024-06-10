@@ -1,6 +1,6 @@
 package com.search.teacher.repository.impl;
 
-import com.search.teacher.filter.OrgFilter;
+import com.search.teacher.dto.filter.OrgFilter;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.repository.CustomOrgRepository;
 import jakarta.persistence.EntityManager;

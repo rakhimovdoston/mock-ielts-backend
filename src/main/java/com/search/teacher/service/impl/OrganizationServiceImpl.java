@@ -2,9 +2,9 @@ package com.search.teacher.service.impl;
 
 import com.search.teacher.dto.request.OrganizationRequest;
 import com.search.teacher.dto.response.OrgResponse;
+import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.NotfoundException;
-import com.search.teacher.filter.OrgFilter;
-import com.search.teacher.model.entities.Images;
+import com.search.teacher.dto.filter.OrgFilter;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
@@ -12,6 +12,7 @@ import com.search.teacher.repository.ImageRepository;
 import com.search.teacher.repository.OrganizationRepository;
 import com.search.teacher.service.organization.OrganizationService;
 import com.search.teacher.utils.SecurityUtils;
+import io.jsonwebtoken.lang.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,8 @@ public class OrganizationServiceImpl implements OrganizationService {
                         .build()
                 ).toList();
 
+        if (Collections.isEmpty(responseData))
+            return JResponse.error(404, "Organisations not found");
 
         return JResponse.success(responseData);
     }
@@ -70,16 +73,17 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .phoneNumber(request.phoneNumber())
                 .email(request.email())
                 .website(request.website())
-                .images(imageRepository.findById(request.logoId()).orElseThrow())
                 .contactPerson(request.contactPerson())
                 .contactPersonPhone(request.contactPersonPhone())
                 .contactPersonEmail(request.contactPersonEmail())
                 .establishedDate(request.establishedDate())
                 .owner(securityUtils.currentUser())
                 .build();
+
+        imageRepository.findById(request.logoId()).ifPresent(organization::setImages);
         organizationRepository.save(organization);
 
-        return JResponse.success("Organization created");
+        return JResponse.success(new SaveResponse(organization.getId()));
     }
 
     @Transactional
@@ -97,15 +101,15 @@ public class OrganizationServiceImpl implements OrganizationService {
         existingOrganization.setWebsite(request.website());
 
         if (request.logoId() != null) {
-            Images images = imageRepository.findById(request.logoId()).orElseThrow();
-            existingOrganization.setImages(images);
+            imageRepository.findById(request.logoId()).ifPresent(existingOrganization::setImages);
         }
 
         existingOrganization.setContactPerson(request.contactPerson());
         existingOrganization.setContactPersonPhone(request.contactPersonPhone());
         existingOrganization.setContactPersonEmail(request.contactPersonEmail());
         existingOrganization.setEstablishedDate(request.establishedDate());
-        return JResponse.success("Organization updated");
+
+        return JResponse.success(new SaveResponse(existingOrganization.getId()));
     }
 
     @Transactional
