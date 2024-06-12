@@ -1,7 +1,7 @@
 package com.search.teacher.controller;
 
+import com.search.teacher.dto.filter.OrganizationFilter;
 import com.search.teacher.dto.request.OrganizationRequest;
-import com.search.teacher.dto.filter.OrgFilter;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.organization.OrganizationService;
 import jakarta.validation.Valid;
@@ -22,7 +22,7 @@ public class OrganizationController {
     }
 
     @GetMapping
-    public JResponse getAll(@ParameterObject OrgFilter filter) {
+    public JResponse getAll(@ParameterObject OrganizationFilter filter) {
         return service.getAllOrganizations(filter);
     }
 

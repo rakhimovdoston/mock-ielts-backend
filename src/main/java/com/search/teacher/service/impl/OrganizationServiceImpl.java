@@ -1,10 +1,10 @@
 package com.search.teacher.service.impl;
 
+import com.search.teacher.dto.filter.OrganizationFilter;
 import com.search.teacher.dto.request.OrganizationRequest;
 import com.search.teacher.dto.response.OrgResponse;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.NotfoundException;
-import com.search.teacher.dto.filter.OrgFilter;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
@@ -29,7 +29,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     private final ImageRepository imageRepository;
 
     @Override
-    public JResponse getAllOrganizations(OrgFilter filter) {
+    public JResponse getAllOrganizations(OrganizationFilter filter) {
         Page<Organization> orgPaged = organizationRepository.findAllByFilter(filter);
 
         List<OrgResponse> responseData = orgPaged.getContent().stream()

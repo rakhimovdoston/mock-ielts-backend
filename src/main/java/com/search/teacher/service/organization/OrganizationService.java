@@ -1,11 +1,11 @@
 package com.search.teacher.service.organization;
 
+import com.search.teacher.dto.filter.OrganizationFilter;
 import com.search.teacher.dto.request.OrganizationRequest;
-import com.search.teacher.dto.filter.OrgFilter;
 import com.search.teacher.model.response.JResponse;
 
 public interface OrganizationService {
-    JResponse getAllOrganizations(OrgFilter filter);
+    JResponse getAllOrganizations(OrganizationFilter filter);
 
     JResponse createOrganization(OrganizationRequest request);
 

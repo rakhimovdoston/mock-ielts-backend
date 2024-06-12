@@ -1,8 +1,8 @@
 package com.search.teacher.repository.impl;
 
-import com.search.teacher.dto.filter.OrgFilter;
+import com.search.teacher.dto.filter.OrganizationFilter;
 import com.search.teacher.model.entities.Organization;
-import com.search.teacher.repository.CustomOrgRepository;
+import com.search.teacher.repository.CustomOrganisationsRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -13,13 +13,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class OrganizationRepositoryImpl implements CustomOrgRepository {
+public class OrganizationRepositoryImpl implements CustomOrganisationsRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
 
     @Override
-    public Page<Organization> findAllByFilter(OrgFilter filter) {
+    public Page<Organization> findAllByFilter(OrganizationFilter filter) {
         final boolean hasSearch = StringUtils.isNotBlank(filter.getSearch());
         final boolean sorted = filter.formPageable().getSort().isSorted();
 
