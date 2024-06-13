@@ -146,6 +146,9 @@ public class StudentServiceImpl implements StudentService {
         response.setCurrentPage(pagedUser.getNumber());
         response.setData(pagedUser.getContent());
 
+        if (pagedUser.getContent().isEmpty())
+            return JResponse.error(404, "Empty list");
+
         return JResponse.success(response);
     }
 }

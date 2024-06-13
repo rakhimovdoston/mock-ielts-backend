@@ -21,7 +21,6 @@ public class TechLearnerApplication {
 		SpringApplication application = new SpringApplication(TechLearnerApplication.class);
 		Environment environment = application.run(args).getEnvironment();
 		logApplicationStartup(environment);
-
 	}
 
 	private static void logApplicationStartup(Environment env) {

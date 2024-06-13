@@ -2,6 +2,7 @@ package com.search.teacher.repository.impl;
 
 import com.search.teacher.dto.filter.UserFilter;
 import com.search.teacher.model.entities.User;
+import com.search.teacher.model.enums.RoleType;
 import com.search.teacher.repository.CustomUserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -31,11 +32,13 @@ public class UserRepositoryImpl implements CustomUserRepository {
                     .append(" or lower(t.lastName) like :searchKey) ");
 
         }
-        if (filter.getRoleType() != null) {
+
+
+        if (StringUtils.isNotEmpty(filter.getRole())) {
             sql.append(" and t.role.name=:roleType ");
         }
 
-        String countSql = sql.toString().replace("select t", "select count(t");
+        String countSql = sql.toString().replace("select t", "select count(t)");
 
         sql.append(" order by ");
 
@@ -60,9 +63,9 @@ public class UserRepositoryImpl implements CustomUserRepository {
             query.setParameter("searchKey", filter.getSearchForQuery());
         }
 
-        if (filter.getRoleType() != null) {
-            query.setParameter("roleType", filter.getRoleType());
-            countQuery.setParameter("roleType", filter.getRoleType());
+        if (StringUtils.isNotEmpty(filter.getRole())) {
+            query.setParameter("roleType", RoleType.getRoleByName(filter.getRole()));
+            countQuery.setParameter("roleType", RoleType.getRoleByName(filter.getRole()));
         }
 
         return new PageImpl<>(query.getResultList(), filter.formPageable(), countQuery.getSingleResult());
