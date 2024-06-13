@@ -1,5 +1,7 @@
 package com.search.teacher.service.impl;
 
+import com.search.teacher.dto.filter.PaginationResponse;
+import com.search.teacher.dto.filter.UserFilter;
 import com.search.teacher.dto.request.StudentRequest;
 import com.search.teacher.dto.response.DescribeDto;
 import com.search.teacher.dto.response.SaveResponse;
@@ -19,6 +21,7 @@ import com.search.teacher.repository.GoalsRepository;
 import com.search.teacher.repository.TopicsRepository;
 import com.search.teacher.repository.UserRepository;
 import com.search.teacher.service.user.StudentService;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -130,5 +133,19 @@ public class StudentServiceImpl implements StudentService {
         response.setGoals(goalDtos);
         response.setRole(user.getRole().getName().getValue());
         return response;
+    }
+
+    @Override
+    public JResponse getUsersList(UserFilter filter) {
+        Page<User> pagedUser = userRepository.findAllByFilter(filter);
+
+        PaginationResponse response = new PaginationResponse();
+        response.setTotalPages(pagedUser.getTotalPages());
+        response.setTotalSizes(pagedUser.getTotalElements());
+        response.setCurrentSize(pagedUser.getNumberOfElements());
+        response.setCurrentPage(pagedUser.getNumber());
+        response.setData(pagedUser.getContent());
+
+        return JResponse.success(response);
     }
 }
