@@ -2,9 +2,10 @@ package com.search.teacher.service.impl;
 
 import com.search.teacher.dto.filter.OrganizationFilter;
 import com.search.teacher.dto.request.OrganizationRequest;
-import com.search.teacher.dto.response.OrgResponse;
+import com.search.teacher.dto.response.OrganizationResponse;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.NotfoundException;
+import com.search.teacher.model.entities.Images;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
@@ -32,8 +33,8 @@ public class OrganizationServiceImpl implements OrganizationService {
     public JResponse getAllOrganizations(OrganizationFilter filter) {
         Page<Organization> orgPaged = organizationRepository.findAllByFilter(filter);
 
-        List<OrgResponse> responseData = orgPaged.getContent().stream()
-                .map(organization -> OrgResponse.builder()
+        List<OrganizationResponse> responseData = orgPaged.getContent().stream()
+                .map(organization -> OrganizationResponse.builder()
                         .name(organization.getName())
                         .description(organization.getDescription())
                         .registrationNumber(organization.getRegistrationNumber())
@@ -42,7 +43,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                         .phoneNumber(organization.getPhoneNumber())
                         .email(organization.getEmail())
                         .website(organization.getWebsite())
-                        .imageUrl(organization.getImages() != null ? organization.getImages().getUrl() : null)
+                        .images(organization.getImages().stream().map(Images::getUrl).toList())
                         .contactPerson(organization.getContactPerson())
                         .contactPersonPhone(organization.getContactPersonPhone())
                         .contactPersonEmail(organization.getContactPersonEmail())
@@ -80,7 +81,9 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .owner(securityUtils.currentUser())
                 .build();
 
-        imageRepository.findById(request.logoId()).ifPresent(organization::setImages);
+        if (request.logoId() != null) {
+            organization.addImage(imageRepository.findById(request.logoId()).orElseThrow());
+        }
         organizationRepository.save(organization);
 
         return JResponse.success(new SaveResponse(organization.getId()));
@@ -101,13 +104,14 @@ public class OrganizationServiceImpl implements OrganizationService {
         existingOrganization.setWebsite(request.website());
 
         if (request.logoId() != null) {
-            imageRepository.findById(request.logoId()).ifPresent(existingOrganization::setImages);
+            existingOrganization.addImage(imageRepository.findById(request.logoId()).orElseThrow());
         }
 
         existingOrganization.setContactPerson(request.contactPerson());
         existingOrganization.setContactPersonPhone(request.contactPersonPhone());
         existingOrganization.setContactPersonEmail(request.contactPersonEmail());
         existingOrganization.setEstablishedDate(request.establishedDate());
+        organizationRepository.save(existingOrganization);
 
         return JResponse.success(new SaveResponse(existingOrganization.getId()));
     }
@@ -115,7 +119,9 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Transactional
     @Override
     public JResponse deleteOrganization(Long id) {
-        organizationRepository.deleteById(id);
+        Organization organization = organizationRepository.findById(id).orElseThrow();
+        organization.setActive(false);
+        organizationRepository.save(organization);
         return JResponse.success("Organization deleted");
     }
 }

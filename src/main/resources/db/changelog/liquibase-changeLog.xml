@@ -9,28 +9,29 @@
     <include file="db/changelog/changeset/2-insert-role.sql" author="Doston"/>
     <include file="db/changelog/changeset/3-alter-user-table-date.sql" author="Doston"/>
     <include file="db/changelog/changeset/4-alter-user-table-forgot-password.sql" author="Nuriddin"/>
-    <include file="db/changelog/changeset/5-create-table-learning-goals.sql" author="Doston" />
-    <include file="db/changelog/changeset/6-insert-goals-topics-table.sql" author="Doston" />
-    <include file="db/changelog/changeset/7-alter-interest-student-table.sql" author="Doston" />
-    <include file="db/changelog/changeset/8-alter-add-topics-user-table.sql" author="Doston" />
-    <include file="db/changelog/changeset/9-create-teacher-table.sql" author="Doston" />
-    <include file="db/changelog/changeset/10-drop-image-teacher.sql" author="Doston" />
-    <include file="db/changelog/changeset/11-alter-image-add-user.sql" author="Doston" />
-    <include file="db/changelog/changeset/12-alter-teacher-table.sql" author="Doston" />
-    <include file="db/changelog/changeset/13-alter-image-add-url-column.sql" author="Doston" />
-    <include file="db/changelog/changeset/14-alter-image-table-add-type.sql" author="Doston" />
-    <include file="db/changelog/changeset/15-create-user-token.sql" author="Doston" />
-    <include file="db/changelog/changeset/16-create-question-table.sql" author="Doston" />
-    <include file="db/changelog/changeset/17-create-question-history-table.sql" author="Doston" />
-    <include file="db/changelog/changeset/18-create-question-category.sql" author="Doston" />
-    <include file="/db/changelog/changeset/19-alter-table-question-add-column.sql" author="Doston" />
-    <include file="/db/changelog/changeset/20-alter-all-table-date.sql" author="Doston" />
-    <include file="/db/changelog/changeset/21-alter-question-history-table.sql" author="Doston" />
-    <include file="/db/changelog/changeset/22-alter-table-question-history.sql" author="Doston" />
-    <include file="/db/changelog/changeset/23-create-rating-table.sql" author="Doston" />
-    <include file="/db/changelog/changeset/24-alter-teacher-table.sql" author="Doston" />
-    <include file="/db/changelog/changeset/25-create-category-table.sql" author="Doston" />
-    <include file="/db/changelog/changeset/26-create-cource-table.sql" author="Doston" />
-    <include file="/db/changelog/changeset/27-add-certificate-table.sql" author="Doston" />
-    <include file="/db/changelog/changeset/28-alter-image-table-add-new-column.sql" author="Doston" />
+    <include file="db/changelog/changeset/5-create-table-learning-goals.sql" author="Doston"/>
+    <include file="db/changelog/changeset/6-insert-goals-topics-table.sql" author="Doston"/>
+    <include file="db/changelog/changeset/7-alter-interest-student-table.sql" author="Doston"/>
+    <include file="db/changelog/changeset/8-alter-add-topics-user-table.sql" author="Doston"/>
+    <include file="db/changelog/changeset/9-create-teacher-table.sql" author="Doston"/>
+    <include file="db/changelog/changeset/10-drop-image-teacher.sql" author="Doston"/>
+    <include file="db/changelog/changeset/11-alter-image-add-user.sql" author="Doston"/>
+    <include file="db/changelog/changeset/12-alter-teacher-table.sql" author="Doston"/>
+    <include file="db/changelog/changeset/13-alter-image-add-url-column.sql" author="Doston"/>
+    <include file="db/changelog/changeset/14-alter-image-table-add-type.sql" author="Doston"/>
+    <include file="db/changelog/changeset/15-create-user-token.sql" author="Doston"/>
+    <include file="db/changelog/changeset/16-create-question-table.sql" author="Doston"/>
+    <include file="db/changelog/changeset/17-create-question-history-table.sql" author="Doston"/>
+    <include file="db/changelog/changeset/18-create-question-category.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/19-alter-table-question-add-column.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/20-alter-all-table-date.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/21-alter-question-history-table.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/22-alter-table-question-history.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/23-create-rating-table.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/24-alter-teacher-table.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/25-create-category-table.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/26-create-cource-table.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/27-add-certificate-table.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/28-alter-image-table-add-new-column.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/29-init-organization-table.sql" author="Nuriddin"/>
 </databaseChangeLog>

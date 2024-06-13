@@ -1,13 +1,11 @@
 package com.search.teacher.model.entities;
 
 import com.search.teacher.model.base.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 
 @Getter
@@ -36,8 +34,8 @@ public class Organization extends BaseEntity {
 
     private String website;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Images images;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "organization")
+    private List<Images> images;
 
     private String contactPerson;
 
@@ -49,4 +47,8 @@ public class Organization extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private User owner;
+
+    public void addImage(Images image) {
+        this.images.add(image);
+    }
 }

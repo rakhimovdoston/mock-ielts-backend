@@ -126,7 +126,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         if (user.isForgotPassword()) {
             rabbitMqProducer.sendForgotPasswordEmail(user.getEmail(), code);
-        } else {
+        }else {
             rabbitMqProducer.sendNotificationToEmail(user.getEmail(), code);
         }
         return JResponse.success(new RegisterResponse(user.getEmail()));
@@ -141,7 +141,7 @@ public class UserServiceImpl implements UserService {
                 user.setPassword(passwordEncoder.encode(req.newPassword()));
                 userRepository.save(user);
                 return new JResponse(200, "Password updated");
-            } else {
+            }else {
                 return new JResponse(401, "non matched password");
             }
         }
@@ -161,7 +161,7 @@ public class UserServiceImpl implements UserService {
                 user.setForgotPassword(false);
                 userRepository.save(user);
                 return JResponse.success();
-            } else
+            }else
                 return JResponse.error(400, "Password non match");
         }
         return JResponse.error(400, "You should confirm your password");
