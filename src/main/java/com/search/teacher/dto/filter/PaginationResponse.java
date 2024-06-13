@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class PaginationResponse {
     private int totalPages;
-    private int totalSizes;
+    private long totalSizes;
     private int currentSize;
     private int currentPage;
     private Object data;

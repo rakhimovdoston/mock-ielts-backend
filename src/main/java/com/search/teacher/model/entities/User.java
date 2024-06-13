@@ -1,6 +1,7 @@
 package com.search.teacher.model.entities;
 
 import com.search.teacher.model.base.BaseEntity;
+import com.search.teacher.model.enums.IStatus;
 import com.search.teacher.model.enums.Status;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -27,6 +28,8 @@ public class User extends BaseEntity implements Serializable {
     @Enumerated(EnumType.STRING)
     private Status status;
     private boolean isForgotPassword = false;
+    @Column(name = "internet_status")
+    private IStatus internetStatus;
 
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id")

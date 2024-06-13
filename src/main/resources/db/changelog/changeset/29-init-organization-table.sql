@@ -1,6 +1,6 @@
 CREATE TABLE organization
 (
-    id BIGSERIAL PRIMARY KEY,
+    id                   BIGSERIAL PRIMARY KEY,
     name                 VARCHAR(255) NOT NULL UNIQUE,
     description          TEXT,
     registration_number  VARCHAR(255),
@@ -19,4 +19,4 @@ CREATE TABLE organization
 
 ALTER TABLE images
     add column organization_id BIGINT,
-    add constraint fk_organisation_images FOREIGN KEY (organization_id) REFERENCES images(id);
+    add constraint fk_organisation_images FOREIGN KEY (organization_id) REFERENCES images (id);

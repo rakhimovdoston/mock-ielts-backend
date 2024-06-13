@@ -34,4 +34,7 @@
     <include file="/db/changelog/changeset/27-add-certificate-table.sql" author="Doston"/>
     <include file="/db/changelog/changeset/28-alter-image-table-add-new-column.sql" author="Doston"/>
     <include file="/db/changelog/changeset/29-init-organization-table.sql" author="Nuriddin"/>
+    <include file="/db/changelog/changeset/30-chat-message-create-table.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/31-alter-table-chat-message.sql" author="Doston"/>
+    <include file="/db/changelog/changeset/32-alter-table-user-add-status-column.sql" author="Doston"/>
 </databaseChangeLog>
