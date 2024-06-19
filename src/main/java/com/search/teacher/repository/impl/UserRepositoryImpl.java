@@ -34,7 +34,7 @@ public class UserRepositoryImpl implements CustomUserRepository {
         }
 
 
-        if (StringUtils.isNotEmpty(filter.getRole())) {
+        if (StringUtils.isNotEmpty(filter.getType())) {
             sql.append(" and t.role.name=:roleType ");
         }
 
@@ -63,9 +63,9 @@ public class UserRepositoryImpl implements CustomUserRepository {
             query.setParameter("searchKey", filter.getSearchForQuery());
         }
 
-        if (StringUtils.isNotEmpty(filter.getRole())) {
-            query.setParameter("roleType", RoleType.getRoleByName(filter.getRole()));
-            countQuery.setParameter("roleType", RoleType.getRoleByName(filter.getRole()));
+        if (StringUtils.isNotEmpty(filter.getType())) {
+            query.setParameter("roleType", RoleType.getRoleByName(filter.getType()));
+            countQuery.setParameter("roleType", RoleType.getRoleByName(filter.getType()));
         }
 
         return new PageImpl<>(query.getResultList(), filter.formPageable(), countQuery.getSingleResult());

@@ -75,6 +75,8 @@ public class UserServiceImpl implements UserService {
     public JResponse authenticate(AuthenticationRequest request) {
         User user = userRepository.findByEmail(request.email());
         if (user == null) return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+        if (!passwordEncoder.matches(request.password(), user.getPassword()))
+            return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
         if (user.getStatus().equals(Status.block)) {
             return JResponse.error(409, ResponseMessage.USER_BLOCKED);
         }

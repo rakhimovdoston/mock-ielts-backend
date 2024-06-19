@@ -1,6 +1,5 @@
 package com.search.teacher.service.message;
 
-import com.amazonaws.services.securityhub.model.SortOrder;
 import com.search.teacher.dto.filter.MessageFilter;
 import com.search.teacher.dto.filter.PageFilter;
 import com.search.teacher.dto.filter.PaginationResponse;
@@ -10,14 +9,12 @@ import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.entities.message.ChatMessage;
 import com.search.teacher.model.entities.message.ChatRoom;
-import com.search.teacher.model.enums.SortTypeEnum;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.message.ChatMessageRepository;
 import com.search.teacher.repository.UserRepository;
 import com.search.teacher.repository.message.ChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

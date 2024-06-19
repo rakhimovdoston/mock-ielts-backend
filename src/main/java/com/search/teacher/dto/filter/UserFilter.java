@@ -23,7 +23,7 @@ public class UserFilter extends PageFilter {
 
     @ApiModelProperty(value = "roleType")
     @ToString.Include
-    private String role;
+    private String type;
 
     @JsonIgnore
     @ApiModelProperty(hidden = true)

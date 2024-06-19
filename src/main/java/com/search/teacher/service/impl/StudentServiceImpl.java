@@ -2,6 +2,7 @@ package com.search.teacher.service.impl;
 
 import com.search.teacher.dto.filter.PaginationResponse;
 import com.search.teacher.dto.filter.UserFilter;
+import com.search.teacher.dto.message.UserResponse;
 import com.search.teacher.dto.request.StudentRequest;
 import com.search.teacher.dto.response.DescribeDto;
 import com.search.teacher.dto.response.SaveResponse;
@@ -11,10 +12,8 @@ import com.search.teacher.mapper.DescribeMapper;
 import com.search.teacher.mapper.GoalsMapper;
 import com.search.teacher.mapper.TopicMapper;
 import com.search.teacher.mapper.UserMapper;
-import com.search.teacher.model.entities.Describe;
-import com.search.teacher.model.entities.Goals;
-import com.search.teacher.model.entities.Topics;
-import com.search.teacher.model.entities.User;
+import com.search.teacher.model.entities.*;
+import com.search.teacher.model.enums.RoleType;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.DescribeRepository;
 import com.search.teacher.repository.GoalsRepository;
@@ -24,10 +23,7 @@ import com.search.teacher.service.user.StudentService;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -82,21 +78,17 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public SaveResponse updateStudent(User currentUser, StudentRequest request) {
-        if (!request.getTopics().isEmpty())
-            currentUser.setTopics(request.getTopics());
+        if (!request.getTopics().isEmpty()) currentUser.setTopics(request.getTopics());
 
-        if (request.getFirstname() != null)
-            currentUser.setFirstname(request.getFirstname());
+        if (request.getFirstname() != null) currentUser.setFirstname(request.getFirstname());
 
-        if (request.getLastname() != null)
-            currentUser.setLastname(request.getLastname());
+        if (request.getLastname() != null) currentUser.setLastname(request.getLastname());
 
         if (request.getDescribeId() != null) {
             Optional<Describe> describe = describeRepository.findById(request.getDescribeId());
             describe.ifPresent(currentUser::setDescribe);
         }
-        if (!request.getGoals().isEmpty())
-            currentUser.setGoals(request.getGoals());
+        if (!request.getGoals().isEmpty()) currentUser.setGoals(request.getGoals());
 
         userRepository.save(currentUser);
         return new SaveResponse(currentUser.getId());
@@ -112,20 +104,16 @@ public class StudentServiceImpl implements StudentService {
         List<DescribeDto> goalDtos = goalsMapper.toListDto(goals);
         List<DescribeDto> topicDtos = topicMapper.toListDto(topics);
 
-        if (user.getDescribe() != null)
-            describeDtos = describeDtos.stream().peek(describe -> {
-                if (describe.getId().equals(user.getDescribe().getId()))
-                    describe.setActive(true);
-            }).collect(Collectors.toList());
+        if (user.getDescribe() != null) describeDtos = describeDtos.stream().peek(describe -> {
+            if (describe.getId().equals(user.getDescribe().getId())) describe.setActive(true);
+        }).collect(Collectors.toList());
 
         goalDtos = goalDtos.stream().peek(goal -> {
-            if (user.getGoals().contains(goal.getId()))
-                goal.setActive(true);
+            if (user.getGoals().contains(goal.getId())) goal.setActive(true);
         }).collect(Collectors.toList());
 
         topicDtos = topicDtos.stream().peek(topic -> {
-            if (user.getTopics().contains(topic.getId()))
-                topic.setActive(true);
+            if (user.getTopics().contains(topic.getId())) topic.setActive(true);
         }).collect(Collectors.toList());
 
         response.setDescribes(describeDtos);
@@ -139,16 +127,37 @@ public class StudentServiceImpl implements StudentService {
     public JResponse getUsersList(UserFilter filter) {
         Page<User> pagedUser = userRepository.findAllByFilter(filter);
 
+        if (pagedUser.getContent().isEmpty()) return JResponse.error(404, "Empty list");
+
+        List<UserResponse> responses = dto(pagedUser.getContent());
         PaginationResponse response = new PaginationResponse();
         response.setTotalPages(pagedUser.getTotalPages());
         response.setTotalSizes(pagedUser.getTotalElements());
         response.setCurrentSize(pagedUser.getNumberOfElements());
         response.setCurrentPage(pagedUser.getNumber());
-        response.setData(pagedUser.getContent());
-
-        if (pagedUser.getContent().isEmpty())
-            return JResponse.error(404, "Empty list");
+        response.setData(responses);
 
         return JResponse.success(response);
+    }
+
+    private List<UserResponse> dto(List<User> content) {
+        List<UserResponse> responses = new ArrayList<>();
+        for (User user : content) {
+            UserResponse response = new UserResponse();
+            response.setId(user.getId());
+            response.setFirstname(user.getFirstname());
+            response.setLastname(user.getLastname());
+            response.setImage(user.getImages().get(0).getUrl());
+            Role role = user.getRole();
+            response.setRole(role.getName().getValue());
+
+            if (role.getName().equals(RoleType.ROLE_TEACHER)) {
+                Teacher teacher = new Teacher();
+                response.setRating(String.valueOf(teacher.getRating()));
+                response.setDescription(teacher.getDescription());
+            }
+            responses.add(response);
+        }
+        return responses;
     }
 }

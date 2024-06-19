@@ -35,7 +35,7 @@ public class UserController {
         return JResponse.success(response);
     }
 
-    @GetMapping
+    @GetMapping("all")
     public JResponse getUsersList(@ParameterObject UserFilter filter) {
         return studentService.getUsersList(filter);
     }

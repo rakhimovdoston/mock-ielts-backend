@@ -1,5 +1,6 @@
 package com.search.teacher.model.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.search.teacher.model.base.BaseEntity;
 import com.search.teacher.model.enums.IStatus;
 import com.search.teacher.model.enums.Status;
@@ -46,4 +47,11 @@ public class User extends BaseEntity implements Serializable {
     @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private List<Long> goals = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore
+    private List<Images> images = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user")
+    private Teacher teacher;
 }

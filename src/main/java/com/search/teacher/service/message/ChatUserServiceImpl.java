@@ -28,9 +28,7 @@ public class ChatUserServiceImpl implements ChatUserService {
 
         String chatId = UUID.randomUUID().toString().replace("-", "").toUpperCase();
         ChatRoom senderUser = ChatRoom.builder().chatId(chatId).receiverUser(userEntity).senderUser(user).build();
-
         ChatRoom receiverUser = ChatRoom.builder().chatId(chatId).receiverUser(user).senderUser(userEntity).build();
-
         chatRoomRepository.save(senderUser);
         chatRoomRepository.save(receiverUser);
         return JResponse.success("User added successfully");
