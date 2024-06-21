@@ -3,6 +3,7 @@ package com.search.teacher.model.entities.message;
 import com.search.teacher.model.base.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +18,10 @@ public class ChatMessage extends BaseEntity {
     private Long toUserId;
     private Long fromUserId;
     private String content;
+
+    @NotNull
     private Date timestamp;
+
     private MessageType messageType;
     private String fileUrl; // messageType is not text
 }

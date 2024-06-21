@@ -41,7 +41,7 @@ public class OrganizationRepositoryImpl implements CustomOrganisationsRepository
                 sql.append(",");
             }
             sql.deleteCharAt(sql.length() - 1);
-        }else {
+        } else {
             sql.append(" t.id");
         }
 

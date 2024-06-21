@@ -1,4 +1,4 @@
-package com.search.teacher.controller;
+package com.search.teacher.controller.organization;
 
 import com.search.teacher.dto.filter.OrganizationFilter;
 import com.search.teacher.dto.request.OrganizationRequest;
@@ -21,20 +21,18 @@ public class OrganizationController {
         return service.createOrganization(request);
     }
 
-    @GetMapping
+    @GetMapping("all")
     public JResponse getAll(@ParameterObject OrganizationFilter filter) {
         return service.getAllOrganizations(filter);
     }
 
-    @PutMapping
+    @PutMapping("update")
     public JResponse update(@RequestBody @Valid OrganizationRequest request) {
         return service.update(request);
     }
 
-    @DeleteMapping
+    @DeleteMapping("delete")
     public JResponse delete(@RequestParam Long id) {
         return service.deleteOrganization(id);
     }
-
-
 }

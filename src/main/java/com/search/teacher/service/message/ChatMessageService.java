@@ -30,6 +30,8 @@ public class ChatMessageService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatUserService chatUserService;
 
+    public final int MAX_PAGEABLE_CHAT_MESSAGES = 100;
+
     public JResponse sendMessage(User user, ChatDto dto) {
         User userEntity = userRepository.findById(dto.getToUserId()).orElseThrow(() -> new NotfoundException("User Not Found"));
 
