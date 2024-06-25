@@ -1,5 +1,6 @@
 package com.search.teacher.service.impl;
 
+import com.search.teacher.dto.UserDto;
 import com.search.teacher.dto.filter.OrganizationFilter;
 import com.search.teacher.dto.request.OrganizationRequest;
 import com.search.teacher.dto.response.OrganizationResponse;
@@ -43,11 +44,6 @@ public class OrganizationServiceImpl implements OrganizationService {
                         .phoneNumber(organization.getPhoneNumber())
                         .email(organization.getEmail())
                         .website(organization.getWebsite())
-                        .images(organization.getImages().stream().map(Images::getUrl).toList())
-                        .contactPerson(organization.getContactPerson())
-                        .contactPersonPhone(organization.getContactPersonPhone())
-                        .contactPersonEmail(organization.getContactPersonEmail())
-                        .establishedDate(organization.getEstablishedDate())
                         .owner(getOwnerName(organization.getOwner()))
                         .build()
                 ).toList();
@@ -74,18 +70,10 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .phoneNumber(request.phoneNumber())
                 .email(request.email())
                 .website(request.website())
-                .contactPerson(request.contactPerson())
-                .contactPersonPhone(request.contactPersonPhone())
-                .contactPersonEmail(request.contactPersonEmail())
-                .establishedDate(request.establishedDate())
                 .owner(securityUtils.currentUser())
                 .build();
 
-        if (request.logoId() != null) {
-            organization.addImage(imageRepository.findById(request.logoId()).orElseThrow());
-        }
         organizationRepository.save(organization);
-
         return JResponse.success(new SaveResponse(organization.getId()));
     }
 
@@ -102,15 +90,6 @@ public class OrganizationServiceImpl implements OrganizationService {
         existingOrganization.setPhoneNumber(request.phoneNumber());
         existingOrganization.setEmail(request.email());
         existingOrganization.setWebsite(request.website());
-
-        if (request.logoId() != null) {
-            existingOrganization.addImage(imageRepository.findById(request.logoId()).orElseThrow());
-        }
-
-        existingOrganization.setContactPerson(request.contactPerson());
-        existingOrganization.setContactPersonPhone(request.contactPersonPhone());
-        existingOrganization.setContactPersonEmail(request.contactPersonEmail());
-        existingOrganization.setEstablishedDate(request.establishedDate());
         organizationRepository.save(existingOrganization);
 
         return JResponse.success(new SaveResponse(existingOrganization.getId()));
@@ -123,5 +102,19 @@ public class OrganizationServiceImpl implements OrganizationService {
         organization.setActive(false);
         organizationRepository.save(organization);
         return JResponse.success("Organization deleted");
+    }
+
+    @Override
+    public void createOrganisation(UserDto userDto, User user) {
+        if (organizationRepository.existsByRegistrationNumber(userDto.registrationNumber()))
+            throw new NotfoundException("Registration number already exists");
+
+        Organization organization = new Organization();
+        organization.setName(userDto.name());
+        organization.setOwner(user);
+        organization.setEmail(user.getEmail());
+        organization.setDescription(userDto.description());
+        organization.setRegistrationNumber(userDto.registrationNumber());
+        organizationRepository.save(organization);
     }
 }

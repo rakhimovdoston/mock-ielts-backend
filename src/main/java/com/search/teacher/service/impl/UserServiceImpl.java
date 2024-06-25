@@ -17,10 +17,12 @@ import com.search.teacher.model.entities.Role;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.enums.RoleType;
 import com.search.teacher.model.enums.Status;
+import com.search.teacher.model.enums.Type;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.RoleRepository;
 import com.search.teacher.repository.UserRepository;
 import com.search.teacher.service.UserSession;
+import com.search.teacher.service.organization.OrganizationService;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.service.user.UserTokenService;
 import com.search.teacher.utils.DateUtils;
@@ -49,6 +51,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final UserSession userSession;
+    private final OrganizationService organizationService;
     private final UserTokenService userTokenService;
     private final RabbitMqProducer rabbitMqProducer;
 
@@ -65,6 +68,7 @@ public class UserServiceImpl implements UserService {
         user.setStatus(Status.confirm);
         String confirmationCode = getRandomCode(100000, 999999);
         user.setCode(confirmationCode);
+        if (userDto.type() == Type.organization) organizationService.createOrganisation(userDto, user);
         userRepository.save(user);
         logger.info("User saved: {}", user.getId());
         rabbitMqProducer.sendNotificationToEmail(user.getEmail(), confirmationCode);
@@ -128,7 +132,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         if (user.isForgotPassword()) {
             rabbitMqProducer.sendForgotPasswordEmail(user.getEmail(), code);
-        }else {
+        } else {
             rabbitMqProducer.sendNotificationToEmail(user.getEmail(), code);
         }
         return JResponse.success(new RegisterResponse(user.getEmail()));
@@ -143,7 +147,7 @@ public class UserServiceImpl implements UserService {
                 user.setPassword(passwordEncoder.encode(req.newPassword()));
                 userRepository.save(user);
                 return new JResponse(200, "Password updated");
-            }else {
+            } else {
                 return new JResponse(401, "non matched password");
             }
         }
@@ -163,8 +167,7 @@ public class UserServiceImpl implements UserService {
                 user.setForgotPassword(false);
                 userRepository.save(user);
                 return JResponse.success();
-            }else
-                return JResponse.error(400, "Password non match");
+            } else return JResponse.error(400, "Password non match");
         }
         return JResponse.error(400, "You should confirm your password");
     }

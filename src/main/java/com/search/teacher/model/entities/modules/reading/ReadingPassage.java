@@ -1,13 +1,15 @@
-package com.search.teacher.model.entities.modules;
+package com.search.teacher.model.entities.modules.reading;
 
 import com.search.teacher.model.base.BaseEntity;
 import com.search.teacher.model.entities.Organization;
-import com.search.teacher.model.entities.Teacher;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ModuleType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Package com.search.teacher.model.entities.modules
@@ -16,25 +18,25 @@ import lombok.Setter;
  * Time: 14:45
  **/
 @Entity
-@Table(name = "listenings")
+@Table(name = "reading_passage")
 @Getter
 @Setter
-public class Listening extends BaseEntity {
+public class ReadingPassage extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
     @Enumerated(EnumType.STRING)
-    private ModuleType type = ModuleType.LISTENING;
+    private ModuleType type = ModuleType.READING;
 
-    @Column(columnDefinition = "TEXT")
-    private String text;
+    private String title;
+    private String explanation;
 
-    private String audioUrl;
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String content;
 
-    @ManyToOne
-    @JoinColumn(name = "teacher_id", nullable = false, referencedColumnName = "id")
-    private Teacher teacher;
+    @OneToMany(mappedBy = "passage")
+    private List<ReadingQuestion> questions = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false, referencedColumnName = "id")

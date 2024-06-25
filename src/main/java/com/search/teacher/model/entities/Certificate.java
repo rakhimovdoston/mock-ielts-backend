@@ -22,8 +22,8 @@ public class Certificate extends BaseEntity {
     private TestType testType;
 
     @ManyToOne
-    @JoinColumn(name = "teacher_id", referencedColumnName = "id", nullable = false)
-    private Teacher teacher;
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private User user;
 
     @OneToOne
     @JoinColumn(name = "image_id", referencedColumnName = "id")

@@ -12,9 +12,5 @@ public record OrganizationRequest(Long id,
                                   String phoneNumber,
                                   String email,
                                   String website,
-                                  Long logoId,
-                                  String contactPerson,
-                                  String contactPersonPhone,
-                                  String contactPersonEmail,
-                                  LocalDate establishedDate) {
+                                  Long logoId) {
 }

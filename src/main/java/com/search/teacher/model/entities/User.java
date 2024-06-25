@@ -52,6 +52,6 @@ public class User extends BaseEntity implements Serializable {
     @JsonIgnore
     private List<Images> images = new ArrayList<>();
 
-    @OneToOne(mappedBy = "user")
-    private Teacher teacher;
+    @OneToMany(mappedBy = "user")
+    private List<Certificate> certificates;
 }

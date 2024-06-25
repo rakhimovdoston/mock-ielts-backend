@@ -151,11 +151,11 @@ public class StudentServiceImpl implements StudentService {
             Role role = user.getRole();
             response.setRole(role.getName().getValue());
 
-            if (role.getName().equals(RoleType.ROLE_TEACHER)) {
-                Teacher teacher = new Teacher();
-                response.setRating(String.valueOf(teacher.getRating()));
-                response.setDescription(teacher.getDescription());
-            }
+//            if (role.getName().equals(RoleType.ROLE_TEACHER)) {
+//                Teacher teacher = new Teacher();
+//                response.setRating(String.valueOf(teacher.getRating()));
+//                response.setDescription(teacher.getDescription());
+//            }
             responses.add(response);
         }
         return responses;

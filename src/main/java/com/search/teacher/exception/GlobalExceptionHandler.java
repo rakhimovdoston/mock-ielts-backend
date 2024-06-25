@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<JResponse> badRequest(BadRequestException e) {
         if (e.getResponse() == null)
-            return new ResponseEntity<>(JResponse.error(404, e.getMessage()), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(JResponse.error(400, e.getMessage()), HttpStatus.BAD_REQUEST);
 
         return new ResponseEntity<>(e.getResponse(), HttpStatus.BAD_REQUEST);
     }
@@ -35,10 +35,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ConstraintViolationException.class})
     public ResponseEntity<JResponse> handleConstraintViolation(ConstraintViolationException ex) {
         Map<String, Object> errors = new HashMap<>();
-        for (ConstraintViolation<?> violation: ex.getConstraintViolations()) {
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
             errors.put(violation.getMessageTemplate(), violation.getInvalidValue());
         }
         return ResponseEntity.badRequest().body(JResponse.error(400, "badRequest", errors));
+    }
+
+    @ExceptionHandler(InvalidFileTypeException.class)
+    public ResponseEntity<String> handleInvalidFileTypeException(InvalidFileTypeException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
@@ -51,12 +56,6 @@ public class GlobalExceptionHandler {
             status = HttpStatus.FORBIDDEN;
             message = e.getMessage();
         }
-        return ResponseEntity.status(status)
-                .body(JResponse.error(status.value(), message));
-    }
-
-    @ExceptionHandler(InvalidFileTypeException.class)
-    public ResponseEntity<String> handleInvalidFileTypeException(InvalidFileTypeException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return ResponseEntity.status(status).body(JResponse.error(status.value(), message));
     }
 }

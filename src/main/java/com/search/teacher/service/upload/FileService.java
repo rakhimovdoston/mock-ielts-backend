@@ -28,7 +28,6 @@ public class FileService {
     public JResponse uploadImage(User user, String type, MultipartFile file) {
         Images images = new Images();
         ImageType imageType = ImageType.getValue(type);
-        images.setUser(user);
         images.setType(imageType);
         images.setUser(user);
         images.setSize(file.getSize());

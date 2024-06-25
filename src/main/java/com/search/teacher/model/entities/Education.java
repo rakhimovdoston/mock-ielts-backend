@@ -20,7 +20,7 @@ public class Education extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Degree degree;
 
-    @ManyToOne
-    @JoinColumn(name = "teacher_id", referencedColumnName = "id")
-    private Teacher teacher;
+//    @ManyToOne
+//    @JoinColumn(name = "teacher_id", referencedColumnName = "id")
+//    private Teacher teacher;
 }

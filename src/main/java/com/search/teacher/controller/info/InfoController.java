@@ -16,21 +16,20 @@ import java.util.Map;
 public class InfoController {
 
     private final StudentService studentService;
-    private final TeacherService teacherService;
 
-    @GetMapping("info-desc")
+    @GetMapping("description")
     public JResponse infoDescription() {
         Map<String, Object> map = studentService.infoDescription();
         return JResponse.success(map);
     }
 
-    @GetMapping("topic-info")
-    public JResponse getTopics() {
-        return teacherService.allTopics();
-    }
-
-    @GetMapping("degree")
-    public JResponse getDegree() {
-        return teacherService.allDegrees();
-    }
+//    @GetMapping("topic-info")
+//    public JResponse getTopics() {
+//        return teacherService.allTopics();
+//    }
+//
+//    @GetMapping("degree")
+//    public JResponse getDegree() {
+//        return teacherService.allDegrees();
+//    }
 }

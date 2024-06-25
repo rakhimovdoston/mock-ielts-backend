@@ -15,6 +15,7 @@ public class StudentRequest {
     private String firstname;
     private String lastname;
     private String phoneNumber;
+    private Long logoId;
 
     private Long describeId;
     private List<Long> topics = new ArrayList<>();

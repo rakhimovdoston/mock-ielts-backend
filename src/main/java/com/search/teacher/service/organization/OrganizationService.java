@@ -1,7 +1,9 @@
 package com.search.teacher.service.organization;
 
+import com.search.teacher.dto.UserDto;
 import com.search.teacher.dto.filter.OrganizationFilter;
 import com.search.teacher.dto.request.OrganizationRequest;
+import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
 
 public interface OrganizationService {
@@ -12,4 +14,6 @@ public interface OrganizationService {
     JResponse update(OrganizationRequest request);
 
     JResponse deleteOrganization(Long id);
+
+    void createOrganisation(UserDto userDto, User user);
 }

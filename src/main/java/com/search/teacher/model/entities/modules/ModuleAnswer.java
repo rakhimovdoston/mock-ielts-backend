@@ -1,5 +1,6 @@
 package com.search.teacher.model.entities.modules;
 
+import com.search.teacher.model.entities.modules.reading.ReadingPassage;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,9 +26,9 @@ public class ModuleAnswer {
 
     @ManyToOne
     @JoinColumn(name = "reading_id", referencedColumnName = "id")
-    private Reading reading;
+    private ReadingPassage reading;
 
-    @ManyToOne
-    @JoinColumn(name = "listening_id", referencedColumnName = "id")
-    private Listening listening;
+//    @ManyToOne
+//    @JoinColumn(name = "listening_id", referencedColumnName = "id")
+//    private Listening listening;
 }

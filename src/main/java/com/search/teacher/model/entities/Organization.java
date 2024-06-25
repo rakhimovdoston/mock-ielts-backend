@@ -3,8 +3,11 @@ package com.search.teacher.model.entities;
 import com.search.teacher.model.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -16,39 +19,24 @@ import java.util.List;
 @Entity
 public class Organization extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
     private String name;
 
     @Column(columnDefinition = "text")
     private String description;
 
     private String registrationNumber;
-
-    private String address;
-
-    private String city;
-
     private String phoneNumber;
 
     private String email;
 
     private String website;
+    private String address;
+    private String city;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "organization")
-    private List<Images> images;
-
-    private String contactPerson;
-
-    private String contactPersonPhone;
-
-    private String contactPersonEmail;
-
-    private LocalDate establishedDate;
+    @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Long> images = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     private User owner;
-
-    public void addImage(Images image) {
-        this.images.add(image);
-    }
 }
