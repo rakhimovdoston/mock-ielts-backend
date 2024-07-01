@@ -20,6 +20,6 @@ public class UserChatController {
     @MessageMapping("/user.addUser")
     @SendTo("/topic/messages")
     public JResponse addUser(@Payload AddUserDto userDto) {
-        return chatUserService.addUser(securityUtils.currentUser(), userDto);
+        return chatUserService.addUser(securityUtils.getCurrentUser(), userDto);
     }
 }

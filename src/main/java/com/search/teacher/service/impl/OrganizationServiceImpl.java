@@ -6,7 +6,6 @@ import com.search.teacher.dto.request.OrganizationRequest;
 import com.search.teacher.dto.response.OrganizationResponse;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.NotfoundException;
-import com.search.teacher.model.entities.Images;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
@@ -70,7 +69,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .phoneNumber(request.phoneNumber())
                 .email(request.email())
                 .website(request.website())
-                .owner(securityUtils.currentUser())
+                .owner(securityUtils.getCurrentUser())
                 .build();
 
         organizationRepository.save(organization);

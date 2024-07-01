@@ -1,5 +1,6 @@
 package com.search.teacher.service.modules;
 
+import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.ReadingDto;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
@@ -12,4 +13,10 @@ import com.search.teacher.model.response.JResponse;
  **/
 public interface ModuleService {
     JResponse saveReading(User user, ReadingDto reading);
+
+    JResponse getAllModules(User currentUser, ModuleFilter filter);
+
+    JResponse getReadingById(User currentUser, Long id);
+
+    JResponse getQuestionTypes(String type);
 }

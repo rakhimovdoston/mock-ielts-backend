@@ -31,12 +31,12 @@ public class FileController {
                     .badRequest()
                     .body(JResponse.error(400, FileUtils.errorMessage(ResponseMessage.CONTENT_TYPE_INVALID, FileUtils.PHOTO_CONTENTS)));
         }
-        return ResponseEntity.ok(fileService.uploadImage(securityUtils.currentUser(), type, file));
+        return ResponseEntity.ok(fileService.uploadImage(securityUtils.getCurrentUser(), type, file));
     }
 
     @GetMapping("photo/download")
     public byte[] downloadImage(@RequestParam("filename") String filename) {
-        return fileService.downloadImage(securityUtils.currentUser(), filename);
+        return fileService.downloadImage(securityUtils.getCurrentUser(), filename);
     }
 
     @PostMapping(value = "upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

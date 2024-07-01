@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class SecurityUtils {
     private final UserRepository userRepository;
 
-    public User currentUser() {
+    public User getCurrentUser() {
         User user = null;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() != null) {

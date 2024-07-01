@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/question")
@@ -36,7 +35,7 @@ public class QuestionController {
     @PostMapping("all")
     public ResponseEntity<JResponse> getAllQuestion(@RequestBody QuestionSearchFilter questionSearchFilter) {
         int count = questionService.getCountAllQuestion(questionSearchFilter);
-        List<QuestionDto> questions = questionService.getAllQuestion(securityUtils.currentUser(), questionSearchFilter);
+        List<QuestionDto> questions = questionService.getAllQuestion(securityUtils.getCurrentUser(), questionSearchFilter);
         if (questions == null || questions.isEmpty())
             return new ResponseEntity<>(JResponse.error(404, "Not found questions"), HttpStatus.NOT_FOUND);
 
@@ -55,17 +54,17 @@ public class QuestionController {
 
     @PostMapping("check-answers")
     public ResponseEntity<JResponse> checkAnswers(@RequestBody AnswerList checker) {
-        return ResponseEntity.ok(JResponse.success(questionService.checkAnswers(securityUtils.currentUser(), checker)));
+        return ResponseEntity.ok(JResponse.success(questionService.checkAnswers(securityUtils.getCurrentUser(), checker)));
     }
 
     @GetMapping("history")
     public JResponse getUserQuestionHistory(@RequestParam(name = "beginDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date beginDate,
                                             @RequestParam(name = "endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate) {
-        return questionService.getQuestionHistories(securityUtils.currentUser(), beginDate, endDate);
+        return questionService.getQuestionHistories(securityUtils.getCurrentUser(), beginDate, endDate);
     }
 
     @GetMapping("history/{requestId}")
     public JResponse getHistoryByRequestId(@PathVariable("requestId") String requestId) {
-        return questionService.questionHistoryByRequestId(securityUtils.currentUser(), requestId);
+        return questionService.questionHistoryByRequestId(securityUtils.getCurrentUser(), requestId);
     }
 }

@@ -21,6 +21,6 @@ public class ChatController {
     @MessageMapping("/hello")
     @SendTo("/topic/messages")
     public JResponse sendMessage(@Payload ChatDto message) {
-        return chatMessageService.sendMessage(securityUtils.currentUser(), message);
+        return chatMessageService.sendMessage(securityUtils.getCurrentUser(), message);
     }
 }

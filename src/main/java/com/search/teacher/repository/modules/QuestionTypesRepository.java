@@ -1,8 +1,12 @@
 package com.search.teacher.repository.modules;
 
 import com.search.teacher.model.entities.modules.QuestionTypes;
+import com.search.teacher.model.enums.ModuleType;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * Package com.search.teacher.repository.modules
@@ -12,4 +16,6 @@ import org.springframework.stereotype.Repository;
  **/
 @Repository
 public interface QuestionTypesRepository extends JpaRepository<QuestionTypes, Long> {
+
+    List<QuestionTypes> findAllByModuleType(ModuleType moduleType);
 }

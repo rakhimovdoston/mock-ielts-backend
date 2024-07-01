@@ -31,7 +31,7 @@ public class UserController {
 
     @GetMapping("get")
     public JResponse getStudent() {
-        StudentResponse response = studentService.getStudentById(securityUtils.currentUser());
+        StudentResponse response = studentService.getStudentById(securityUtils.getCurrentUser());
         return JResponse.success(response);
     }
 
@@ -49,7 +49,7 @@ public class UserController {
         filter.setPage(page);
         filter.setPage(size);
         filter.setToUserId(toUserId);
-        return messageService.getLastMessage(securityUtils.currentUser(), filter);
+        return messageService.getLastMessage(securityUtils.getCurrentUser(), filter);
     }
 
     @GetMapping("all-relative-users")
@@ -58,6 +58,6 @@ public class UserController {
         PageFilter filter = new PageFilter();
         filter.setPage(page);
         filter.setSize(size);
-        return messageService.getUserAllConnections(securityUtils.currentUser(), filter);
+        return messageService.getUserAllConnections(securityUtils.getCurrentUser(), filter);
     }
 }

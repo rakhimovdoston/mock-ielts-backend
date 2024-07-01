@@ -1,5 +1,6 @@
 package com.search.teacher.utils;
 
+import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
 
 import java.util.Random;
@@ -25,6 +26,25 @@ public class Utils {
             case PROFILE_PICTURE -> "profiles";
             case LOGO -> "logo";
             default -> "images";
+        };
+    }
+
+    public static String getListeningPassageName(Difficulty difficulty) {
+        return switch (difficulty) {
+            case semi_easy -> "Listening Passage 1";
+            case easy -> "Listening Passage 2";
+            case medium -> "Listening Passage 3";
+            case hard -> "Listening Passage 4";
+            default -> "";
+        };
+    }
+
+    public static String getReadingPassageName(Difficulty difficulty) {
+        return switch (difficulty) {
+            case easy -> "Reading Passage 1";
+            case medium -> "Reading Passage 2";
+            case hard -> "Reading Passage 3";
+            default -> "";
         };
     }
 }

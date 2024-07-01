@@ -4,10 +4,8 @@ import com.search.teacher.dto.question.QuestionDto;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.question.QuestionService;
 import com.search.teacher.utils.SecurityUtils;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.models.annotations.OpenAPI30;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +23,7 @@ public class AdminQuestionController {
 
     @PostMapping("save")
     public JResponse newQuestion(@RequestBody QuestionDto questionDto) {
-        return questionService.saveQuestion(securityUtils.currentUser(), questionDto);
+        return questionService.saveQuestion(securityUtils.getCurrentUser(), questionDto);
     }
 
     @PostMapping("external")
@@ -36,7 +34,7 @@ public class AdminQuestionController {
 
     @PutMapping("update/")
     public JResponse updateQuestion(@RequestBody QuestionDto questionDto) {
-        return questionService.updateQuestion(securityUtils.currentUser(), questionDto);
+        return questionService.updateQuestion(securityUtils.getCurrentUser(), questionDto);
     }
 
     @PostMapping("excel")
@@ -44,11 +42,11 @@ public class AdminQuestionController {
         if (questionFile.isEmpty())
             return new ResponseEntity<>(JResponse.error(400, "File is empty"), HttpStatus.BAD_REQUEST);
 
-        return ResponseEntity.ok(questionService.uploadQuestions(securityUtils.currentUser(), questionFile));
+        return ResponseEntity.ok(questionService.uploadQuestions(securityUtils.getCurrentUser(), questionFile));
     }
 
     @DeleteMapping("delete/{id}")
     public JResponse deleteQuestion(@PathVariable("id") Long id) {
-        return questionService.deleteQuestion(securityUtils.currentUser(), id);
+        return questionService.deleteQuestion(securityUtils.getCurrentUser(), id);
     }
 }

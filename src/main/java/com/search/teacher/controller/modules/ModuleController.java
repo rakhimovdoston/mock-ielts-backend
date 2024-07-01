@@ -9,33 +9,23 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Package com.search.teacher.controller.modules
  * Created by doston.rakhimov
- * Date: 21/06/24
- * Time: 15:05
+ * Date: 25/06/24
+ * Time: 10:00
  **/
 @RestController
-@RequestMapping("api/v1/reading")
+@RequestMapping("api/v1/module")
 @RequiredArgsConstructor
-public class ReadingController {
+public class ModuleController {
 
-    private final ModuleService moduleService;
     private final SecurityUtils securityUtils;
-
-//    @PostMapping("save")
-//    public ResponseEntity<JResponse> createReading(@RequestBody ReadingDto reading) {
-//
-//        if (reading.getAnswers().isEmpty())
-//            return ResponseEntity.badRequest().body(JResponse.error(400, "Please enter your reading answers"));
-//
-//        JResponse response = moduleService.saveReading(securityUtils.getCurrentUser(), reading);
-//        return ResponseEntity.ok(response);
-//    }
+    private final ModuleService moduleService;
 
     @GetMapping("all")
     public ResponseEntity<JResponse> getAllModule(@ParameterObject ModuleFilter filter) {
@@ -43,9 +33,8 @@ public class ReadingController {
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("byId/{id}")
-    public JResponse getReadingById(@PathVariable(name = "id") Long id) {
-        return moduleService.getReadingById(securityUtils.getCurrentUser(), id);
+    @GetMapping("types")
+    public JResponse getModuleTypes(@RequestParam(name = "types") String type) {
+        return moduleService.getQuestionTypes(type);
     }
-
 }

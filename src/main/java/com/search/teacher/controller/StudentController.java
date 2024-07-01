@@ -10,8 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/v1/student")
 @Tag(name = "Student Controller")
@@ -33,7 +31,7 @@ public class StudentController {
 
     @PutMapping("update")
     public JResponse updateStudent(@RequestBody StudentRequest request) {
-        SaveResponse response = studentService.updateStudent(securityUtils.currentUser(), request);
+        SaveResponse response = studentService.updateStudent(securityUtils.getCurrentUser(), request);
         return JResponse.success(response);
     }
 }

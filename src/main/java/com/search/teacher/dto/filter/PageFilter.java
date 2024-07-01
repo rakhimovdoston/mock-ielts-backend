@@ -22,6 +22,7 @@ public class PageFilter {
     @Min(value = 0, message = "Page number cannot be smaller than 0")
     @ToString.Include
     private Integer page = 0;
+
     @ApiModelProperty(value = "The size of the page, by default it is set to 200")
     @Min(value = 0, message = "Page size cannot be smaller than 0")
     @ToString.Include
