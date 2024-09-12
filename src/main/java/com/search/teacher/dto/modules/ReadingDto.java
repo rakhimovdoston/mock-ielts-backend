@@ -1,5 +1,6 @@
 package com.search.teacher.dto.modules;
 
+import com.search.teacher.model.enums.Difficulty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +15,7 @@ import lombok.Setter;
 public class ReadingDto {
     private Long id;
     private String passage;
+    private Difficulty difficulty;
     private String title;
     private String explanation;
 }

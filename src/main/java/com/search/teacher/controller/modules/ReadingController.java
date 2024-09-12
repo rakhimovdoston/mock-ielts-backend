@@ -1,6 +1,7 @@
 package com.search.teacher.controller.modules;
 
 import com.search.teacher.dto.filter.ModuleFilter;
+import com.search.teacher.dto.modules.ReadingDto;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.modules.ModuleService;
 import com.search.teacher.utils.SecurityUtils;
@@ -8,10 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Package com.search.teacher.controller.modules
@@ -27,15 +25,15 @@ public class ReadingController {
     private final ModuleService moduleService;
     private final SecurityUtils securityUtils;
 
-//    @PostMapping("save")
-//    public ResponseEntity<JResponse> createReading(@RequestBody ReadingDto reading) {
-//
+    @PostMapping("save")
+    public ResponseEntity<JResponse> createReading(@RequestBody ReadingDto reading) {
+
 //        if (reading.getAnswers().isEmpty())
 //            return ResponseEntity.badRequest().body(JResponse.error(400, "Please enter your reading answers"));
-//
-//        JResponse response = moduleService.saveReading(securityUtils.getCurrentUser(), reading);
-//        return ResponseEntity.ok(response);
-//    }
+
+        JResponse response = moduleService.saveReading(securityUtils.getCurrentUser(), reading);
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("all")
     public ResponseEntity<JResponse> getAllModule(@ParameterObject ModuleFilter filter) {

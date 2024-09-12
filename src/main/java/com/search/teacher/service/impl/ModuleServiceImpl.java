@@ -46,6 +46,11 @@ public class ModuleServiceImpl implements ModuleService {
     @Override
     public JResponse saveReading(User user, ReadingDto dto) {
         ReadingPassage reading = new ReadingPassage();
+        reading.setDifficulty(dto.getDifficulty());
+        reading.setTitle(dto.getTitle());
+        reading.setHtml(true);
+        reading.setType(ModuleType.READING);
+        reading.setContent(dto.getPassage());
         readingRepository.save(reading);
         return JResponse.success(new SaveResponse(reading.getId()));
     }
