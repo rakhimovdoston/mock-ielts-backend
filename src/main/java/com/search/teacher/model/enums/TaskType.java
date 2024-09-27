@@ -7,5 +7,5 @@ package com.search.teacher.model.enums;
  * Time: 14:56
  **/
 public enum TaskType {
-    TASK_ONE, TASK_TWO, TASK_THREE
+    TASK_ONE, TASK_TWO, TASK_THREE, TASK_FOUR;
 }

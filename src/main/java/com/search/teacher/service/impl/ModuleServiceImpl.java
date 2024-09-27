@@ -51,7 +51,19 @@ public class ModuleServiceImpl implements ModuleService {
         reading.setHtml(true);
         reading.setType(ModuleType.READING);
         reading.setContent(dto.getPassage());
+
+        // Set the organization based on the user
+        Organization organization = organizationRepository.findByOwner(user);
+        if (organization != null) {
+            reading.setOrganization(organization);
+        } else {
+            return JResponse.error(400, "Organization not found for the user.");
+        }
+
+        // Save the reading passage to the database
         readingRepository.save(reading);
+
+        // Return the saved reading passage ID to the frontend
         return JResponse.success(new SaveResponse(reading.getId()));
     }
 

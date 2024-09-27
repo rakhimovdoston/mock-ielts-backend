@@ -57,22 +57,45 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public JResponse registerUser(UserDto userDto) {
-        if (userRepository.existsByEmail(userDto.email())) {
+        validateEmailNotRegistered(userDto.email());
+
+        User user = createUser(userDto);
+
+        userRepository.save(user);
+        logger.info("User saved: {}", user.getId());
+
+        sendConfirmationEmail(user);
+
+        return JResponse.success(new RegisterResponse(user.getEmail()));
+    }
+
+    private void validateEmailNotRegistered(String email) {
+        if (userRepository.existsByEmail(email)) {
             throw new BadRequestException(JResponse.error(400, "This email has already been registered!"));
         }
+    }
+
+    private User createUser(UserDto userDto) {
         User user = userDto.toUser();
         user.setPassword(passwordEncoder.encode(userDto.password()));
+
         Role role = roleRepository.findByName(RoleType.getRoleByName(userDto.role()));
         if (role == null) throw new NotfoundException("Role not found");
         user.setRole(role);
+
         user.setStatus(Status.confirm);
-        String confirmationCode = getRandomCode(100000, 999999);
-        user.setCode(confirmationCode);
-        if (userDto.type() == Type.organization) organizationService.createOrganisation(userDto, user);
-        userRepository.save(user);
-        logger.info("User saved: {}", user.getId());
+        user.setCode(getRandomCode(100000, 999999));
+
+        if (userDto.type() == Type.organization) {
+            organizationService.createOrganisation(userDto, user);
+        }
+
+        return user;
+    }
+
+    private void sendConfirmationEmail(User user) {
+        String confirmationCode = user.getCode();
         rabbitMqProducer.sendNotificationToEmail(user.getEmail(), confirmationCode);
-        return JResponse.success(new RegisterResponse(user.getEmail()));
     }
 
     @Override
