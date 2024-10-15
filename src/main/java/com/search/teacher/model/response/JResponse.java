@@ -1,9 +1,13 @@
 package com.search.teacher.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 
+@Setter
+@Getter
 public class JResponse {
     private int code;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -11,7 +15,7 @@ public class JResponse {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Object data;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private Map<String, Object> error;
+    private Map<String, String> error;
 
     public JResponse(int code, Object data) {
         this.code = code;
@@ -23,7 +27,7 @@ public class JResponse {
         this.message = message;
     }
 
-    public JResponse(int code, String message, Map<String, Object> error) {
+    public JResponse(int code, String message, Map<String, String> error) {
         this.code = code;
         this.message = message;
         this.error = error;
@@ -41,7 +45,7 @@ public class JResponse {
         return new JResponse(200, "success");
     }
 
-    public static JResponse error(int code, String message, Map<String, Object> error) {
+    public static JResponse error(int code, String message, Map<String, String> error) {
         return new JResponse(code, message, error);
     }
 
@@ -57,35 +61,4 @@ public class JResponse {
         return code != 200;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public void setCode(int code) {
-        this.code = code;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public Object getData() {
-        return data;
-    }
-
-    public void setData(Object data) {
-        this.data = data;
-    }
-
-    public Map<String, Object> getError() {
-        return error;
-    }
-
-    public void setError(Map<String, Object> error) {
-        this.error = error;
-    }
 }

@@ -44,6 +44,16 @@ public class ReadingController {
         return readingService.updateReadingAnswer(securityUtils.getCurrentUser(), readingId, answer);
     }
 
+    @DeleteMapping("delete/passage/{id}")
+    public JResponse deleteReadingPassage(@PathVariable("id") Long readingId) {
+        return readingService.deleteReadingPassage(securityUtils.getCurrentUser(), readingId);
+    }
+
+    @DeleteMapping("delete/passage/{passageId}/answer/{answerId}")
+    public JResponse deleteReadingAnswer(@PathVariable("passageId") Long passageId, @PathVariable("answerId") Long answerId) {
+        return readingService.deleteReadingAnswer(securityUtils.getCurrentUser(), passageId, answerId);
+    }
+
     @GetMapping("get/{id}")
     public JResponse getReadingById(@PathVariable(name = "id") Long id) {
         return readingService.getReadingById(securityUtils.getCurrentUser(), id);

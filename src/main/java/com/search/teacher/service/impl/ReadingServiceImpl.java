@@ -18,6 +18,8 @@ import com.search.teacher.service.organization.OrganizationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+
 /**
  * Package com.search.teacher.service.impl
  * Created by doston.rakhimov
@@ -66,6 +68,37 @@ public class ReadingServiceImpl implements ReadingService {
         readingPassage.setCount(passage.getPassages().size());
         readingRepository.save(readingPassage);
         return JResponse.success(new SaveResponse(readingPassage.getId()));
+    }
+
+    @Override
+    public JResponse deleteReadingPassage(User currentUser, Long readingId) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+
+        ReadingPassage readingPassage = readingRepository.findByIdAndOrganization(readingId, organization);
+
+        if (readingPassage == null) return JResponse.error(400, "This reading is not for you.");
+
+        readingPassage.setActive(false);
+        readingPassage.setDeleteDate(new Date());
+        readingRepository.save(readingPassage);
+        return JResponse.success();
+    }
+
+    @Override
+    public JResponse deleteReadingAnswer(User currentUser, Long passageId, Long answerId) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+
+        ReadingPassage readingPassage = readingRepository.findByIdAndOrganization(passageId, organization);
+
+        if (readingPassage == null) return JResponse.error(400, "This reading is not for you.");
+
+        ReadingQuestion question = readingQuestionRepository.findByIdAndPassage(answerId, readingPassage);
+        if (question == null) return JResponse.error(400, "This reading question is not for you.");
+
+        question.setActive(false);
+        question.setDeleteDate(new Date());
+        readingQuestionRepository.save(question);
+        return JResponse.success();
     }
 
     @Override

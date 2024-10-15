@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -32,18 +34,30 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(e.getResponse(), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({ConstraintViolationException.class})
-    public ResponseEntity<JResponse> handleConstraintViolation(ConstraintViolationException ex) {
-        Map<String, Object> errors = new HashMap<>();
-        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
-            errors.put(violation.getMessageTemplate(), violation.getInvalidValue());
-        }
-        return ResponseEntity.badRequest().body(JResponse.error(400, "badRequest", errors));
-    }
+//    @ExceptionHandler({ConstraintViolationException.class})
+//    public ResponseEntity<JResponse> handleConstraintViolation(ConstraintViolationException ex) {
+//        Map<String, String> errors = new HashMap<>();
+//        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+//            errors.put(violation.getMessageTemplate(), violation.getInvalidValue());
+//        }
+//        return ResponseEntity.badRequest().body(JResponse.error(400, "badRequest", errors));
+//    }
 
     @ExceptionHandler(InvalidFileTypeException.class)
     public ResponseEntity<String> handleInvalidFileTypeException(InvalidFileTypeException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<JResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        JResponse response = JResponse.error(400, "Validations errors", errors);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)

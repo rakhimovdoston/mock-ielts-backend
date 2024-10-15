@@ -44,4 +44,8 @@ public class UserTokenService {
         if (phoneNumber.equals(user.getEmail())) return user;
         return null;
     }
+
+    public UserToken findByRefreshToken(String refreshToken) {
+        return userTokenRepository.findByRefreshToken(refreshToken);
+    }
 }

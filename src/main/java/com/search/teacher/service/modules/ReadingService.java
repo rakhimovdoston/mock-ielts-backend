@@ -21,4 +21,8 @@ public interface ReadingService {
     JResponse updateReadingAnswer(User currentUser, Long readingId, RQuestionAnswerDto answer);
 
     JResponse updatePassage(User currentUser, ReadingPassageDto passage);
+
+    JResponse deleteReadingPassage(User currentUser, Long readingId);
+
+    JResponse deleteReadingAnswer(User currentUser, Long passageId, Long answerId);
 }

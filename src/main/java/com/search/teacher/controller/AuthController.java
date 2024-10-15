@@ -4,6 +4,7 @@ import com.search.teacher.dto.AuthenticationRequest;
 import com.search.teacher.dto.UserDto;
 import com.search.teacher.dto.request.ConfirmationRequest;
 import com.search.teacher.dto.request.ForgotPasswordReq;
+import com.search.teacher.dto.request.RefreshTokenReq;
 import com.search.teacher.dto.request.ResendRequest;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.user.UserService;
@@ -35,6 +36,11 @@ public class AuthController {
     @PostMapping("authenticate")
     public ResponseEntity<JResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
         return ResponseEntity.ok(userService.authenticate(request));
+    }
+
+    @PostMapping("refresh-token")
+    public ResponseEntity<JResponse> refreshToken(@RequestBody RefreshTokenReq refreshTokenReq) {
+        return ResponseEntity.ok(userService.refreshToken(refreshTokenReq));
     }
 
     @PostMapping("forgot-password")

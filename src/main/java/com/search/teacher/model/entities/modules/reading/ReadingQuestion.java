@@ -9,6 +9,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -35,6 +36,8 @@ public class ReadingQuestion extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private ReadingQuestionTypes types;
+
+    private Date deleteDate;
 
     @ManyToOne
     @JoinColumn(name = "passage_id", referencedColumnName = "id")

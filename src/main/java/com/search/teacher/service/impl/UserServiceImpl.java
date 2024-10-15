@@ -4,16 +4,14 @@ import com.search.teacher.components.Constants;
 import com.search.teacher.config.rabbit.RabbitMqProducer;
 import com.search.teacher.dto.AuthenticationRequest;
 import com.search.teacher.dto.UserDto;
-import com.search.teacher.dto.request.ConfirmationRequest;
-import com.search.teacher.dto.request.ForgotPasswordReq;
-import com.search.teacher.dto.request.ResendRequest;
-import com.search.teacher.dto.request.ResetPasswordRequest;
+import com.search.teacher.dto.request.*;
 import com.search.teacher.dto.response.RegisterResponse;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.model.entities.Role;
 import com.search.teacher.model.entities.User;
+import com.search.teacher.model.entities.UserToken;
 import com.search.teacher.model.enums.RoleType;
 import com.search.teacher.model.enums.Status;
 import com.search.teacher.model.enums.Type;
@@ -55,7 +53,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public JResponse registerUser(UserDto userDto) {
         validateEmailNotRegistered(userDto.email());
-
         User user = createUser(userDto);
 
         userRepository.save(user);
@@ -76,7 +73,7 @@ public class UserServiceImpl implements UserService {
         User user = userDto.toUser();
         user.setPassword(passwordEncoder.encode(userDto.password()));
 
-        Role role = roleRepository.findByName(RoleType.getRoleByName(userDto.role()));
+        Role role = roleRepository.findByName(RoleType.ROLE_STUDENT);
         if (role == null) throw new NotfoundException("Role not found");
         user.setRoles(List.of(role));
 
@@ -193,6 +190,17 @@ public class UserServiceImpl implements UserService {
     public List<User> getAllUsers() {
         logger.info("Get all users");
         return userRepository.findAll();
+    }
+
+    @Override
+    public JResponse refreshToken(RefreshTokenReq refreshTokenReq) {
+        UserToken userToken = userTokenService.findByRefreshToken(refreshTokenReq.getRefreshToken());
+        if (userToken == null) throw new BadRequestException("Refresh token expired.");
+
+        if (!DateUtils.isExpirationToken(userToken.getExpireDate()))
+            throw new BadRequestException("Refresh token expired");
+
+        return userTokenService.generateToken(userToken.getUser());
     }
 
     private String getRandomCode(int min, int max) {
