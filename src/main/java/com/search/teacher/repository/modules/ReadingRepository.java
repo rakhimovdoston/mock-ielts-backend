@@ -1,5 +1,6 @@
 package com.search.teacher.repository.modules;
 
+import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.modules.reading.ReadingPassage;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,4 +11,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * Time: 15:06
  **/
 public interface ReadingRepository extends JpaRepository<ReadingPassage, Long> {
+
+    ReadingPassage findByIdAndOrganization(Long id, Organization organization);
 }

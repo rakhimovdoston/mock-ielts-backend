@@ -2,7 +2,9 @@ package com.search.teacher.service.modules;
 
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.ReadingDto;
+import com.search.teacher.dto.modules.ReadingPassageDto;
 import com.search.teacher.model.entities.User;
+import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.model.response.JResponse;
 
 /**
@@ -12,11 +14,7 @@ import com.search.teacher.model.response.JResponse;
  * Time: 15:07
  **/
 public interface ModuleService {
-    JResponse saveReading(User user, ReadingDto reading);
-
     JResponse getAllModules(User currentUser, ModuleFilter filter);
 
-    JResponse getReadingById(User currentUser, Long id);
-
-    JResponse getQuestionTypes(String type);
+    JResponse getQuestionTypes(ModuleType type);
 }

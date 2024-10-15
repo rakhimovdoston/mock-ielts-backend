@@ -8,7 +8,6 @@ import com.search.teacher.dto.request.ConfirmationRequest;
 import com.search.teacher.dto.request.ForgotPasswordReq;
 import com.search.teacher.dto.request.ResendRequest;
 import com.search.teacher.dto.request.ResetPasswordRequest;
-import com.search.teacher.dto.response.AuthenticationResponse;
 import com.search.teacher.dto.response.RegisterResponse;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
@@ -21,19 +20,17 @@ import com.search.teacher.model.enums.Type;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.RoleRepository;
 import com.search.teacher.repository.UserRepository;
-import com.search.teacher.service.UserSession;
 import com.search.teacher.service.organization.OrganizationService;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.service.user.UserTokenService;
 import com.search.teacher.utils.DateUtils;
 import com.search.teacher.utils.ResponseMessage;
+import com.search.teacher.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
@@ -50,7 +47,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final UserSession userSession;
+    private final SecurityUtils securityUtils;
     private final OrganizationService organizationService;
     private final UserTokenService userTokenService;
     private final RabbitMqProducer rabbitMqProducer;
@@ -81,7 +78,7 @@ public class UserServiceImpl implements UserService {
 
         Role role = roleRepository.findByName(RoleType.getRoleByName(userDto.role()));
         if (role == null) throw new NotfoundException("Role not found");
-        user.setRole(role);
+        user.setRoles(List.of(role));
 
         user.setStatus(Status.confirm);
         user.setCode(getRandomCode(100000, 999999));
@@ -163,7 +160,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public JResponse resetPassword(ResetPasswordRequest req) {
-        User user = userSession.getUser();
+        User user = securityUtils.getCurrentUser();
         boolean matches = passwordEncoder.matches(req.oldPassword(), req.newPassword());
         if (matches) {
             if (req.newPassword().equals(req.confirmPassword())) {

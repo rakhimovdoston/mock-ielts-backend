@@ -1,8 +1,7 @@
 package com.search.teacher.repository.modules;
 
-import com.search.teacher.model.entities.modules.QuestionTypes;
+import com.search.teacher.model.entities.modules.reading.QuestionTypes;
 import com.search.teacher.model.enums.ModuleType;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

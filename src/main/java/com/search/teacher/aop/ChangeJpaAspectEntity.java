@@ -1,7 +1,6 @@
 package com.search.teacher.aop;
 
 import com.search.teacher.components.Constants;
-import com.search.teacher.model.entities.Question;
 import com.search.teacher.model.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -27,17 +26,6 @@ public class ChangeJpaAspectEntity {
             if (cache != null) {
                 cache.clear();
                 logger.info("Clearing cache by user email");
-            }
-        }
-    }
-
-    @AfterReturning(pointcut = "execution(* com.search.teacher.repository.QuestionRepository.save(..)))", returning = "question")
-    public void clearQuestionCache(Object question) {
-        if (question instanceof Question) {
-            Cache cache = cacheManager.getCache(Constants.QUESTION_CACHE);
-            if (cache != null) {
-                cache.clear();
-                logger.info("Clearing cache by question");
             }
         }
     }

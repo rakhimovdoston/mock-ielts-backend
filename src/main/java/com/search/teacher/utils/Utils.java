@@ -3,6 +3,8 @@ package com.search.teacher.utils;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class Utils {
@@ -46,5 +48,14 @@ public class Utils {
             case hard -> "Reading Passage 3";
             default -> "";
         };
+    }
+
+    public static List<String> getHeadingList(int count) {
+        List<String> headingList = new ArrayList<>();
+        for (int i = 1; i <= count; i++) {
+            char letter = (char) (i + 64);
+            headingList.add(String.valueOf(letter));
+        }
+        return headingList;
     }
 }

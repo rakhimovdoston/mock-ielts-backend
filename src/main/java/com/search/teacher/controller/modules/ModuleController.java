@@ -1,6 +1,7 @@
 package com.search.teacher.controller.modules;
 
 import com.search.teacher.dto.filter.ModuleFilter;
+import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.modules.ModuleService;
 import com.search.teacher.utils.SecurityUtils;
@@ -33,8 +34,8 @@ public class ModuleController {
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("types")
-    public JResponse getModuleTypes(@RequestParam(name = "types") String type) {
-        return moduleService.getQuestionTypes(type);
+    @GetMapping("question-types")
+    public ResponseEntity<JResponse> getQuestionTypes(@RequestParam(name = "module_type") ModuleType moduleType) {
+        return ResponseEntity.ok(moduleService.getQuestionTypes(moduleType));
     }
 }

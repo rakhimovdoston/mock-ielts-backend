@@ -23,19 +23,16 @@ public class Organization extends BaseEntity {
 
     @Column(columnDefinition = "text")
     private String description;
-
-    private String registrationNumber;
+    
     private String phoneNumber;
 
     private String email;
 
     private String website;
     private String address;
+    private String longitude;
+    private String latitude;
     private String city;
-
-    @Column(columnDefinition = "jsonb")
-    @JdbcTypeCode(SqlTypes.JSON)
-    private List<Long> images = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     private User owner;

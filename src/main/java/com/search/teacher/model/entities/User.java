@@ -32,26 +32,9 @@ public class User extends BaseEntity implements Serializable {
     @Column(name = "internet_status")
     private IStatus internetStatus;
 
-    @ManyToOne
-    @JoinColumn(name = "role_id", referencedColumnName = "id")
-    private Role role;
-
-    @OneToOne
-    @JoinColumn(name = "describe_id", referencedColumnName = "id")
-    private Describe describe;
-
-    @Column(columnDefinition = "jsonb")
-    @JdbcTypeCode(SqlTypes.JSON)
-    private List<Long> topics = new ArrayList<>();
-
-    @Column(columnDefinition = "jsonb")
-    @JdbcTypeCode(SqlTypes.JSON)
-    private List<Long> goals = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user")
-    @JsonIgnore
-    private List<Images> images = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user")
-    private List<Certificate> certificates;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_role",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
+    private List<Role> roles = new ArrayList<>();
 }

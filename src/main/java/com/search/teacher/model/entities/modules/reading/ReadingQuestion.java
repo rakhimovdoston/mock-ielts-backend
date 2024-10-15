@@ -1,10 +1,12 @@
 package com.search.teacher.model.entities.modules.reading;
 
 import com.search.teacher.model.base.BaseEntity;
-import com.search.teacher.model.entities.modules.QuestionTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,24 +24,19 @@ import java.util.List;
 @Setter
 public class ReadingQuestion extends BaseEntity {
 
-    private String title;
-    private boolean titleHtml;
+    private String instruction;
 
-    @Column(columnDefinition = "TEXT")
-    private String explanation;
-    private boolean explanationHtml;
+    private String content;
+    private boolean html = false;
 
-    private String condition;
-    private boolean conditionHtml;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private List<Form> questions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "question")
-    private List<ReadingAnswer> questions = new ArrayList<>();
-
-    @ManyToOne
-    @JoinColumn(name = "type_id", referencedColumnName = "id")
-    private QuestionTypes type;
+    @Enumerated(EnumType.STRING)
+    private ReadingQuestionTypes types;
 
     @ManyToOne
-    @JoinColumn(name = "passage_id")
+    @JoinColumn(name = "passage_id", referencedColumnName = "id")
     private ReadingPassage passage;
 }

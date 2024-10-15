@@ -1,7 +1,5 @@
 package com.search.teacher.config.handler;
 
-import com.google.gson.Gson;
-import com.search.teacher.model.response.JResponse;
 import com.search.teacher.utils.GsonUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +9,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 @Component
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {

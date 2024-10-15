@@ -3,19 +3,14 @@ package com.search.teacher.service.impl;
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.filter.PaginationResponse;
 import com.search.teacher.dto.modules.ReadingDto;
-import com.search.teacher.dto.response.SaveResponse;
-import com.search.teacher.exception.NotfoundException;
-import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
-import com.search.teacher.model.entities.modules.QuestionTypes;
+import com.search.teacher.model.entities.modules.reading.QuestionTypes;
 import com.search.teacher.model.entities.modules.reading.ReadingPassage;
 import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.OrganizationRepository;
 import com.search.teacher.repository.modules.QuestionTypesRepository;
 import com.search.teacher.repository.modules.ReadingRepository;
-import com.search.teacher.repository.modules.SpeakingRepository;
-import com.search.teacher.repository.modules.WritingRepository;
 import com.search.teacher.service.modules.ModuleService;
 import com.search.teacher.utils.Utils;
 import lombok.RequiredArgsConstructor;
@@ -37,35 +32,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ModuleServiceImpl implements ModuleService {
 
-    private final SpeakingRepository speakingRepository;
     private final ReadingRepository readingRepository;
-    private final WritingRepository writingRepository;
     private final OrganizationRepository organizationRepository;
     private final QuestionTypesRepository questionTypesRepository;
-
-    @Override
-    public JResponse saveReading(User user, ReadingDto dto) {
-        ReadingPassage reading = new ReadingPassage();
-        reading.setDifficulty(dto.getDifficulty());
-        reading.setTitle(dto.getTitle());
-        reading.setHtml(true);
-        reading.setType(ModuleType.READING);
-        reading.setContent(dto.getPassage());
-
-        // Set the organization based on the user
-        Organization organization = organizationRepository.findByOwner(user);
-        if (organization != null) {
-            reading.setOrganization(organization);
-        } else {
-            return JResponse.error(400, "Organization not found for the user.");
-        }
-
-        // Save the reading passage to the database
-        readingRepository.save(reading);
-
-        // Return the saved reading passage ID to the frontend
-        return JResponse.success(new SaveResponse(reading.getId()));
-    }
 
     @Override
     public JResponse getAllModules(User currentUser, ModuleFilter filter) {
@@ -92,22 +61,8 @@ public class ModuleServiceImpl implements ModuleService {
     }
 
     @Override
-    public JResponse getReadingById(User currentUser, Long id) {
-        ReadingPassage passage = readingRepository.findById(id).orElseThrow(() -> new NotfoundException("Reading not found this id: " + id));
-
-        Organization organization = organizationRepository.findByOwner(currentUser);
-        if (organization == null) return JResponse.error(400, "This reading is not for you.");
-
-        if (!passage.getOrganization().getId().equals(organization.getId()))
-            return JResponse.error(400, "This reading is not for you.");
-
-        return JResponse.success();
-    }
-
-    @Override
-    public JResponse getQuestionTypes(String type) {
-        ModuleType moduleType = ModuleType.getModuleType(type);
-        List<QuestionTypes> questionTypes = questionTypesRepository.findAllByModuleType(moduleType);
+    public JResponse getQuestionTypes(ModuleType type) {
+        List<QuestionTypes> questionTypes = questionTypesRepository.findAllByModuleType(type);
         return JResponse.success(questionTypes);
     }
 }

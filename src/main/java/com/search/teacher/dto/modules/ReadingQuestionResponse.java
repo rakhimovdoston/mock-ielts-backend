@@ -1,6 +1,6 @@
 package com.search.teacher.dto.modules;
 
-import com.search.teacher.model.entities.modules.QuestionTypes;
+import com.search.teacher.model.entities.modules.reading.QuestionTypes;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -30,11 +30,14 @@ public class ReadingPassage extends BaseEntity {
     private ModuleType type = ModuleType.READING;
 
     private String title;
+    private String description;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    private boolean html;
+    private boolean list = false;
+
+    private int count = 0;
 
     @OneToMany(mappedBy = "passage")
     private List<ReadingQuestion> questions = new ArrayList<>();
