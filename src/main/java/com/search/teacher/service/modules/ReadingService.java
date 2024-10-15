@@ -19,4 +19,6 @@ public interface ReadingService {
     JResponse saveReadingAnswer(User currentUser, Long questionId, RQuestionAnswerDto answer);
 
     JResponse updateReadingAnswer(User currentUser, Long readingId, RQuestionAnswerDto answer);
+
+    JResponse updatePassage(User currentUser, ReadingPassageDto passage);
 }

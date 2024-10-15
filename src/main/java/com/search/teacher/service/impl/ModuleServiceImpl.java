@@ -62,7 +62,7 @@ public class ModuleServiceImpl implements ModuleService {
 
     @Override
     public JResponse getQuestionTypes(ModuleType type) {
-        List<QuestionTypes> questionTypes = questionTypesRepository.findAllByModuleType(type);
+        List<QuestionTypes> questionTypes = questionTypesRepository.findAllByModuleTypeAndActiveIsTrue(type);
         return JResponse.success(questionTypes);
     }
 }

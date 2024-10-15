@@ -20,7 +20,7 @@ public class ReadingPassageDto {
     private Difficulty difficulty;
     private String title;
     private String description;
-    private String passage;
-    private int count = 0;
+    private String content;
+    private List<String> passages = new ArrayList<>();
     private boolean withList = false;
 }

@@ -28,6 +28,11 @@ public class ReadingController {
         return ResponseEntity.ok(readingService.createPassage(securityUtils.getCurrentUser(), passage));
     }
 
+    @PostMapping("update/passage")
+    public JResponse updateReadingPassage(@RequestBody ReadingPassageDto passage) {
+        return readingService.updatePassage(securityUtils.getCurrentUser(), passage);
+    }
+
     @PostMapping("save/passage-answer")
     public JResponse readingAnswer(@RequestParam(name = "question_id") Long questionId, @RequestBody RQuestionAnswerDto answer) {
         return readingService.saveReadingAnswer(securityUtils.getCurrentUser(), questionId, answer);
@@ -38,6 +43,7 @@ public class ReadingController {
         if (answer.getId() == null) return JResponse.error(400, "Please select Question Answer");
         return readingService.updateReadingAnswer(securityUtils.getCurrentUser(), readingId, answer);
     }
+
     @GetMapping("get/{id}")
     public JResponse getReadingById(@PathVariable(name = "id") Long id) {
         return readingService.getReadingById(securityUtils.getCurrentUser(), id);

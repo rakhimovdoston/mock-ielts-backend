@@ -43,8 +43,27 @@ public class ReadingServiceImpl implements ReadingService {
         readingPassage.setOrganization(organization);
         readingPassage.setList(passage.isWithList());
         readingPassage.setDifficulty(passage.getDifficulty());
-        readingPassage.setContent(passage.getPassage());
-        readingPassage.setCount(passage.getCount());
+        readingPassage.setPassages(passage.getPassages());
+        readingPassage.setContent(passage.getContent());
+        readingPassage.setCount(passage.getPassages().size());
+        readingRepository.save(readingPassage);
+        return JResponse.success(new SaveResponse(readingPassage.getId()));
+    }
+
+    @Override
+    public JResponse updatePassage(User currentUser, ReadingPassageDto passage) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+
+        ReadingPassage readingPassage = readingRepository.findByIdAndOrganization(passage.getId(), organization);
+
+        if (readingPassage == null) return JResponse.error(400, "This reading is not for you.");
+
+        readingPassage.setTitle(passage.getTitle());
+        readingPassage.setDescription(passage.getDescription());
+        readingPassage.setList(passage.isWithList());
+        readingPassage.setPassages(passage.getPassages());
+        readingPassage.setContent(passage.getContent());
+        readingPassage.setCount(passage.getPassages().size());
         readingRepository.save(readingPassage);
         return JResponse.success(new SaveResponse(readingPassage.getId()));
     }
@@ -55,8 +74,7 @@ public class ReadingServiceImpl implements ReadingService {
 
         ReadingPassage passage = readingRepository.findByIdAndOrganization(id, organization);
 
-        if (!passage.getOrganization().getId().equals(organization.getId()))
-            return JResponse.error(400, "This reading is not for you.");
+        if (passage == null) return JResponse.error(400, "This reading is not for you.");
 
         return JResponse.success(new ReadingResponse(passage));
     }

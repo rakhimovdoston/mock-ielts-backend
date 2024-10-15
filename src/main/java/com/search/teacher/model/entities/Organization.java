@@ -34,6 +34,7 @@ public class Organization extends BaseEntity {
     private String latitude;
     private String city;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne
+    @JoinColumn(name = "owner_id", referencedColumnName = "id")
     private User owner;
 }

@@ -83,10 +83,6 @@ public class UserServiceImpl implements UserService {
         user.setStatus(Status.confirm);
         user.setCode(getRandomCode(100000, 999999));
 
-        if (userDto.type() == Type.organization) {
-            organizationService.createOrganisation(userDto, user);
-        }
-
         return user;
     }
 

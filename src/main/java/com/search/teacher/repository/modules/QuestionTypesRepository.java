@@ -16,5 +16,5 @@ import java.util.List;
 @Repository
 public interface QuestionTypesRepository extends JpaRepository<QuestionTypes, Long> {
 
-    List<QuestionTypes> findAllByModuleType(ModuleType moduleType);
+    List<QuestionTypes> findAllByModuleTypeAndActiveIsTrue(ModuleType moduleType);
 }

@@ -26,10 +26,9 @@ import java.util.List;
 public class OrganizationServiceImpl implements OrganizationService {
 
     private final OrganizationRepository organizationRepository;
-    private final SecurityUtils securityUtils;
 
     @Override
-    public JResponse getAllOrganizations(OrganizationFilter filter) {
+    public JResponse getAllOrganizations(User currentUser, OrganizationFilter filter) {
         Page<Organization> orgPaged = organizationRepository.findAllByFilter(filter);
 
         List<OrganizationResponse> responseData = orgPaged.getContent().stream().map(organization -> OrganizationResponse.builder()
@@ -54,9 +53,12 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Transactional
     @Override
-    public JResponse createOrganization(OrganizationRequest request) {
+    public JResponse createOrganization(User currentUser, OrganizationRequest request) {
+        Organization organization = organizationRepository.findByOwner(currentUser);
+        if (organization != null)
+            throw new BadRequestException("Organization already exists");
 
-        Organization organization = Organization
+        organization = Organization
                 .builder()
                 .name(request.name())
                 .address(request.address())
@@ -64,7 +66,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .phoneNumber(request.phoneNumber())
                 .email(request.email())
                 .website(request.website())
-                .owner(securityUtils.getCurrentUser())
+                .owner(currentUser)
                 .build();
 
         organizationRepository.save(organization);
@@ -73,8 +75,13 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Transactional
     @Override
-    public JResponse update(OrganizationRequest request) {
-        Organization existingOrganization = organizationRepository.findById(request.id()).orElseThrow(() -> new NotfoundException("Organization not found with id " + request.id()));
+    public JResponse update(User currentUser, OrganizationRequest request) {
+        Organization existingOrganization = organizationRepository.findById(request.id())
+                .orElseThrow(() -> new NotfoundException("Organization not found with id " + request.id()));
+
+        if (!existingOrganization.getOwner().equals(currentUser)) {
+            throw new NotfoundException("Organization not found with id " + request.id());
+        }
 
         existingOrganization.setName(request.name());
         existingOrganization.setAddress(request.address());
@@ -89,24 +96,17 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Transactional
     @Override
-    public JResponse deleteOrganization(Long id) {
-        Organization organization = organizationRepository.findById(id).orElseThrow();
+    public JResponse deleteOrganization(User currentUser, Long id) {
+
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(() -> new NotfoundException("Organization not found with id " + id));
+
+        if (!organization.getOwner().equals(currentUser))
+            throw new NotfoundException("Organization not found with id " + id);
+
         organization.setActive(false);
         organizationRepository.save(organization);
         return JResponse.success("Organization deleted");
-    }
-
-    @Override
-    public void createOrganisation(UserDto userDto, User user) {
-//        if (organizationRepository.existsByRegistrationNumber(userDto.registrationNumber()))
-//            throw new NotfoundException("Registration number already exists");
-
-        Organization organization = new Organization();
-        organization.setName(userDto.name());
-        organization.setOwner(user);
-        organization.setEmail(user.getEmail());
-        organization.setDescription(userDto.description());
-        organizationRepository.save(organization);
     }
 
     @Override

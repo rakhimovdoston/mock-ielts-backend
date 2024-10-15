@@ -7,6 +7,8 @@ import com.search.teacher.model.enums.ModuleType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,10 @@ public class ReadingPassage extends BaseEntity {
     private boolean list = false;
 
     private int count = 0;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private List<String> passages = new ArrayList<>();
 
     @OneToMany(mappedBy = "passage")
     private List<ReadingQuestion> questions = new ArrayList<>();

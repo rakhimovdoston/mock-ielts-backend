@@ -8,15 +8,13 @@ import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
 
 public interface OrganizationService {
-    JResponse getAllOrganizations(OrganizationFilter filter);
+    JResponse getAllOrganizations(User currentUser, OrganizationFilter filter);
 
-    JResponse createOrganization(OrganizationRequest request);
+    JResponse createOrganization(User currentUser, OrganizationRequest request);
 
-    JResponse update(OrganizationRequest request);
+    JResponse update(User currentUser, OrganizationRequest request);
 
-    JResponse deleteOrganization(Long id);
-
-    void createOrganisation(UserDto userDto, User user);
+    JResponse deleteOrganization(User currentUser, Long id);
 
     Organization getOrganisationByOwner(User currentUser);
 }
