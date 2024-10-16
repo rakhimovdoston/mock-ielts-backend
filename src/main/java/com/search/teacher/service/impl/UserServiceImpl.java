@@ -36,6 +36,7 @@ import org.thymeleaf.util.StringUtils;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -75,7 +76,7 @@ public class UserServiceImpl implements UserService {
 
         Role role = roleRepository.findByName(RoleType.ROLE_STUDENT);
         if (role == null) throw new NotfoundException("Role not found");
-        user.setRoles(List.of(role));
+        user.setRoles(Set.of(role));
 
         user.setStatus(Status.confirm);
         user.setCode(getRandomCode(100000, 999999));
@@ -152,22 +153,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public JResponse resetPassword(ResetPasswordRequest req) {
-        User user = securityUtils.getCurrentUser();
-        boolean matches = passwordEncoder.matches(req.oldPassword(), req.newPassword());
-        if (matches) {
-            if (req.newPassword().equals(req.confirmPassword())) {
-                user.setPassword(passwordEncoder.encode(req.newPassword()));
-                userRepository.save(user);
-                return new JResponse(200, "Password updated");
-            } else {
-                return new JResponse(401, "non matched password");
-            }
-        }
-        return new JResponse(401, "Incorrect password");
-    }
-
-    @Override
     public JResponse forgotPassword(ForgotPasswordReq request) {
         User user = userRepository.findByEmail(request.getEmail());
         if (user == null) {
@@ -183,13 +168,6 @@ public class UserServiceImpl implements UserService {
             } else return JResponse.error(400, "Password non match");
         }
         return JResponse.error(400, "You should confirm your password");
-    }
-
-    @Override
-    @Cacheable(cacheNames = Constants.USER_EMAIL)
-    public List<User> getAllUsers() {
-        logger.info("Get all users");
-        return userRepository.findAll();
     }
 
     @Override

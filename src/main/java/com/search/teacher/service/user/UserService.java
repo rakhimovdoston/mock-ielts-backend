@@ -19,11 +19,7 @@ public interface UserService {
 
     JResponse resendEmailCode(ResendRequest request);
 
-    JResponse resetPassword(ResetPasswordRequest req);
-
     JResponse forgotPassword(ForgotPasswordReq request);
-
-    List<User> getAllUsers();
 
     JResponse refreshToken(RefreshTokenReq refreshTokenReq);
 }
