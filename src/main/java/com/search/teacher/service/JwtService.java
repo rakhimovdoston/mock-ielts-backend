@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -32,18 +33,13 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> map = new HashMap<>();
-        userDetails.getAuthorities().forEach(grantedAuthority -> map.put(String.valueOf(grantedAuthority.getAuthority()), String.valueOf(grantedAuthority.getAuthority())));
-        return generateToken(map, userDetails);
-    }
-
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return buildToken(extraClaims, userDetails, jwtExpiration);
+        map.put("roles", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList());
+        return buildToken(map, userDetails, jwtExpiration);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        Map<String, Object> map = new HashMap<>();
-        userDetails.getAuthorities().forEach(grantedAuthority -> map.put(String.valueOf(grantedAuthority), String.valueOf(grantedAuthority)));
-        return buildToken(map, userDetails, refreshExpiration);
+        String ex = "\n";
+        return buildToken(new HashMap<>(), userDetails, refreshExpiration);
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
@@ -51,6 +47,7 @@ public class JwtService {
                 .builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
+                .setIssuer(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)

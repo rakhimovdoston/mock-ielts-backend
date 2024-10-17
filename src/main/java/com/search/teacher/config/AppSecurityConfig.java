@@ -58,7 +58,6 @@ public class AppSecurityConfig {
                 .authorizeHttpRequests(
                         authorize ->
                                 authorize
-                                        .requestMatchers("/chat/**").permitAll()
                                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                                         .requestMatchers("/api/v1/module/**").permitAll()
                                         .requestMatchers(SWAGGER_URL).permitAll()

@@ -182,11 +182,20 @@ public class UserServiceImpl implements UserService {
         UserResponse response = UserResponse.builder()
                 .id(currentUser.getId())
                 .image("")
+                .email(currentUser.getEmail())
                 .firstname(currentUser.getFirstname())
                 .lastname(currentUser.getLastname())
                 .role(role)
                 .build();
         return JResponse.success(response);
+    }
+
+    @Override
+    public JResponse updateProfileData(User currentUser, UserUpdate userDto) {
+        currentUser.setFirstname(userDto.getFirstname());
+        currentUser.setLastname(userDto.getLastname());
+        userRepository.save(currentUser);
+        return JResponse.success();
     }
 
     @Override

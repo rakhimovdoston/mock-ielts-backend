@@ -34,15 +34,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(e.getResponse(), HttpStatus.BAD_REQUEST);
     }
 
-//    @ExceptionHandler({ConstraintViolationException.class})
-//    public ResponseEntity<JResponse> handleConstraintViolation(ConstraintViolationException ex) {
-//        Map<String, String> errors = new HashMap<>();
-//        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
-//            errors.put(violation.getMessageTemplate(), violation.getInvalidValue());
-//        }
-//        return ResponseEntity.badRequest().body(JResponse.error(400, "badRequest", errors));
-//    }
-
     @ExceptionHandler(InvalidFileTypeException.class)
     public ResponseEntity<String> handleInvalidFileTypeException(InvalidFileTypeException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -67,7 +58,7 @@ public class GlobalExceptionHandler {
         String message = "An error occurred while processing the request.";
 
         if (e instanceof UsernameNotFoundException || e instanceof BadCredentialsException) {
-            status = HttpStatus.FORBIDDEN;
+            status = HttpStatus.UNAUTHORIZED;
             message = e.getMessage();
         }
         return ResponseEntity.status(status).body(JResponse.error(status.value(), message));

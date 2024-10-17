@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Component
@@ -46,19 +49,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         jwt = authHeader.substring(7);
         User user = userTokenService.checkToken(jwt);
-        if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            if (user.getStatus().equals(Status.active)) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else if (user.getStatus().equals(Status.block)) {
-                GsonUtils.responseError(409, ResponseMessage.USER_BLOCKED, response);
-                return;
-            } else {
-                GsonUtils.responseError(410, ResponseMessage.USER_NOT_ACTIVATED, response);
-                return;
-            }
+
+        if (user == null) {
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        if (user.getStatus().equals(Status.block)) {
+            GsonUtils.responseError(409, ResponseMessage.USER_BLOCKED, response);
+            return;
+        }
+
+        if (user.getStatus().equals(Status.confirm)) {
+            GsonUtils.responseError(410, ResponseMessage.USER_NOT_ACTIVATED, response);
+            return;
+        }
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), null, getAuthorities(user));
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
+    }
+
+    private Collection<? extends GrantedAuthority> getAuthorities(User user) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName().name())));
+        return authorities;
     }
 }

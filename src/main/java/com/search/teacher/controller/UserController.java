@@ -1,11 +1,13 @@
 package com.search.teacher.controller;
 
+import com.search.teacher.dto.UserDto;
+import com.search.teacher.dto.request.UserUpdate;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.utils.SecurityUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Package com.search.teacher.controller
@@ -30,4 +32,9 @@ public class UserController {
     public JResponse getProfileData() {
         return userService.getProfileData(securityUtils.getCurrentUser());
     }
-}
+
+    @PostMapping("update")
+    public JResponse updateProfile(@RequestBody @Valid UserUpdate userDto) {
+        return  userService.updateProfileData(securityUtils.getCurrentUser(), userDto);
+    }
+ }

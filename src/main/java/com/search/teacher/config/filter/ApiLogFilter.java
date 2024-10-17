@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
-@Order(1)
+@Order(Integer.MIN_VALUE)
 public class ApiLogFilter implements Filter {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

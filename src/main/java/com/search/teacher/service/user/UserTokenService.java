@@ -35,13 +35,13 @@ public class UserTokenService {
     public User checkToken(String jwt) {
         if (jwtService.isTokenExpired(jwt))
             return null;
-        String phoneNumber = jwtService.extractUsername(jwt);
+        String email = jwtService.extractUsername(jwt);
         UserToken userToken = userTokenRepository.findByAccessToken(jwt);
         if (userToken == null || !DateUtils.isExpirationToken(userToken.getExpireDate())) {
             return null;
         }
         User user = userToken.getUser();
-        if (phoneNumber.equals(user.getEmail())) return user;
+        if (email.equals(user.getEmail())) return user;
         return null;
     }
 

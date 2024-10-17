@@ -6,6 +6,7 @@ import com.search.teacher.dto.request.*;
 import com.search.teacher.dto.response.AuthenticationResponse;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -24,4 +25,6 @@ public interface UserService {
     JResponse refreshToken(RefreshTokenReq refreshTokenReq);
 
     JResponse getProfileData(User currentUser);
+
+    JResponse updateProfileData(User currentUser, @Valid UserUpdate userDto);
 }
