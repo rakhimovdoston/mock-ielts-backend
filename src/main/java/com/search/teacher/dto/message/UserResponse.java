@@ -13,6 +13,4 @@ public class UserResponse {
     private String lastname;
     private String role;
     private String image;
-    private String description;
-    private String rating;
 }

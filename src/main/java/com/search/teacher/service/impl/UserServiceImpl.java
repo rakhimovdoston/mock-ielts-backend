@@ -4,6 +4,7 @@ import com.search.teacher.components.Constants;
 import com.search.teacher.config.rabbit.RabbitMqProducer;
 import com.search.teacher.dto.AuthenticationRequest;
 import com.search.teacher.dto.UserDto;
+import com.search.teacher.dto.message.UserResponse;
 import com.search.teacher.dto.request.*;
 import com.search.teacher.dto.response.RegisterResponse;
 import com.search.teacher.dto.response.SaveResponse;
@@ -168,6 +169,24 @@ public class UserServiceImpl implements UserService {
             } else return JResponse.error(400, "Password non match");
         }
         return JResponse.error(400, "You should confirm your password");
+    }
+
+    @Override
+    public JResponse getProfileData(User currentUser) {
+
+        Set<Role> roles = currentUser.getRoles();
+        String role = "User";
+        if (roles.contains("ROLE_ADMIN")) {
+            role = "Admin";
+        }
+        UserResponse response = UserResponse.builder()
+                .id(currentUser.getId())
+                .image("")
+                .firstname(currentUser.getFirstname())
+                .lastname(currentUser.getLastname())
+                .role(role)
+                .build();
+        return JResponse.success(response);
     }
 
     @Override

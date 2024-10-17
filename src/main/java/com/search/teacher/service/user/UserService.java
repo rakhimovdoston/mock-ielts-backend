@@ -22,4 +22,6 @@ public interface UserService {
     JResponse forgotPassword(ForgotPasswordReq request);
 
     JResponse refreshToken(RefreshTokenReq refreshTokenReq);
+
+    JResponse getProfileData(User currentUser);
 }
