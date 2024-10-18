@@ -54,7 +54,7 @@ public class ReadingController {
         return readingService.deleteReadingAnswer(securityUtils.getCurrentUser(), passageId, answerId);
     }
 
-    @GetMapping("get/{id}")
+    @GetMapping("passage/{id}")
     public JResponse getReadingById(@PathVariable(name = "id") Long id) {
         return readingService.getReadingById(securityUtils.getCurrentUser(), id);
     }

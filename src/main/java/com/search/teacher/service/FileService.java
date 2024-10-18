@@ -26,6 +26,7 @@ public class FileService {
     public JResponse uploadPhoto(User currentUser, MultipartFile file, String type) {
         Image image = fileUploadService.fileUpload(file, type, true);
         image.setUserId(currentUser.getId());
+        imageRepository.save(image);
         return JResponse.success("Image uploaded successfully");
     }
 }
