@@ -1,5 +1,6 @@
 package com.search.teacher.service;
 
+import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.ImageRepository;
@@ -20,8 +21,11 @@ public class FileService {
 
     private final UserService userService;
     private final ImageRepository imageRepository;
+    private final FileUploadService fileUploadService;
 
     public JResponse uploadPhoto(User currentUser, MultipartFile file, String type) {
-        return null;
+        Image image = fileUploadService.fileUpload(file, type, true);
+        image.setUserId(currentUser.getId());
+        return JResponse.success("Image uploaded successfully");
     }
 }

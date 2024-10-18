@@ -33,7 +33,6 @@ public class FileController {
 
         if (file.isEmpty())
             throw new BadRequestException("File is not empty");
-
         return fileService.uploadPhoto(securityUtils.getCurrentUser(), file, type);
     }
 }

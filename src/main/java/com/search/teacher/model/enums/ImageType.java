@@ -4,7 +4,11 @@ public enum ImageType {
     CERTIFICATE,
     PHOTO,
     LOGO,
-    PROFILE_PICTURE;
+    PROFILE_PICTURE,
+    READING,
+    LISTENING,
+    WRITING,
+    SPEAKING;
 
     public static ImageType getValue(String type) {
         for (ImageType imageType : ImageType.values()) {
