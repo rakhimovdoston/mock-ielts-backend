@@ -20,7 +20,19 @@ public enum ReadingQuestionTypes {
     FLOW_CHART_COMPLETION("Flow Chart Completion", true),
     NOTE_COMPLETION("Note Completion", true),
     YES_NO_NOT_GIVEN("Yes/No/Not Given", true),
-    TABLE_COMPLETION("Table Completion", false);
+    TABLE_COMPLETION("Table Completion", false),
+//    Listening
+    MATCHING("Matching", true),
+    MULTIPLE_CHOICES("Multiple Choices", true),
+    NOTE_COMPLETION_LIS("Note completion", true),
+    FORM_COMPLETION("Form Completion", true),
+    TABLE_COMPLETION_LIS("Table Completion", true),
+    SENTENCE_COMPLETION_LIS("Sentence Completion", true),
+    SUMMARY_COMPLETION_LIS("Summary Completion", true),
+    SHORT_ANSWER_COMPLETION_LIS("Short Answer Completion", true),
+    MAP_PLAN_LABELLING("Map & Plan Labelling", true),
+    DIAGRAM_AND_FLOWCHART_COMPLETION("Diagram & flowchart completion", true),
+    ;
 
     public static ReadingQuestionTypes getType(String type) {
         for (var name : ReadingQuestionTypes.values()) {

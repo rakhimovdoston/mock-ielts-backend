@@ -1,5 +1,7 @@
 package com.search.teacher.service.impl;
 
+import com.search.teacher.dto.filter.ModuleFilter;
+import com.search.teacher.dto.filter.PaginationResponse;
 import com.search.teacher.dto.modules.RQuestionAnswerDto;
 import com.search.teacher.dto.modules.ReadingPassageDto;
 import com.search.teacher.dto.modules.ReadingResponse;
@@ -10,15 +12,19 @@ import com.search.teacher.model.entities.User;
 import com.search.teacher.model.entities.modules.reading.ReadingPassage;
 import com.search.teacher.model.entities.modules.reading.ReadingQuestion;
 import com.search.teacher.model.entities.modules.reading.ReadingQuestionTypes;
+import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.modules.ReadingQuestionRepository;
 import com.search.teacher.repository.modules.ReadingRepository;
 import com.search.teacher.service.modules.ReadingService;
 import com.search.teacher.service.organization.OrganizationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Package com.search.teacher.service.impl
@@ -99,6 +105,30 @@ public class ReadingServiceImpl implements ReadingService {
         question.setDeleteDate(new Date());
         readingQuestionRepository.save(question);
         return JResponse.success();
+    }
+
+    @Override
+    public JResponse getAllReadingPassage(User currentUser, ModuleFilter moduleFilter) {
+        PageRequest pageRequest = PageRequest.of(moduleFilter.getPage(), moduleFilter.getSize());
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        Difficulty difficulty = Difficulty.getValue(moduleFilter.getType());
+        Page<ReadingPassageDto> passageContents;
+        if (moduleFilter.getType().equals("all"))
+            passageContents = readingRepository.findAllOrganizationAndActiveTrue(organization, pageRequest);
+        else
+            passageContents = readingRepository.findAllOrganizationAndActiveTrueAndDifficulty(organization, difficulty, pageRequest);
+
+        List<ReadingPassageDto> passages = passageContents.getContent();
+        if (passages.isEmpty())
+            return JResponse.error(404, "Reading Passage not found.");
+
+        PaginationResponse response = new PaginationResponse();
+        response.setData(passages);
+        response.setTotalPages(passageContents.getTotalPages());
+        response.setTotalSizes(passageContents.getTotalElements());
+        response.setCurrentSize(moduleFilter.getSize());
+        response.setCurrentPage(moduleFilter.getPage());
+        return JResponse.success(response);
     }
 
     @Override

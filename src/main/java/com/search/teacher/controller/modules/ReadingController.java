@@ -1,10 +1,12 @@
 package com.search.teacher.controller.modules;
 
+import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.RQuestionAnswerDto;
 import com.search.teacher.dto.modules.ReadingPassageDto;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.modules.ReadingService;
 import com.search.teacher.utils.SecurityUtils;
+import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
  **/
 @RestController
 @RequestMapping("api/v1/reading")
+@Api(tags = "Reading Module API")
 @RequiredArgsConstructor
 public class ReadingController {
 
@@ -33,8 +36,8 @@ public class ReadingController {
         return readingService.updatePassage(securityUtils.getCurrentUser(), passage);
     }
 
-    @PostMapping("save/passage-answer")
-    public JResponse readingAnswer(@RequestParam(name = "question_id") Long questionId, @RequestBody RQuestionAnswerDto answer) {
+    @PostMapping("save/{passageId}/passage-answer")
+    public JResponse readingAnswer(@PathVariable(name = "passageId") Long questionId, @RequestBody RQuestionAnswerDto answer) {
         return readingService.saveReadingAnswer(securityUtils.getCurrentUser(), questionId, answer);
     }
 
@@ -57,6 +60,17 @@ public class ReadingController {
     @GetMapping("passage/{id}")
     public JResponse getReadingById(@PathVariable(name = "id") Long id) {
         return readingService.getReadingById(securityUtils.getCurrentUser(), id);
+    }
+
+    @GetMapping("passage/all")
+    public JResponse getAllReadings(@RequestParam(name = "page", defaultValue = "0", required = false) int page,
+                                    @RequestParam(name = "size", defaultValue = "10", required = false) int size,
+                                    @RequestParam(name = "type", defaultValue = "all", required = false) String type) {
+        ModuleFilter moduleFilter = new ModuleFilter();
+        moduleFilter.setType(type);
+        moduleFilter.setPage(page);
+        moduleFilter.setSize(size);
+        return readingService.getAllReadingPassage(securityUtils.getCurrentUser(), moduleFilter);
     }
 
 }

@@ -1,8 +1,13 @@
 package com.search.teacher.repository.modules;
 
+import com.search.teacher.dto.modules.ReadingPassageDto;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.modules.reading.ReadingPassage;
+import com.search.teacher.model.enums.Difficulty;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 /**
  * Package com.search.teacher.repository.modules
@@ -13,4 +18,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ReadingRepository extends JpaRepository<ReadingPassage, Long> {
 
     ReadingPassage findByIdAndOrganization(Long id, Organization organization);
+
+    @Query(value = "select new com.search.teacher.dto.modules.ReadingPassageDto(id, difficulty, title, description, SUBSTRING(content, 1, 50)) from ReadingPassage where organization=?1 and active = true")
+    Page<ReadingPassageDto> findAllOrganizationAndActiveTrue(Organization organization, Pageable pageable);
+
+    @Query(value = "select new com.search.teacher.dto.modules.ReadingPassageDto(id, difficulty, title, description, SUBSTRING(content, 1, 50)) from ReadingPassage where organization=?1 and difficulty=?2 and active = true")
+    Page<ReadingPassageDto> findAllOrganizationAndActiveTrueAndDifficulty(Organization organization, Difficulty difficulty, Pageable pageable);
 }

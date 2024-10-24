@@ -23,4 +23,19 @@ public class ReadingPassageDto {
     private String content;
     private List<String> passages = new ArrayList<>();
     private boolean withList = false;
+
+    public ReadingPassageDto() {
+    }
+
+    public ReadingPassageDto(Long id,
+                             Difficulty difficulty,
+                             String title,
+                             String description,
+                             String content) {
+        this.id = id;
+        this.difficulty = difficulty;
+        this.title = title;
+        this.description = description;
+        this.content = content;
+    }
 }

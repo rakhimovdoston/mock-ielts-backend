@@ -1,6 +1,5 @@
 package com.search.teacher.model.entities.modules.reading;
 
-import com.search.teacher.model.enums.ModuleType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,9 +29,9 @@ public class QuestionTypes {
     @Column(columnDefinition = "TEXT")
     private String example;
 
-    @Enumerated(EnumType.STRING)
-    private ReadingQuestionTypes type;
+    @Column(length = 150)
+    private String type;
 
-    @Enumerated(EnumType.STRING)
-    private ModuleType moduleType;
+    @Column(length = 50)
+    private String moduleType;
 }

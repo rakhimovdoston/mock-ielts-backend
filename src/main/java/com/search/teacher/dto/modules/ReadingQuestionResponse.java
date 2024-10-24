@@ -17,5 +17,5 @@ public class ReadingQuestionResponse {
     private String text;
     private String explanation;
     private String condition;
-    private QuestionTypes types;
+    private QuestionTypeDto types;
 }

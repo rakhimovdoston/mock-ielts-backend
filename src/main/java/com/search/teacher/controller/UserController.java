@@ -5,6 +5,7 @@ import com.search.teacher.dto.request.UserUpdate;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.utils.SecurityUtils;
+import io.swagger.annotations.ApiOperation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -29,11 +30,13 @@ public class UserController {
     }
 
     @GetMapping("profile")
+    @ApiOperation("User's data")
     public JResponse getProfileData() {
         return userService.getProfileData(securityUtils.getCurrentUser());
     }
 
     @PostMapping("update")
+    @ApiOperation("User update him/her data")
     public JResponse updateProfile(@RequestBody @Valid UserUpdate userDto) {
         return  userService.updateProfileData(securityUtils.getCurrentUser(), userDto);
     }

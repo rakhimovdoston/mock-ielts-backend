@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum RoleType {
     ROLE_STUDENT("Student"),
     ROLE_TEACHER("Teacher"),
-    ROLE_ADMIN("Admin");
+    ROLE_ADMIN("Admin"),
+    ROLE_ORGANISATION("Organisation");
 
     private final String value;
 
@@ -14,8 +15,8 @@ public enum RoleType {
         this.value = value;
     }
 
-    public static RoleType getRoleByName(String name){
-        for (RoleType roleType: RoleType.values()) {
+    public static RoleType getRoleByName(String name) {
+        for (RoleType roleType : RoleType.values()) {
             if (name.equals(roleType.getValue()))
                 return roleType;
         }

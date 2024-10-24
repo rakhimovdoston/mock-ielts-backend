@@ -1,6 +1,7 @@
 package com.search.teacher.repository;
 
 import com.search.teacher.model.entities.Image;
+import com.search.teacher.model.enums.ImageType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,6 @@ import org.springframework.stereotype.Repository;
  **/
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {
+
+    Image findByObjectNameAndImageType(String objectName, ImageType imageType);
 }

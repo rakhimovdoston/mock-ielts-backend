@@ -14,7 +14,6 @@ import com.search.teacher.model.response.JResponse;
  * Time: 15:07
  **/
 public interface ModuleService {
-    JResponse getAllModules(User currentUser, ModuleFilter filter);
 
     JResponse getQuestionTypes(ModuleType type);
 }

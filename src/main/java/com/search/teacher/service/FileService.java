@@ -1,13 +1,18 @@
 package com.search.teacher.service;
 
+import com.search.teacher.dto.ImageDto;
+import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.User;
+import com.search.teacher.model.enums.ImageType;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.ImageRepository;
 import com.search.teacher.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Optional;
 
 /**
  * Package com.search.teacher.service
@@ -24,9 +29,14 @@ public class FileService {
     private final FileUploadService fileUploadService;
 
     public JResponse uploadPhoto(User currentUser, MultipartFile file, String type) {
-        Image image = fileUploadService.fileUpload(file, type, true);
-        image.setUserId(currentUser.getId());
-        imageRepository.save(image);
-        return JResponse.success("Image uploaded successfully");
+        ImageDto image = fileUploadService.fileUpload(currentUser, file, type, true);
+        return JResponse.success(image);
+    }
+
+    public String checkFilename(String audio, ImageType imageType) {
+        Image image = Optional.ofNullable(imageRepository.findByObjectNameAndImageType(audio, imageType))
+                .orElseThrow(() -> new BadRequestException("Please upload Listening Audio"));
+
+        return image.getUrl();
     }
 }

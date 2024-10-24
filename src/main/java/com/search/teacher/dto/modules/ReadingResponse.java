@@ -20,6 +20,7 @@ public class ReadingResponse {
     private Long id;
     private String title;
     private String description;
+    private String difficulty;
     private String passage;
     private List<String> headings;
     private boolean list;
@@ -31,6 +32,7 @@ public class ReadingResponse {
         this.description = passage.getDescription();
         this.passage = passage.getContent();
         this.list = passage.isList();
+        this.difficulty = passage.getDifficulty().name();
         this.headings = passage.isList() ? Utils.getHeadingList(passage.getCount()) : new ArrayList<>();
     }
 }

@@ -1,5 +1,6 @@
 package com.search.teacher.service.modules;
 
+import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.RQuestionAnswerDto;
 import com.search.teacher.dto.modules.ReadingPassageDto;
 import com.search.teacher.model.entities.User;
@@ -25,4 +26,6 @@ public interface ReadingService {
     JResponse deleteReadingPassage(User currentUser, Long readingId);
 
     JResponse deleteReadingAnswer(User currentUser, Long passageId, Long answerId);
+
+    JResponse getAllReadingPassage(User currentUser, ModuleFilter moduleFilter);
 }

@@ -2,7 +2,9 @@ package com.search.teacher.service.impl;
 
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.filter.PaginationResponse;
+import com.search.teacher.dto.modules.QuestionTypeDto;
 import com.search.teacher.dto.modules.ReadingDto;
+import com.search.teacher.mapper.QuestionTypesMapper;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.entities.modules.reading.QuestionTypes;
 import com.search.teacher.model.entities.modules.reading.ReadingPassage;
@@ -32,37 +34,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ModuleServiceImpl implements ModuleService {
 
-    private final ReadingRepository readingRepository;
-    private final OrganizationRepository organizationRepository;
     private final QuestionTypesRepository questionTypesRepository;
-
-    @Override
-    public JResponse getAllModules(User currentUser, ModuleFilter filter) {
-        Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize());
-        Page<ReadingPassage> readings = readingRepository.findAll(pageable);
-        if (readings.getContent().isEmpty()) return JResponse.error(404, "Data Not Found");
-
-        List<ReadingDto> dtos = new ArrayList<>();
-        for (ReadingPassage reading : readings.getContent()) {
-            ReadingDto dto = new ReadingDto();
-            dto.setId(reading.getId());
-            dto.setTitle(reading.getTitle());
-            dto.setPassage(Utils.getReadingPassageName(reading.getDifficulty()));
-            dtos.add(dto);
-        }
-
-        PaginationResponse response = new PaginationResponse();
-        response.setTotalSizes(readings.getTotalElements());
-        response.setTotalPages(readings.getTotalPages());
-        response.setCurrentSize(readings.getSize());
-        response.setCurrentPage(readings.getNumber());
-        response.setData(dtos);
-        return JResponse.success(response);
-    }
+    private final QuestionTypesMapper questionTypesMapper;
 
     @Override
     public JResponse getQuestionTypes(ModuleType type) {
-        List<QuestionTypes> questionTypes = questionTypesRepository.findAllByModuleTypeAndActiveIsTrue(type);
-        return JResponse.success(questionTypes);
+        List<QuestionTypes> questionTypes = questionTypesRepository.findAllByModuleTypeAndActiveIsTrue(type.name());
+        var response = questionTypesMapper.questionTypesToQuestionTypeDtoList(questionTypes);
+        return JResponse.success(response);
     }
 }

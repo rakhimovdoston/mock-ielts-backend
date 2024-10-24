@@ -19,8 +19,11 @@ import java.util.UUID;
 @Getter
 @Setter
 public class Image extends BaseEntity {
-    @Column(name = "object_name")
+    @Column(name = "object_name", length = 150)
     private String objectName;
+
+    @Column(length = 200)
+    private String originalFilename;
 
     @Column(name = "content_type")
     private String contentType;
@@ -28,17 +31,12 @@ public class Image extends BaseEntity {
     @Column(name = "size")
     private Long size;
 
-    @Column(name = "url", columnDefinition = "varchar")
+    @Column(name = "url")
     private String url;
 
-    @Column(name = "image_type")
+    @Column(name = "image_type", length = 50)
     @Enumerated(EnumType.STRING)
     private ImageType imageType;
 
     private Long userId;
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }

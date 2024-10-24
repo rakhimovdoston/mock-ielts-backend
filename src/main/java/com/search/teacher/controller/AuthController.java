@@ -8,6 +8,8 @@ import com.search.teacher.dto.request.RefreshTokenReq;
 import com.search.teacher.dto.request.ResendRequest;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.user.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication Controller")
+@Api(tags = "Authentication")
 public class AuthController {
 
     private final UserService userService;
@@ -28,22 +30,26 @@ public class AuthController {
     }
 
     @PostMapping("register")
+    @ApiOperation("New User register")
     public ResponseEntity<JResponse> register(@RequestBody @Valid UserDto userRequest) {
         JResponse response = userService.registerUser(userRequest);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("authenticate")
+    @ApiOperation("User can get access token")
     public ResponseEntity<JResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
         return ResponseEntity.ok(userService.authenticate(request));
     }
 
     @PostMapping("refresh-token")
+    @ApiOperation("User get new access token when old access token was expired")
     public ResponseEntity<JResponse> refreshToken(@RequestBody RefreshTokenReq refreshTokenReq) {
         return ResponseEntity.ok(userService.refreshToken(refreshTokenReq));
     }
 
     @PostMapping("forgot-password")
+    @ApiOperation("If user forgot him/her password, can generate new password")
     public ResponseEntity<JResponse> forgotPassword(@RequestBody ForgotPasswordReq request) {
         return ResponseEntity.ok(userService.forgotPassword(request));
     }
@@ -54,6 +60,7 @@ public class AuthController {
     }
 
     @PostMapping("confirmation-code")
+    @ApiOperation("User activation")
     public ResponseEntity<JResponse> confirmationCode(@RequestBody @Valid ConfirmationRequest request) {
         JResponse response = userService.confirmationUser(request);
         return ResponseEntity.ok(response);
