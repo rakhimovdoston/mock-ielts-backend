@@ -25,14 +25,19 @@ import java.util.List;
 @Setter
 public class ReadingQuestion extends BaseEntity {
 
+    @Column(columnDefinition = "TEXT")
     private String instruction;
 
+    @Column(columnDefinition = "TEXT")
     private String content;
     private boolean html = false;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private List<Form> questions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL)
+    private List<RMultipleChoice> choices = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private ReadingQuestionTypes types;
@@ -42,4 +47,7 @@ public class ReadingQuestion extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "passage_id", referencedColumnName = "id")
     private ReadingPassage passage;
+
+    @Column(columnDefinition = "integer default 0")
+    private int sort = 0;
 }

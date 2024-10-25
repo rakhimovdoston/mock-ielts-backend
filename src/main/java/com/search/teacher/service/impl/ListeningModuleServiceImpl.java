@@ -12,7 +12,6 @@ import com.search.teacher.model.entities.modules.listening.ListeningQuestion;
 import com.search.teacher.model.entities.modules.reading.Form;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
-import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.modules.ListeningModuleRepository;
 import com.search.teacher.repository.modules.ListeningQuestionRepository;

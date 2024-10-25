@@ -2,18 +2,21 @@ package com.search.teacher.service.impl;
 
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.filter.PaginationResponse;
+import com.search.teacher.dto.modules.RMultipleChoiceDto;
 import com.search.teacher.dto.modules.RQuestionAnswerDto;
 import com.search.teacher.dto.modules.ReadingPassageDto;
 import com.search.teacher.dto.modules.ReadingResponse;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
+import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
-import com.search.teacher.model.entities.modules.reading.ReadingPassage;
-import com.search.teacher.model.entities.modules.reading.ReadingQuestion;
-import com.search.teacher.model.entities.modules.reading.ReadingQuestionTypes;
+import com.search.teacher.model.entities.modules.reading.*;
 import com.search.teacher.model.enums.Difficulty;
+import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.model.response.JResponse;
+import com.search.teacher.repository.modules.QuestionTypesRepository;
+import com.search.teacher.repository.modules.RMultipleChoiceRepository;
 import com.search.teacher.repository.modules.ReadingQuestionRepository;
 import com.search.teacher.repository.modules.ReadingRepository;
 import com.search.teacher.service.modules.ReadingService;
@@ -23,8 +26,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Package com.search.teacher.service.impl
@@ -39,6 +44,8 @@ public class ReadingServiceImpl implements ReadingService {
     private final ReadingRepository readingRepository;
     private final ReadingQuestionRepository readingQuestionRepository;
     private final OrganizationService organizationService;
+    private final QuestionTypesRepository questionTypesRepository;
+    private final RMultipleChoiceRepository rMultipleChoiceRepository;
 
     @Override
     public JResponse createPassage(User currentUser, ReadingPassageDto passage) {
@@ -119,8 +126,7 @@ public class ReadingServiceImpl implements ReadingService {
             passageContents = readingRepository.findAllOrganizationAndActiveTrueAndDifficulty(organization, difficulty, pageRequest);
 
         List<ReadingPassageDto> passages = passageContents.getContent();
-        if (passages.isEmpty())
-            return JResponse.error(404, "Reading Passage not found.");
+        if (passages.isEmpty()) return JResponse.error(404, "Reading Passage not found.");
 
         PaginationResponse response = new PaginationResponse();
         response.setData(passages);
@@ -150,7 +156,7 @@ public class ReadingServiceImpl implements ReadingService {
 
         if (reading == null) return JResponse.error(400, "This reading passage is not for you.");
 
-        if (rAnswer.getContent() == null || rAnswer.getQuestionList().isEmpty())
+        if (rAnswer.getContent() == null && rAnswer.getQuestionList().isEmpty() && rAnswer.getChoices().isEmpty())
             return JResponse.error(400, "This reading passage is empty.");
 
         ReadingQuestion answers = saveAnswer(reading, rAnswer);
@@ -182,26 +188,51 @@ public class ReadingServiceImpl implements ReadingService {
     }
 
     private ReadingQuestion saveAnswer(ReadingPassage reading, RQuestionAnswerDto rAnswer) {
+
+        QuestionTypes questionTypes = questionTypesRepository.findByActiveTrueAndModuleTypeAndName(ModuleType.READING.name(), rAnswer.getType());
+        if (questionTypes == null) {
+            throw new NotfoundException("Question type not found.");
+        }
+
         ReadingQuestion question = new ReadingQuestion();
-        ReadingQuestionTypes type = ReadingQuestionTypes.getType(rAnswer.getType());
+
+        ReadingQuestionTypes type = ReadingQuestionTypes.getType(questionTypes.getType());
         question.setTypes(type);
+        int sort = reading.getQuestions().stream().map(ReadingQuestion::getSort).max(Integer::compareTo).orElse(0);
+        question.setSort(sort + 1);
         question.setInstruction(rAnswer.getInstruction());
+
         if (rAnswer.getContent() != null) {
             question.setContent(rAnswer.getContent());
             question.setHtml(true);
         }
+
         if (!rAnswer.getQuestionList().isEmpty()) {
-            int count = 0;
-            for (var answer : rAnswer.getQuestionList()) {
-                if (answer.getAnswer() != null) count++;
-            }
-
-            if (count == 0) throw new BadRequestException("Please enter question answers");
-
             question.setQuestions(rAnswer.getQuestionList());
         }
         question.setPassage(reading);
         readingQuestionRepository.save(question);
+        if (questionTypes.getType().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS.name())) {
+            if (rAnswer.getChoices().isEmpty()) {
+                throw new BadRequestException("Please enter multiple choice question");
+            }
+            question.setChoices(choice(rAnswer.getChoices(), question));
+        }
+        readingQuestionRepository.save(question);
         return question;
+    }
+
+    private List<RMultipleChoice> choice(List<RMultipleChoiceDto> choices, ReadingQuestion question) {
+        List<RMultipleChoice> list = new ArrayList<>();
+        choices.forEach(choice -> {
+            RMultipleChoice newChoice = new RMultipleChoice();
+            newChoice.setName(choice.getName());
+            newChoice.setSort(choice.getOrder());
+            newChoice.setCorrectAnswer(choice.getCorrectAnswer());
+            newChoice.setChoices(choice.getAnswers());
+            newChoice.setQuestion(question);
+            list.add(newChoice);
+        });
+        return list;
     }
 }

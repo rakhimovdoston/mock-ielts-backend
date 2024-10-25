@@ -1,8 +1,12 @@
 package com.search.teacher.dto.modules;
 
+import com.search.teacher.model.entities.modules.reading.Form;
 import com.search.teacher.model.entities.modules.reading.QuestionTypes;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Package com.search.teacher.dto.modules
@@ -17,5 +21,7 @@ public class ReadingQuestionResponse {
     private String text;
     private String explanation;
     private String condition;
-    private QuestionTypeDto types;
+    private String types;
+    private List<Form> questions = new ArrayList<>();
+    private List<RMultipleChoiceDto> choices = new ArrayList<>();
 }

@@ -1,6 +1,7 @@
 package com.search.teacher.dto.modules;
 
 import com.search.teacher.model.entities.modules.reading.Form;
+import com.search.teacher.model.entities.modules.reading.RMultipleChoice;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,4 +22,5 @@ public class RQuestionAnswerDto {
     private String instruction;
     private String type;
     private List<Form> questionList = new ArrayList<>();
+    private List<RMultipleChoiceDto> choices = new ArrayList<>();
 }

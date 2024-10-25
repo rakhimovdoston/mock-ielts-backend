@@ -1,5 +1,6 @@
 package com.search.teacher.model.entities.modules.reading;
 
+import com.search.teacher.dto.modules.ReadingQuestionResponse;
 import com.search.teacher.model.base.BaseEntity;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.enums.Difficulty;
@@ -49,9 +50,27 @@ public class ReadingPassage extends BaseEntity {
     private List<String> passages = new ArrayList<>();
 
     @OneToMany(mappedBy = "passage")
+    @OrderBy("sort")
     private List<ReadingQuestion> questions = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false, referencedColumnName = "id")
     private Organization organization;
+
+    public List<ReadingQuestionResponse> toQuestionDto() {
+        List<ReadingQuestionResponse> responses = new ArrayList<>();
+        for (ReadingQuestion question : getQuestions()) {
+            ReadingQuestionResponse response = new ReadingQuestionResponse();
+            response.setId(question.getId());
+            response.setText(question.getContent());
+            response.setTypes(question.getTypes().getDisplayName());
+            response.setCondition(question.getInstruction());
+            response.setQuestions(question.getQuestions().stream().peek(form -> form.setAnswer(null)).toList());
+            if (question.getTypes().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS))
+                response.setChoices(question.getChoices().stream().map(RMultipleChoice::toDto).toList());
+            
+            responses.add(response);
+        }
+        return responses;
+    }
 }

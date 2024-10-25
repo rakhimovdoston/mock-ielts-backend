@@ -17,4 +17,6 @@ import java.util.List;
 public interface QuestionTypesRepository extends JpaRepository<QuestionTypes, Long> {
 
     List<QuestionTypes> findAllByModuleTypeAndActiveIsTrue(String moduleType);
+
+    QuestionTypes findByActiveTrueAndModuleTypeAndName(String moduleType, String name);
 }

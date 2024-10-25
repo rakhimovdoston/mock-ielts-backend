@@ -20,6 +20,7 @@ public class ReadingResponse {
     private Long id;
     private String title;
     private String description;
+    private int answerStart;
     private String difficulty;
     private String passage;
     private List<String> headings;
@@ -34,5 +35,7 @@ public class ReadingResponse {
         this.list = passage.isList();
         this.difficulty = passage.getDifficulty().name();
         this.headings = passage.isList() ? Utils.getHeadingList(passage.getCount()) : new ArrayList<>();
+        this.question = passage.toQuestionDto();
+        this.answerStart = passage.getQuestions().stream().map(ques -> ques.getQuestions().size()).reduce(0, Integer::sum);
     }
 }
