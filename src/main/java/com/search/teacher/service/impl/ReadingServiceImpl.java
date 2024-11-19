@@ -91,26 +91,29 @@ public class ReadingServiceImpl implements ReadingService {
 
         if (readingPassage == null) return JResponse.error(400, "This reading is not for you.");
 
-        readingPassage.setActive(false);
-        readingPassage.setDeleteDate(new Date());
-        readingRepository.save(readingPassage);
+//        readingPassage.setActive(false);
+//        readingPassage.setDeleteDate(new Date());
+//        readingRepository.save(readingPassage);
+        readingRepository.delete(readingPassage);
         return JResponse.success();
     }
 
     @Override
-    public JResponse deleteReadingAnswer(User currentUser, Long passageId, Long answerId) {
+    public JResponse deleteReadingAnswer(User currentUser, Long passageId, Long questionId, String type) {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
 
         ReadingPassage readingPassage = readingRepository.findByIdAndOrganization(passageId, organization);
 
         if (readingPassage == null) return JResponse.error(400, "This reading is not for you.");
 
-        ReadingQuestion question = readingQuestionRepository.findByIdAndPassage(answerId, readingPassage);
+        ReadingQuestionTypes types = ReadingQuestionTypes.getTypeByName(type);
+        var question = readingQuestionRepository.findByIdAndPassage(questionId, readingPassage);
         if (question == null) return JResponse.error(400, "This reading question is not for you.");
-
-        question.setActive(false);
-        question.setDeleteDate(new Date());
-        readingQuestionRepository.save(question);
+        if (types == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+            List<RMultipleChoice> choices = question.getChoices();
+            rMultipleChoiceRepository.deleteAll(choices);
+        }
+        readingQuestionRepository.delete(question);
         return JResponse.success();
     }
 

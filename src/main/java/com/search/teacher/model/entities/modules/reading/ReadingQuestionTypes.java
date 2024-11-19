@@ -21,7 +21,7 @@ public enum ReadingQuestionTypes {
     NOTE_COMPLETION("Note Completion", true),
     YES_NO_NOT_GIVEN("Yes/No/Not Given", true),
     TABLE_COMPLETION("Table Completion", false),
-//    Listening
+    //    Listening
     MATCHING("Matching", true),
     MULTIPLE_CHOICES("Multiple Choices", true),
     NOTE_COMPLETION_LIS("Note completion", true),
@@ -40,6 +40,15 @@ public enum ReadingQuestionTypes {
                 return name;
             }
         }
+        return MATCHING_HEADINGS;
+    }
+
+    public static ReadingQuestionTypes getTypeByName(String type) {
+        for (var name : ReadingQuestionTypes.values()) {
+            if (name.getDisplayName().equals(type))
+                return name;
+        }
+
         return MATCHING_HEADINGS;
     }
 

@@ -6,6 +6,8 @@ import com.search.teacher.dto.modules.ReadingPassageDto;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
 
+import java.util.List;
+
 /**
  * Package com.search.teacher.service.modules
  * Created by doston.rakhimov
@@ -25,7 +27,7 @@ public interface ReadingService {
 
     JResponse deleteReadingPassage(User currentUser, Long readingId);
 
-    JResponse deleteReadingAnswer(User currentUser, Long passageId, Long answerId);
+    JResponse deleteReadingAnswer(User currentUser, Long passageId, Long questionId, String type);
 
     JResponse getAllReadingPassage(User currentUser, ModuleFilter moduleFilter);
 }
