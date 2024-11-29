@@ -2,10 +2,7 @@ package com.search.teacher.service.impl;
 
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.filter.PaginationResponse;
-import com.search.teacher.dto.modules.RMultipleChoiceDto;
-import com.search.teacher.dto.modules.RQuestionAnswerDto;
-import com.search.teacher.dto.modules.ReadingPassageDto;
-import com.search.teacher.dto.modules.ReadingResponse;
+import com.search.teacher.dto.modules.*;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
@@ -19,17 +16,19 @@ import com.search.teacher.repository.modules.QuestionTypesRepository;
 import com.search.teacher.repository.modules.RMultipleChoiceRepository;
 import com.search.teacher.repository.modules.ReadingQuestionRepository;
 import com.search.teacher.repository.modules.ReadingRepository;
+import com.search.teacher.service.JsoupService;
 import com.search.teacher.service.modules.ReadingService;
 import com.search.teacher.service.organization.OrganizationService;
+import com.search.teacher.utils.StringUtils;
+import com.search.teacher.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Package com.search.teacher.service.impl
@@ -46,6 +45,7 @@ public class ReadingServiceImpl implements ReadingService {
     private final OrganizationService organizationService;
     private final QuestionTypesRepository questionTypesRepository;
     private final RMultipleChoiceRepository rMultipleChoiceRepository;
+    private final JsoupService jsoupService;
 
     @Override
     public JResponse createPassage(User currentUser, ReadingPassageDto passage) {
@@ -109,12 +109,58 @@ public class ReadingServiceImpl implements ReadingService {
         ReadingQuestionTypes types = ReadingQuestionTypes.getTypeByName(type);
         var question = readingQuestionRepository.findByIdAndPassage(questionId, readingPassage);
         if (question == null) return JResponse.error(400, "This reading question is not for you.");
-        if (types == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+
+        setQuestionNewOrder(question, readingPassage.getQuestions());
+
+        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
             List<RMultipleChoice> choices = question.getChoices();
             rMultipleChoiceRepository.deleteAll(choices);
         }
         readingQuestionRepository.delete(question);
         return JResponse.success();
+    }
+
+    private void setQuestionNewOrder(ReadingQuestion deletedQuestion, List<ReadingQuestion> questions) {
+        int startQuestion = Utils.getStartUpdatedQuestion(deletedQuestion);
+
+        questions.sort(Comparator.comparing(ReadingQuestion::getSort));
+        questions = getWithoutDeleteQuestions(startQuestion, questions, deletedQuestion);
+        for (var question : questions) {
+            if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+                List<RMultipleChoice> choices = question.getChoices();
+                for (var choice : question.getChoices()) {
+                    choice.setSort(startQuestion);
+                    startQuestion++;
+                }
+                rMultipleChoiceRepository.saveAll(choices);
+                continue;
+            }
+
+            if (question.getContent() != null && question.isHtml()) {
+                String newContent = jsoupService.setOrderForHtmlContent(startQuestion, question.getContent());
+                question.setContent(newContent);
+            }
+
+            List<Form> forms = question.getQuestions();
+            for (Form form : forms) {
+                form.setOrder(startQuestion);
+                startQuestion++;
+            }
+            question.setQuestions(forms);
+            readingQuestionRepository.save(question);
+        }
+    }
+
+    private List<ReadingQuestion> getWithoutDeleteQuestions(int startQuestion, List<ReadingQuestion> questions, ReadingQuestion deletedQuestion) {
+        List<ReadingQuestion> newQuestions = new ArrayList<>();
+        for (ReadingQuestion question : questions) {
+            var oldQuestion = Utils.getStartUpdatedQuestion(question);
+            if (oldQuestion > startQuestion && !question.equals(deletedQuestion)) {
+                newQuestions.add(question);
+            }
+        }
+
+        return newQuestions;
     }
 
     @Override
@@ -141,14 +187,25 @@ public class ReadingServiceImpl implements ReadingService {
     }
 
     @Override
-    public JResponse getReadingById(User currentUser, Long id) {
+    public JResponse getPassageQuestion(User currentUser, Long passageId) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+
+        ReadingPassage passage = readingRepository.findByIdAndOrganization(passageId, organization);
+
+        if (passage == null) return JResponse.error(400, "This reading is not for you.");
+
+        return JResponse.success(passage.toQuestionDto());
+    }
+
+    @Override
+    public JResponse getReadingById(User currentUser, Long id, boolean withAnswer) {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
 
         ReadingPassage passage = readingRepository.findByIdAndOrganization(id, organization);
 
         if (passage == null) return JResponse.error(400, "This reading is not for you.");
 
-        return JResponse.success(new ReadingResponse(passage));
+        return JResponse.success(new ReadingResponse(passage, withAnswer));
     }
 
     @Override
@@ -198,14 +255,13 @@ public class ReadingServiceImpl implements ReadingService {
         }
 
         ReadingQuestion question = new ReadingQuestion();
-
         ReadingQuestionTypes type = ReadingQuestionTypes.getType(questionTypes.getType());
         question.setTypes(type);
         int sort = reading.getQuestions().stream().map(ReadingQuestion::getSort).max(Integer::compareTo).orElse(0);
         question.setSort(sort + 1);
         question.setInstruction(rAnswer.getInstruction());
 
-        if (rAnswer.getContent() != null) {
+        if (!StringUtils.isNullOrEmpty(rAnswer.getContent())) {
             question.setContent(rAnswer.getContent());
             question.setHtml(true);
         }

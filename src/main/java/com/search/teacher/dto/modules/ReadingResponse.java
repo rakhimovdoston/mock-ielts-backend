@@ -27,7 +27,7 @@ public class ReadingResponse {
     private boolean list;
     private List<ReadingQuestionResponse> question;
 
-    public ReadingResponse(ReadingPassage passage) {
+    public ReadingResponse(ReadingPassage passage, boolean withAnswer) {
         this.id = passage.getId();
         this.title = passage.getTitle();
         this.description = passage.getDescription();
@@ -35,7 +35,7 @@ public class ReadingResponse {
         this.list = passage.isList();
         this.difficulty = passage.getDifficulty().name();
         this.headings = passage.isList() ? Utils.getHeadingList(passage.getCount()) : new ArrayList<>();
-        this.question = passage.toQuestionDto();
-        this.answerStart = passage.getQuestions().stream().map(ques -> ques.getQuestions().size()).reduce(0, Integer::sum);
+        this.question = withAnswer ? passage.toQuestionDto() : new ArrayList<>();
+        this.answerStart = !passage.getQuestions().isEmpty() ? Utils.getLastQuestionsNumber(passage.getQuestions()) : 0;
     }
 }

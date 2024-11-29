@@ -11,6 +11,7 @@ import org.hibernate.type.SqlTypes;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Package com.search.teacher.model.entities.modules
@@ -50,4 +51,16 @@ public class ReadingQuestion extends BaseEntity {
 
     @Column(columnDefinition = "integer default 0")
     private int sort = 0;
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        ReadingQuestion that = (ReadingQuestion) o;
+        return getId().equals(that.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
+    }
 }

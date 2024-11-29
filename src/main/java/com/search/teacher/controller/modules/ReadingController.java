@@ -61,12 +61,21 @@ public class ReadingController {
     }
 
     @GetMapping("passage/{id}")
-    public JResponse getReadingById(@PathVariable(name = "id") Long id) {
-        return readingService.getReadingById(securityUtils.getCurrentUser(), id);
+    public JResponse getReadingById(@PathVariable(name = "id") Long id,
+                                    @RequestParam(name = "withAnswer", required = false, defaultValue = "0") boolean withAnswer) {
+        return readingService.getReadingById(securityUtils.getCurrentUser(), id, withAnswer);
+    }
+
+    @GetMapping("passage/{id}/questions")
+    public JResponse getReadingQuestions(@PathVariable(name = "id") Long passageId) {
+
+        return readingService.getPassageQuestion(securityUtils.getCurrentUser(), passageId);
     }
 
     @GetMapping("passage/all")
-    public JResponse getAllReadings(@RequestParam(name = "page", defaultValue = "0", required = false) int page, @RequestParam(name = "size", defaultValue = "10", required = false) int size, @RequestParam(name = "type", defaultValue = "all", required = false) String type) {
+    public JResponse getAllReadings(@RequestParam(name = "page", defaultValue = "0", required = false) int page,
+                                    @RequestParam(name = "size", defaultValue = "10", required = false) int size,
+                                    @RequestParam(name = "type", defaultValue = "all", required = false) String type) {
         ModuleFilter moduleFilter = new ModuleFilter();
         moduleFilter.setType(type);
         moduleFilter.setPage(page);

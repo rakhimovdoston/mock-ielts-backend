@@ -5,6 +5,7 @@ import com.search.teacher.model.base.BaseEntity;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ModuleType;
+import com.search.teacher.utils.Utils;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -65,10 +66,11 @@ public class ReadingPassage extends BaseEntity {
             response.setText(question.getContent());
             response.setTypes(question.getTypes().getDisplayName());
             response.setCondition(question.getInstruction());
+            response.setCount(Utils.getCountString(question));
             response.setQuestions(question.getQuestions().stream().peek(form -> form.setAnswer(null)).toList());
             if (question.getTypes().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS))
                 response.setChoices(question.getChoices().stream().map(RMultipleChoice::toDto).toList());
-            
+
             responses.add(response);
         }
         return responses;

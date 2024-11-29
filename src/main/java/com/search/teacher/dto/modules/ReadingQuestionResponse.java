@@ -19,6 +19,7 @@ import java.util.List;
 public class ReadingQuestionResponse {
     private Long id;
     private String text;
+    private String count;
     private String explanation;
     private String condition;
     private String types;

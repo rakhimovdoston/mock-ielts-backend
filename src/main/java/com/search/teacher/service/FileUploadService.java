@@ -44,9 +44,9 @@ public class FileUploadService {
     public void removeObject(Image image, String bucket) {
         try {
             minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(applicationProperties.getMinio().getApplicationName())
-                    .object(image.getObjectName())
-                    .build());
+                .bucket(applicationProperties.getMinio().getApplicationName())
+                .object(image.getObjectName())
+                .build());
 
             imageRepository.deleteById(image.getId());
         } catch (ErrorResponseException |
@@ -94,13 +94,13 @@ public class FileUploadService {
             ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
             checkBucket(bucket, isPublic);
             this.uploadWithPutObject(
-                    PutObjectArgs
-                            .builder()
-                            .bucket(bucket)
-                            .object(fileName)
-                            .stream(stream, bytes.length, -1)
-                            .contentType(file.getContentType())
-                            .build()
+                PutObjectArgs
+                    .builder()
+                    .bucket(bucket)
+                    .object(fileName)
+                    .stream(stream, bytes.length, -1)
+                    .contentType(file.getContentType())
+                    .build()
             );
 
             Image image = new Image();
@@ -122,32 +122,32 @@ public class FileUploadService {
         try {
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
                 minioClient.makeBucket(MakeBucketArgs
-                        .builder()
-                        .bucket(bucket)
-                        .build());
+                    .builder()
+                    .bucket(bucket)
+                    .build());
 
                 if (isPublic) {
                     String publicPolicy = "{\n" +
-                            "  \"Version\"::" + Utils.getCurrentDateStandardFormat() + ",\n" +
-                            "  \"Statement\": [\n" +
-                            "    {\n" +
-                            "      \"Effect\": \"Allow\",\n" +
-                            "      \"Principal\": \"*\",\n" +
-                            "      \"Action\": [\n" +
-                            "        \"s3:GetObject\"\n" +
-                            "      ],\n" +
-                            "      \"Resource\": [\n" +
-                            "        \"arn:aws:s3:::" + bucket + "/*\"\n" +
-                            "      ]\n" +
-                            "    }\n" +
-                            "  ]\n" +
-                            "}";
+                        "  \"Version\"::" + Utils.getCurrentDateStandardFormat() + ",\n" +
+                        "  \"Statement\": [\n" +
+                        "    {\n" +
+                        "      \"Effect\": \"Allow\",\n" +
+                        "      \"Principal\": \"*\",\n" +
+                        "      \"Action\": [\n" +
+                        "        \"s3:GetObject\"\n" +
+                        "      ],\n" +
+                        "      \"Resource\": [\n" +
+                        "        \"arn:aws:s3:::" + bucket + "/*\"\n" +
+                        "      ]\n" +
+                        "    }\n" +
+                        "  ]\n" +
+                        "}";
 
                     minioClient.setBucketPolicy(SetBucketPolicyArgs
-                            .builder()
-                            .bucket(bucket)
-                            .config(publicPolicy)
-                            .build());
+                        .builder()
+                        .bucket(bucket)
+                        .config(publicPolicy)
+                        .build());
 
                 }
             }
@@ -170,8 +170,8 @@ public class FileUploadService {
             ObjectWriteResponse response = minioClient.putObject(objectArgs);
 
             String builder = "\nObject: --------   " + response.object() +
-                    "\nVersion Id: --------   " + response.versionId() +
-                    "\nEtag: --------   " + response.etag();
+                "\nVersion Id: --------   " + response.versionId() +
+                "\nEtag: --------   " + response.etag();
             log.info(builder);
             log.info("Uploaded successfully");
 

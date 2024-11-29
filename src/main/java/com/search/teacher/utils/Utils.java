@@ -1,19 +1,24 @@
 package com.search.teacher.utils;
 
+import com.search.teacher.model.entities.modules.reading.Form;
+import com.search.teacher.model.entities.modules.reading.RMultipleChoice;
+import com.search.teacher.model.entities.modules.reading.ReadingQuestion;
+import com.search.teacher.model.entities.modules.reading.ReadingQuestionTypes;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
+import com.search.teacher.service.JsoupService;
+import org.hibernate.dialect.unique.CreateTableUniqueDelegate;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Utils {
 
     public final static String[] COLORS = {"#2196F3", "#32c787", "#00BCD4", "#ff5652", "#ffc107", "#ff85af", "#FF9800", "#39bbb0"};
     public final static String STANDARD_FORMAT = "yyyy-mm-dd";
     public final static String[] IMAGE_TYPES = {"image/jpeg", "image/png", "image/jpg"};
+    public final static int MIN_VALUE = Integer.MIN_VALUE;
+    public final static int MAX_VALUE = Integer.MAX_VALUE;
 
     public static String getRandomProfileColor(String[] colors) {
         Random random = new Random();
@@ -24,6 +29,39 @@ public class Utils {
         return colors[randomNumber];
     }
 
+    public static String getCountString(ReadingQuestion question) {
+        int max, min;
+        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+            min = question.getChoices().stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
+            max = question.getChoices().stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
+
+            return min + "-" + max;
+        }
+        if (question.isHtml() && question.getContent() != null) {
+            return JsoupService.questionCountString(question.getContent());
+        }
+        min = question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
+        max = question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
+        return min + "-" + max;
+    }
+
+    public static int getLastQuestionsNumber(List<ReadingQuestion> questions) {
+        questions.sort(Comparator.comparing(ReadingQuestion::getSort));
+        ReadingQuestion question = questions.get(questions.size() - 1);
+        return getLastQuestionNumber(question);
+    }
+
+    public static int getLastQuestionNumber(ReadingQuestion question) {
+        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+            return question.getChoices().stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
+        }
+
+        if (question.isHtml() && question.getContent() != null) {
+            return JsoupService.getLastQuestionNumberFromHtml(question.getContent());
+        }
+
+        return question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
+    }
 
     public static String getBucketWithType(ImageType imageType) {
         return switch (imageType) {
@@ -78,5 +116,17 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    public static int getStartUpdatedQuestion(ReadingQuestion question) {
+        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+            return question.getChoices().stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
+        }
+
+        if (question.isHtml() && !StringUtils.isNullOrEmpty(question.getContent())) {
+            return JsoupService.getStartQuestionNumber(question.getContent());
+        }
+
+        return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
     }
 }

@@ -17,7 +17,7 @@ import java.util.List;
 public interface ReadingService {
     JResponse createPassage(User currentUser, ReadingPassageDto passage);
 
-    JResponse getReadingById(User currentUser, Long id);
+    JResponse getReadingById(User currentUser, Long id, boolean withAnswer);
 
     JResponse saveReadingAnswer(User currentUser, Long questionId, RQuestionAnswerDto answer);
 
@@ -30,4 +30,6 @@ public interface ReadingService {
     JResponse deleteReadingAnswer(User currentUser, Long passageId, Long questionId, String type);
 
     JResponse getAllReadingPassage(User currentUser, ModuleFilter moduleFilter);
+
+    JResponse getPassageQuestion(User currentUser, Long passageId);
 }

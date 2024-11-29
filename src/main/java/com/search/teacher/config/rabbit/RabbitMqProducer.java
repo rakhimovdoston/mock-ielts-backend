@@ -48,14 +48,14 @@ public class RabbitMqProducer {
         try {
             String payloadString = objectMapper.writeValueAsString(payload);
             Message jsonMessage = MessageBuilder
-                    .withBody(payloadString.getBytes())
-                    .andProperties(
-                            MessagePropertiesBuilder
-                                    .newInstance()
-                                    .setContentType("application/json")
-                                    .setHeader("__TypeId__", TypeIdConstants.EMAIL_PAYLOAD)
-                                    .build())
-                    .build();
+                .withBody(payloadString.getBytes())
+                .andProperties(
+                    MessagePropertiesBuilder
+                        .newInstance()
+                        .setContentType("application/json")
+                        .setHeader("__TypeId__", TypeIdConstants.EMAIL_PAYLOAD)
+                        .build())
+                .build();
 
             rabbitTemplate.send(exchange, queue, jsonMessage);
         } catch (AmqpTimeoutException | AmqpConnectException exception) {
