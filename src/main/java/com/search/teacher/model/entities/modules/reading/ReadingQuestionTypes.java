@@ -52,6 +52,10 @@ public enum ReadingQuestionTypes {
         return MATCHING_HEADINGS;
     }
 
+    public static boolean isMatchingSentenceOrFeatures(String type) {
+        return type.equals(MATCHING_FEATURES.displayName) || type.equals(MATCHING_SENTENCE_ENDINGS.displayName);
+    }
+
     private String displayName;
     private boolean active;
 

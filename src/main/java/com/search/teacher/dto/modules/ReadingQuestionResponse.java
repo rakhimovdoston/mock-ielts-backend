@@ -24,5 +24,6 @@ public class ReadingQuestionResponse {
     private String condition;
     private String types;
     private List<Form> questions = new ArrayList<>();
+    private List<Form> questionSeconds = new ArrayList<>();
     private List<RMultipleChoiceDto> choices = new ArrayList<>();
 }

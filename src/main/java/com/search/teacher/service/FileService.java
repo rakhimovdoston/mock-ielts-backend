@@ -4,6 +4,7 @@ import com.search.teacher.dto.ImageDto;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.User;
+import com.search.teacher.model.entities.modules.reading.ReadingQuestion;
 import com.search.teacher.model.enums.ImageType;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.ImageRepository;
@@ -35,8 +36,13 @@ public class FileService {
 
     public String checkFilename(String audio, ImageType imageType) {
         Image image = Optional.ofNullable(imageRepository.findByObjectNameAndImageType(audio, imageType))
-                .orElseThrow(() -> new BadRequestException("Please upload Listening Audio"));
+            .orElseThrow(() -> new BadRequestException("Please upload Listening Audio"));
 
         return image.getUrl();
+    }
+
+    public Image saveImageToQuestion(String imageUrl) {
+        return Optional.ofNullable(imageRepository.findByObjectNameAndImageType(imageUrl, ImageType.READING))
+            .orElseThrow(() -> new BadRequestException("RPlease upload Reading Passage"));
     }
 }

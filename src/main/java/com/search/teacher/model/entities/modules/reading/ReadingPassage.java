@@ -5,6 +5,7 @@ import com.search.teacher.model.base.BaseEntity;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ModuleType;
+import com.search.teacher.service.JsoupService;
 import com.search.teacher.utils.Utils;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -58,6 +59,9 @@ public class ReadingPassage extends BaseEntity {
     @JoinColumn(name = "organization_id", nullable = false, referencedColumnName = "id")
     private Organization organization;
 
+    @OneToMany(mappedBy = "passage")
+    private List<PassageAnswer> answers = new ArrayList<>();
+
     public List<ReadingQuestionResponse> toQuestionDto() {
         List<ReadingQuestionResponse> responses = new ArrayList<>();
         for (ReadingQuestion question : getQuestions()) {
@@ -65,9 +69,14 @@ public class ReadingPassage extends BaseEntity {
             response.setId(question.getId());
             response.setText(question.getContent());
             response.setTypes(question.getTypes().getDisplayName());
-            response.setCondition(question.getInstruction());
             response.setCount(Utils.getCountString(question));
+            response.setCondition(JsoupService.replaceInstruction(question.getInstruction(), response.getCount()));
             response.setQuestions(question.getQuestions().stream().peek(form -> form.setAnswer(null)).toList());
+            if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
+                MatchingSentence sentence = question.getMatching();
+                response.setQuestions(sentence.getSentence());
+                response.setQuestionSeconds(sentence.getAnswers());
+            }
             if (question.getTypes().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS))
                 response.setChoices(question.getChoices().stream().map(RMultipleChoice::toDto).toList());
 

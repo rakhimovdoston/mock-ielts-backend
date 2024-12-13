@@ -1,6 +1,7 @@
 package com.search.teacher.service.modules;
 
 import com.search.teacher.dto.filter.ModuleFilter;
+import com.search.teacher.dto.modules.PassageConfirmDto;
 import com.search.teacher.dto.modules.RQuestionAnswerDto;
 import com.search.teacher.dto.modules.ReadingPassageDto;
 import com.search.teacher.model.entities.User;
@@ -32,4 +33,6 @@ public interface ReadingService {
     JResponse getAllReadingPassage(User currentUser, ModuleFilter moduleFilter);
 
     JResponse getPassageQuestion(User currentUser, Long passageId);
+
+    JResponse confirmPassage(User currentUser, PassageConfirmDto confirm);
 }

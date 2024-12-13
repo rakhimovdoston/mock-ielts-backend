@@ -6,16 +6,15 @@ import com.search.teacher.dto.modules.*;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
+import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.entities.modules.reading.*;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.model.response.JResponse;
-import com.search.teacher.repository.modules.QuestionTypesRepository;
-import com.search.teacher.repository.modules.RMultipleChoiceRepository;
-import com.search.teacher.repository.modules.ReadingQuestionRepository;
-import com.search.teacher.repository.modules.ReadingRepository;
+import com.search.teacher.repository.modules.*;
+import com.search.teacher.service.FileService;
 import com.search.teacher.service.JsoupService;
 import com.search.teacher.service.modules.ReadingService;
 import com.search.teacher.service.organization.OrganizationService;
@@ -46,6 +45,9 @@ public class ReadingServiceImpl implements ReadingService {
     private final QuestionTypesRepository questionTypesRepository;
     private final RMultipleChoiceRepository rMultipleChoiceRepository;
     private final JsoupService jsoupService;
+    private final FileService fileService;
+    private final MatchingSentenceRepository matchingSentenceRepository;
+    private final PassageAnswerRepository passageAnswerRepository;
 
     @Override
     public JResponse createPassage(User currentUser, ReadingPassageDto passage) {
@@ -106,7 +108,6 @@ public class ReadingServiceImpl implements ReadingService {
 
         if (readingPassage == null) return JResponse.error(400, "This reading is not for you.");
 
-        ReadingQuestionTypes types = ReadingQuestionTypes.getTypeByName(type);
         var question = readingQuestionRepository.findByIdAndPassage(questionId, readingPassage);
         if (question == null) return JResponse.error(400, "This reading question is not for you.");
 
@@ -116,6 +117,11 @@ public class ReadingServiceImpl implements ReadingService {
             List<RMultipleChoice> choices = question.getChoices();
             rMultipleChoiceRepository.deleteAll(choices);
         }
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(type)) {
+            matchingSentenceRepository.delete(question.getMatching());
+        }
+
         readingQuestionRepository.delete(question);
         return JResponse.success();
     }
@@ -133,6 +139,18 @@ public class ReadingServiceImpl implements ReadingService {
                     startQuestion++;
                 }
                 rMultipleChoiceRepository.saveAll(choices);
+                continue;
+            }
+
+            if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
+                MatchingSentence sentence = question.getMatching();
+                List<Form> forms = sentence.getSentence();
+                for (Form form : forms) {
+                    form.setOrder(startQuestion);
+                    startQuestion++;
+                }
+                sentence.setAnswers(forms);
+                matchingSentenceRepository.save(sentence);
                 continue;
             }
 
@@ -170,9 +188,9 @@ public class ReadingServiceImpl implements ReadingService {
         Difficulty difficulty = Difficulty.getValue(moduleFilter.getType());
         Page<ReadingPassageDto> passageContents;
         if (moduleFilter.getType().equals("all"))
-            passageContents = readingRepository.findAllOrganizationAndActiveTrue(organization, pageRequest);
+            passageContents = readingRepository.findAllOrganization(organization, pageRequest);
         else
-            passageContents = readingRepository.findAllOrganizationAndActiveTrueAndDifficulty(organization, difficulty, pageRequest);
+            passageContents = readingRepository.findAllOrganizationAndDifficulty(organization, difficulty, pageRequest);
 
         List<ReadingPassageDto> passages = passageContents.getContent();
         if (passages.isEmpty()) return JResponse.error(404, "Reading Passage not found.");
@@ -195,6 +213,29 @@ public class ReadingServiceImpl implements ReadingService {
         if (passage == null) return JResponse.error(400, "This reading is not for you.");
 
         return JResponse.success(passage.toQuestionDto());
+    }
+
+    @Override
+    public JResponse confirmPassage(User currentUser, PassageConfirmDto confirm) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        ReadingPassage passage = readingRepository.findByIdAndOrganization(confirm.getPassageId(), organization);
+        if (passage == null) return JResponse.error(400, "This reading is not for you.");
+
+        saveConfirm(passage, confirm.getAnswers());
+        return JResponse.success();
+    }
+
+    private void saveConfirm(ReadingPassage passage, List<PassageAnswerDto> answers) {
+        passage.setActive(true);
+        for (var answer : answers) {
+            PassageAnswer answerEntity = new PassageAnswer();
+            answerEntity.setAnswer(answer.getAnswer());
+            answerEntity.setPassage(passage);
+            answerEntity.setId(answer.getId());
+            passageAnswerRepository.save(answerEntity);
+        }
+
+        readingRepository.save(passage);
     }
 
     @Override
@@ -260,22 +301,40 @@ public class ReadingServiceImpl implements ReadingService {
         int sort = reading.getQuestions().stream().map(ReadingQuestion::getSort).max(Integer::compareTo).orElse(0);
         question.setSort(sort + 1);
         question.setInstruction(rAnswer.getInstruction());
+        question.setQuestionCount(rAnswer.getQuestionCount());
+
+        if (!StringUtils.isNullOrEmpty(rAnswer.getImage())) {
+            Image image = fileService.saveImageToQuestion(rAnswer.getImage());
+            question.setImageId(image.getId());
+        }
 
         if (!StringUtils.isNullOrEmpty(rAnswer.getContent())) {
             question.setContent(rAnswer.getContent());
             question.setHtml(true);
         }
 
-        if (!rAnswer.getQuestionList().isEmpty()) {
+        if (!rAnswer.getQuestionList().isEmpty() && rAnswer.getQuestionSeconds().isEmpty()) {
             question.setQuestions(rAnswer.getQuestionList());
         }
+
         question.setPassage(reading);
         readingQuestionRepository.save(question);
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(rAnswer.getType())) {
+            MatchingSentence sentence = new MatchingSentence();
+            sentence.setQuestion(question);
+            sentence.setSentence(rAnswer.getQuestionList());
+            sentence.setAnswers(rAnswer.getQuestionSeconds());
+            matchingSentenceRepository.save(sentence);
+        }
+
         if (questionTypes.getType().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS.name())) {
+
             if (rAnswer.getChoices().isEmpty()) {
                 throw new BadRequestException("Please enter multiple choice question");
             }
             question.setChoices(choice(rAnswer.getChoices(), question));
+            question.setInstruction(JsoupService.replaceInstruction(question.getInstruction(), rAnswer.getChoices()));
         }
         readingQuestionRepository.save(question);
         return question;

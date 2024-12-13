@@ -1,6 +1,7 @@
 package com.search.teacher.model.entities.modules.reading;
 
 import com.search.teacher.model.base.BaseEntity;
+import com.search.teacher.model.entities.Image;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,8 +41,15 @@ public class ReadingQuestion extends BaseEntity {
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL)
     private List<RMultipleChoice> choices = new ArrayList<>();
 
+    @OneToOne(mappedBy = "question")
+    private MatchingSentence matching;
+
     @Enumerated(EnumType.STRING)
     private ReadingQuestionTypes types;
+
+    private Integer questionCount;
+
+    private Long imageId;
 
     private Date deleteDate;
 

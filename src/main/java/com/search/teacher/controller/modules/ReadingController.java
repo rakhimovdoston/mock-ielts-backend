@@ -1,9 +1,9 @@
 package com.search.teacher.controller.modules;
 
 import com.search.teacher.dto.filter.ModuleFilter;
+import com.search.teacher.dto.modules.PassageConfirmDto;
 import com.search.teacher.dto.modules.RQuestionAnswerDto;
 import com.search.teacher.dto.modules.ReadingPassageDto;
-import com.search.teacher.dto.request.DeleteItem;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.modules.ReadingService;
 import com.search.teacher.utils.SecurityUtils;
@@ -40,6 +40,11 @@ public class ReadingController {
     @PostMapping("save/{passageId}/passage-answer")
     public JResponse readingAnswer(@PathVariable(name = "passageId") Long questionId, @RequestBody RQuestionAnswerDto answer) {
         return readingService.saveReadingAnswer(securityUtils.getCurrentUser(), questionId, answer);
+    }
+
+    @PostMapping("passage/confirm")
+    public JResponse confirmReadingPassage(@RequestBody PassageConfirmDto confirm) {
+        return readingService.confirmPassage(securityUtils.getCurrentUser(), confirm);
     }
 
     @PutMapping("update/{passageId}/answer")

@@ -37,6 +37,14 @@ public class Utils {
 
             return min + "-" + max;
         }
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
+            var sentences = question.getMatching();
+            min = sentences.getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
+            max = sentences.getSentence().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
+            return min + "-" + max;
+        }
+
         if (question.isHtml() && question.getContent() != null) {
             return JsoupService.questionCountString(question.getContent());
         }
@@ -58,6 +66,10 @@ public class Utils {
 
         if (question.isHtml() && question.getContent() != null) {
             return JsoupService.getLastQuestionNumberFromHtml(question.getContent());
+        }
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
+            return question.getMatching().getSentence().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
         }
 
         return question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
@@ -126,6 +138,9 @@ public class Utils {
         if (question.isHtml() && !StringUtils.isNullOrEmpty(question.getContent())) {
             return JsoupService.getStartQuestionNumber(question.getContent());
         }
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName()))
+            return question.getMatching().getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
 
         return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
     }
