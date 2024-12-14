@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * Package com.search.teacher.repository.modules
  * Created by doston.rakhimov
@@ -21,4 +23,6 @@ public interface WritingModuleRepository extends JpaRepository<WritingModule, Lo
     Page<WritingModule> findAllByActiveTrueAndOrganization(Organization organization, Pageable pageable);
 
     Page<WritingModule> findAllByActiveTrueAndOrganizationAndTaskOne(Organization organization, boolean taskOne, Pageable pageable);
+
+    List<WritingModule> findAllByActiveIsTrueAndIdInAndOrganization(List<Long> ids, Organization organization);
 }

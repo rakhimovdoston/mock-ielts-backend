@@ -88,7 +88,6 @@ public class ListeningModuleServiceImpl implements ListeningService {
                 .orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
 
         listeningModule.setActive(false);
-        listeningModule.setDeleteDate(new Date());
         listeningModuleRepository.save(listeningModule);
         return JResponse.success();
     }

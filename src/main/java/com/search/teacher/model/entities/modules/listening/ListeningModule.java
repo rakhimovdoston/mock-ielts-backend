@@ -29,7 +29,6 @@ public class ListeningModule extends BaseEntity {
 
     private String audio;
 
-    private Date deleteDate;
 
     @OneToMany(mappedBy = "listening")
     private List<ListeningQuestion> questions = new ArrayList<>();

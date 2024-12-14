@@ -22,6 +22,7 @@ public class OrganizationController {
     private final OrganizationService organizationService;
     private final SecurityUtils securityUtils;
 
+    @Secured({"ADMIN", "MANAGER"})
     @PostMapping(value = "create")
     @ApiOperation(value = "New Organization create")
     public JResponse createOrganization(@RequestBody @Valid OrganizationRequest request) {
@@ -29,12 +30,13 @@ public class OrganizationController {
     }
 
     @GetMapping("all")
-    @Secured("ADMIN")
+    @Secured({"ADMIN", "MANAGER"})
     @ApiOperation(value = "All Organization List Only for Admin")
     public JResponse getAll(@ParameterObject OrganizationFilter filter) {
         return organizationService.getAllOrganizations(securityUtils.getCurrentUser(), filter);
     }
 
+    @Secured({"ADMIN", "MANAGER"})
     @PutMapping("update")
     @ApiOperation(value = "Update your organization")
     public JResponse update(@RequestBody @Valid OrganizationRequest request) {
@@ -42,7 +44,7 @@ public class OrganizationController {
     }
 
     @DeleteMapping("delete")
-    @Secured("ADMIN")
+    @Secured({"ADMIN", "MANAGER"})
     @ApiOperation(value = "Delete Organization for only ADMIN")
     public JResponse delete(@RequestParam Long id) {
         return organizationService.deleteOrganization(securityUtils.getCurrentUser(), id);
