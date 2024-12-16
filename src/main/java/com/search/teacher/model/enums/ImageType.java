@@ -8,6 +8,7 @@ public enum ImageType {
     READING,
     LISTENING,
     WRITING,
+    AUDIO,
     SPEAKING;
 
     public static ImageType getValue(String type) {

@@ -34,6 +34,8 @@ public class Image extends BaseEntity {
     @Column(name = "url")
     private String url;
 
+    private String bucket;
+
     @Column(name = "image_type", length = 50)
     @Enumerated(EnumType.STRING)
     private ImageType imageType;

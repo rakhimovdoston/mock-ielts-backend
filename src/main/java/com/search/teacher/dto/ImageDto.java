@@ -14,9 +14,11 @@ import lombok.Setter;
 public class ImageDto {
     private String url;
     private Long id;
+    private String name;
 
-    public ImageDto(Long id, String url) {
+    public ImageDto(Long id, String url, String name) {
         this.id = id;
         this.url = url;
+        this.name = name;
     }
 }

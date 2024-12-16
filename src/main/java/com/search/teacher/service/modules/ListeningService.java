@@ -20,4 +20,6 @@ public interface ListeningService {
     JResponse getAllListening(User currentUser, ModuleFilter filter);
 
     JResponse deleteListening(User currentUser, Long byId);
+
+    JResponse getListeningById(User currentUser, Long id);
 }

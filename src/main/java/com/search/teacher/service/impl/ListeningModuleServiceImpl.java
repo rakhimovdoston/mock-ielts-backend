@@ -92,6 +92,13 @@ public class ListeningModuleServiceImpl implements ListeningService {
         return JResponse.success();
     }
 
+    @Override
+    public JResponse getListeningById(User currentUser, Long id) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        ListeningModule listeningModule = listeningModuleRepository.findByIdAndOrganization(id, organization);
+        return null;
+    }
+
     @NotNull
     private static ListeningQuestion getListeningQuestion(ListeningAnswerDto dto, ListeningModule listeningModule) {
         ListeningQuestion question = new ListeningQuestion();

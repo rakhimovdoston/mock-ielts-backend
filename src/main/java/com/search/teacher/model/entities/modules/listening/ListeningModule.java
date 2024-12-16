@@ -1,6 +1,7 @@
 package com.search.teacher.model.entities.modules.listening;
 
 import com.search.teacher.model.base.BaseEntity;
+import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.enums.Difficulty;
 import jakarta.persistence.*;
@@ -36,4 +37,8 @@ public class ListeningModule extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
     private Organization organization;
+
+    @OneToOne
+    @JoinColumn(name = "image_id", referencedColumnName = "id")
+    private Image image;
 }

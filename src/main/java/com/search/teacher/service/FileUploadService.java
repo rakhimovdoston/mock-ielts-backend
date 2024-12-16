@@ -14,6 +14,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.support.SimpleTriggerContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -64,11 +65,13 @@ public class FileUploadService {
 
     public ImageDto fileUpload(User currentUser, MultipartFile file, String type, boolean pubLic) {
         ImageType imageType = ImageType.valueOf(type);
-        Image image = uploadToStorageServer(file, getBucket(imageType), pubLic);
+        String bucket = getBucket(imageType);
+        Image image = uploadToStorageServer(file, bucket, pubLic);
         image.setImageType(imageType);
+        image.setBucket(bucket);
         image.setUserId(currentUser.getId());
         imageRepository.save(image);
-        return new ImageDto(image.getId(), image.getUrl());
+        return new ImageDto(image.getId(), image.getUrl(), image.getOriginalFilename());
     }
 
     private String getBucket(ImageType imageType) {
@@ -76,8 +79,36 @@ public class FileUploadService {
             case LOGO -> "logos";
             case PROFILE_PICTURE -> "profiles";
             case READING, LISTENING, WRITING, SPEAKING -> "modules";
+            case AUDIO -> "audios";
             default -> "photos";
         };
+    }
+
+    public String uploadAudio(MultipartFile file, Image image) {
+        String objectName = getObjectName(file.getOriginalFilename());
+        String bucket = getBucket(image.getImageType());
+        image.setObjectName(objectName);
+        image.setBucket(bucket);
+        checkBucket(bucket, true);
+
+        try {
+            byte[] bytes = file.getBytes();
+            ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+            this.uploadWithPutObject(
+                PutObjectArgs
+                    .builder()
+                    .bucket(bucket)
+                    .object(objectName)
+                    .stream(stream, bytes.length, -1)
+                    .contentType(file.getContentType())
+                    .build()
+            );
+            image.setUrl(StringUtils.join(applicationProperties.getMinio().getHost(), "/", bucket, "/", objectName));
+            return objectName;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException("Audio File upload failed");
+        }
     }
 
 

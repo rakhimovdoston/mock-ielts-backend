@@ -7,16 +7,18 @@ import com.search.teacher.model.entities.modules.reading.ReadingQuestionTypes;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
 import com.search.teacher.service.JsoupService;
-import org.hibernate.dialect.unique.CreateTableUniqueDelegate;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Utils {
 
     public final static String[] COLORS = {"#2196F3", "#32c787", "#00BCD4", "#ff5652", "#ffc107", "#ff85af", "#FF9800", "#39bbb0"};
     public final static String STANDARD_FORMAT = "yyyy-mm-dd";
     public final static String[] IMAGE_TYPES = {"image/jpeg", "image/png", "image/jpg"};
+    public final static String[] COMPRESSED_AUDIO_TYPES = {"audio/mpeg", "audio/aac", "audio/aac", "audio/x-ms-wma"};
+    public final static String[] UNCOMPRESSED_AUDIO_TYPES = {"audio/wav", "audio/x-wav", "audio/aiff", "audio/x-aiff"};
     public final static int MIN_VALUE = Integer.MIN_VALUE;
     public final static int MAX_VALUE = Integer.MAX_VALUE;
 
@@ -143,5 +145,18 @@ public class Utils {
             return question.getMatching().getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
 
         return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
+    }
+
+    public static boolean isAudio(String contentType) {
+        if (contentType == null) {
+            return false;
+        }
+        List<String> audioFormats = Stream.concat(Arrays.stream(COMPRESSED_AUDIO_TYPES), Arrays.stream(UNCOMPRESSED_AUDIO_TYPES)).toList();
+        for (String audioFormat : audioFormats) {
+            if (contentType.toLowerCase().equals(audioFormat))
+                return true;
+        }
+
+        return false;
     }
 }
