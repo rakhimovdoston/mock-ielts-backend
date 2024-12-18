@@ -45,7 +45,7 @@ public class FileUploadService {
     public void removeObject(Image image, String bucket) {
         try {
             minioClient.removeObject(RemoveObjectArgs.builder()
-                .bucket(applicationProperties.getMinio().getApplicationName())
+                .bucket(bucket)
                 .object(image.getObjectName())
                 .build());
 
@@ -64,7 +64,7 @@ public class FileUploadService {
     }
 
     public ImageDto fileUpload(User currentUser, MultipartFile file, String type, boolean pubLic) {
-        ImageType imageType = ImageType.valueOf(type);
+        ImageType imageType = ImageType.getValue(type);
         String bucket = getBucket(imageType);
         Image image = uploadToStorageServer(file, bucket, pubLic);
         image.setImageType(imageType);

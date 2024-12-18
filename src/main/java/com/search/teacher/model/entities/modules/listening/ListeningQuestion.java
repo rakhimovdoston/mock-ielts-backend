@@ -2,6 +2,8 @@ package com.search.teacher.model.entities.modules.listening;
 
 import com.search.teacher.model.base.BaseEntity;
 import com.search.teacher.model.entities.modules.reading.Form;
+import com.search.teacher.model.entities.modules.reading.MatchingSentence;
+import com.search.teacher.model.entities.modules.reading.RMultipleChoice;
 import com.search.teacher.model.entities.modules.reading.ReadingQuestionTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -24,10 +26,15 @@ import java.util.List;
 @Setter
 public class ListeningQuestion extends BaseEntity {
 
+    @Column(columnDefinition = "TEXT")
     private String instruction;
 
     private boolean html;
+
+    @Column(columnDefinition = "TEXT")
     private String content;
+
+    private int sort = 0;
 
     @Column(name = "image_url", length = 200)
     private String imageUrl;
@@ -37,13 +44,15 @@ public class ListeningQuestion extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private List<Form> qustions = new ArrayList<>();
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private List<Form> answers = new ArrayList<>();
+    private List<Form> questions = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "listening_id", referencedColumnName = "id")
     private ListeningModule listening;
+
+    @OneToOne(mappedBy = "listening")
+    private MatchingSentence matching;
+
+    @OneToMany(mappedBy = "listening")
+    private List<RMultipleChoice> choices = new ArrayList<>();
 }

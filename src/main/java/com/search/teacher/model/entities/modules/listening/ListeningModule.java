@@ -1,8 +1,11 @@
 package com.search.teacher.model.entities.modules.listening;
 
+import com.search.teacher.dto.ImageDto;
+import com.search.teacher.dto.modules.listening.ListeningResponse;
 import com.search.teacher.model.base.BaseEntity;
 import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
+import com.search.teacher.model.entities.modules.reading.MatchingSentence;
 import com.search.teacher.model.enums.Difficulty;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -28,9 +31,6 @@ public class ListeningModule extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
-    private String audio;
-
-
     @OneToMany(mappedBy = "listening")
     private List<ListeningQuestion> questions = new ArrayList<>();
 
@@ -39,6 +39,15 @@ public class ListeningModule extends BaseEntity {
     private Organization organization;
 
     @OneToOne
-    @JoinColumn(name = "image_id", referencedColumnName = "id")
-    private Image image;
+    @JoinColumn(name = "audio_id", referencedColumnName = "id")
+    private Image audio;
+
+    public ListeningResponse toResponse() {
+        ListeningResponse response = new ListeningResponse();
+        response.setId(this.getId());
+        response.setAudio(new ImageDto(getAudio()));
+        response.setTitle(this.getTitle());
+        response.setDifficulty(getDifficulty().name());
+        return response;
+    }
 }

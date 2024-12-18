@@ -1,6 +1,7 @@
 package com.search.teacher.model.entities.modules.reading;
 
 import com.search.teacher.model.base.BaseEntity;
+import com.search.teacher.model.entities.modules.listening.ListeningQuestion;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,4 +28,8 @@ public class MatchingSentence extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "question_id", referencedColumnName = "id")
     private ReadingQuestion question;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "listening_id", referencedColumnName = "id")
+    private ListeningQuestion listening;
 }

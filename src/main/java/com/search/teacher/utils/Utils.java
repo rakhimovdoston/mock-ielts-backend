@@ -1,12 +1,13 @@
 package com.search.teacher.utils;
 
-import com.search.teacher.model.entities.modules.reading.Form;
-import com.search.teacher.model.entities.modules.reading.RMultipleChoice;
-import com.search.teacher.model.entities.modules.reading.ReadingQuestion;
-import com.search.teacher.model.entities.modules.reading.ReadingQuestionTypes;
+import com.search.teacher.dto.modules.ReadingQuestionResponse;
+import com.search.teacher.model.entities.modules.listening.ListeningModule;
+import com.search.teacher.model.entities.modules.listening.ListeningQuestion;
+import com.search.teacher.model.entities.modules.reading.*;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
 import com.search.teacher.service.JsoupService;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -17,7 +18,7 @@ public class Utils {
     public final static String[] COLORS = {"#2196F3", "#32c787", "#00BCD4", "#ff5652", "#ffc107", "#ff85af", "#FF9800", "#39bbb0"};
     public final static String STANDARD_FORMAT = "yyyy-mm-dd";
     public final static String[] IMAGE_TYPES = {"image/jpeg", "image/png", "image/jpg"};
-    public final static String[] COMPRESSED_AUDIO_TYPES = {"audio/mpeg", "audio/aac", "audio/aac", "audio/x-ms-wma"};
+    public final static String[] COMPRESSED_AUDIO_TYPES = {"audio/mpeg", "audio/aac", "audio/aac", "audio/x-ms-wma", "audio/mpeg"};
     public final static String[] UNCOMPRESSED_AUDIO_TYPES = {"audio/wav", "audio/x-wav", "audio/aiff", "audio/x-aiff"};
     public final static int MIN_VALUE = Integer.MIN_VALUE;
     public final static int MAX_VALUE = Integer.MAX_VALUE;
@@ -32,27 +33,7 @@ public class Utils {
     }
 
     public static String getCountString(ReadingQuestion question) {
-        int max, min;
-        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
-            min = question.getChoices().stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
-            max = question.getChoices().stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
-
-            return min + "-" + max;
-        }
-
-        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
-            var sentences = question.getMatching();
-            min = sentences.getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
-            max = sentences.getSentence().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
-            return min + "-" + max;
-        }
-
-        if (question.isHtml() && question.getContent() != null) {
-            return JsoupService.questionCountString(question.getContent());
-        }
-        min = question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
-        max = question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
-        return min + "-" + max;
+        return getString(question.getTypes(), question.getChoices(), question.getMatching(), question.isHtml(), question.getContent(), question.getQuestions());
     }
 
     public static int getLastQuestionsNumber(List<ReadingQuestion> questions) {
@@ -147,9 +128,27 @@ public class Utils {
         return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
     }
 
+    public static int getStartUpdatedQuestionForListening(ListeningQuestion question) {
+        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+            return question.getChoices().stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
+        }
+
+        if (question.isHtml() && !StringUtils.isNullOrEmpty(question.getContent())) {
+            return JsoupService.getStartQuestionNumber(question.getContent());
+        }
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName()))
+            return question.getMatching().getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
+
+        return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
+    }
+
     public static boolean isAudio(String contentType) {
         if (contentType == null) {
             return false;
+        }
+        if (contentType.startsWith("audio/")) {
+            return true;
         }
         List<String> audioFormats = Stream.concat(Arrays.stream(COMPRESSED_AUDIO_TYPES), Arrays.stream(UNCOMPRESSED_AUDIO_TYPES)).toList();
         for (String audioFormat : audioFormats) {
@@ -158,5 +157,62 @@ public class Utils {
         }
 
         return false;
+    }
+
+    public static int countAnswerStart(List<ListeningQuestion> questions) {
+        questions.sort(Comparator.comparing(ListeningQuestion::getSort));
+        ListeningQuestion question = questions.get(questions.size() - 1);
+        return getLastQuestionLastQuestionOrder(question);
+    }
+
+    public static int getLastQuestionLastQuestionOrder(ListeningQuestion question) {
+        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+            return question.getChoices().stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
+        }
+
+        if (question.isHtml() && question.getContent() != null) {
+            return JsoupService.getLastQuestionNumberFromHtml(question.getContent());
+        }
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
+            return question.getMatching().getSentence().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
+        }
+
+        return question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
+    }
+
+    public static String getCountString(ListeningQuestion question) {
+        return getString(
+            question.getTypes(),
+            question.getChoices(),
+            question.getMatching(),
+            question.isHtml(),
+            question.getContent(),
+            question.getQuestions());
+
+    }
+
+    @NotNull
+    private static String getString(ReadingQuestionTypes types, List<RMultipleChoice> choices, MatchingSentence matching, boolean html, String content, List<Form> questions) {
+        int max, min;
+        if (types == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+            min = choices.stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
+            max = choices.stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
+
+            return min + "-" + max;
+        }
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(types.getDisplayName())) {
+            min = matching.getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
+            max = matching.getSentence().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
+            return min + "-" + max;
+        }
+
+        if (html && content != null) {
+            return JsoupService.questionCountString(content);
+        }
+        min = questions.stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
+        max = questions.stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
+        return min + "-" + max;
     }
 }

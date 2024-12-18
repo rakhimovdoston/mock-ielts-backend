@@ -1,33 +1,40 @@
 package com.search.teacher.service.impl;
 
+import com.search.teacher.dto.ImageDto;
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.ListeningAnswerDto;
 import com.search.teacher.dto.modules.ListeningDto;
+import com.search.teacher.dto.modules.ReadingQuestionResponse;
+import com.search.teacher.dto.modules.listening.ListeningResponse;
+import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
+import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.entities.modules.listening.ListeningModule;
 import com.search.teacher.model.entities.modules.listening.ListeningQuestion;
-import com.search.teacher.model.entities.modules.reading.Form;
+import com.search.teacher.model.entities.modules.reading.*;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.modules.ListeningModuleRepository;
 import com.search.teacher.repository.modules.ListeningQuestionRepository;
+import com.search.teacher.repository.modules.MatchingSentenceRepository;
+import com.search.teacher.repository.modules.RMultipleChoiceRepository;
 import com.search.teacher.service.FileService;
+import com.search.teacher.service.JsoupService;
 import com.search.teacher.service.modules.ListeningService;
 import com.search.teacher.service.organization.OrganizationService;
+import com.search.teacher.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Package com.search.teacher.service.impl
@@ -42,36 +49,19 @@ public class ListeningModuleServiceImpl implements ListeningService {
     private final ListeningModuleRepository listeningModuleRepository;
     private final ListeningQuestionRepository listeningQuestionRepository;
     private final OrganizationService organizationService;
+    private final RMultipleChoiceRepository rMultipleChoiceRepository;
     private final FileService fileService;
-
-    @Override
-    public JResponse saveListening(User currentUser, ListeningDto dto) {
-        Organization organization = organizationService.getOrganisationByOwner(currentUser);
-
-        String filename = fileService.checkFilename(dto.getAudio(), ImageType.LISTENING);
-        ListeningModule listening = new ListeningModule();
-        listening.setDifficulty(Difficulty.getValue(dto.getDifficulty()));
-        listening.setAudio(filename);
-        listening.setOrganization(organization);
-        listening.setTitle(dto.getTitle());
-        listeningModuleRepository.save(listening);
-        return JResponse.success();
-    }
+    private final MatchingSentenceRepository matchingSentenceRepository;
+    private final JsoupService jsoupService;
 
     @Override
     public JResponse saveQuestionListening(User currentUser, Long listeningId, ListeningAnswerDto dto) {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
 
         ListeningModule listeningModule = Optional.ofNullable(listeningModuleRepository.findByIdAndOrganization(listeningId, organization))
-                .orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
+            .orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
 
-        if (dto.questions().isEmpty()) {
-            throw new BadRequestException("Please send listening questions");
-        }
-
-        ListeningQuestion question = getListeningQuestion(dto, listeningModule);
-
-        listeningQuestionRepository.save(question);
+        getListeningQuestion(dto, listeningModule);
         return JResponse.success();
     }
 
@@ -85,40 +75,183 @@ public class ListeningModuleServiceImpl implements ListeningService {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
 
         ListeningModule listeningModule = Optional.ofNullable(listeningModuleRepository.findByIdAndOrganization(byId, organization))
-                .orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
+            .orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
 
-        listeningModule.setActive(false);
-        listeningModuleRepository.save(listeningModule);
+        listeningModuleRepository.delete(listeningModule);
+        fileService.removeAudio(currentUser.getId(), listeningModule.getAudio());
         return JResponse.success();
     }
 
     @Override
     public JResponse getListeningById(User currentUser, Long id) {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
-        ListeningModule listeningModule = listeningModuleRepository.findByIdAndOrganization(id, organization);
-        return null;
+        ListeningModule listening = listeningModuleRepository.findByIdAndOrganization(id, organization);
+        if (listening == null) {
+            return JResponse.error(404, "Audio File Not Found");
+        }
+        ListeningResponse response = listening.toResponse();
+        response.setAnswerStart(!listening.getQuestions().isEmpty() ? Utils.countAnswerStart(listening.getQuestions()) : 0);
+        response.setQuestion(getListeningQuestion(listening));
+        return JResponse.success(response);
+    }
+
+    private List<ReadingQuestionResponse> getListeningQuestion(ListeningModule listening) {
+        List<ReadingQuestionResponse> responses = new ArrayList<>();
+
+        for (var question : listening.getQuestions()) {
+            ReadingQuestionResponse response = new ReadingQuestionResponse();
+            response.setId(question.getId());
+            response.setText(question.getContent());
+            response.setTypes(question.getTypes().getDisplayName());
+            response.setCount(Utils.getCountString(question));
+            response.setCondition(JsoupService.replaceInstruction(question.getInstruction(), response.getCount()));
+            response.setQuestions(question.getQuestions().stream().peek(form -> form.setAnswer(null)).toList());
+            if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
+                MatchingSentence sentence = question.getMatching();
+                response.setQuestions(sentence.getSentence());
+                response.setQuestionSeconds(sentence.getAnswers());
+            }
+            if (question.getTypes().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS))
+                response.setChoices(question.getChoices().stream().map(RMultipleChoice::toDto).toList());
+
+            responses.add(response);
+        }
+        return responses;
+    }
+
+    @Override
+    public ListeningResponse createListening(Organization organization, Image image, String listeningPart) {
+        Difficulty difficulty = Difficulty.getValue(listeningPart);
+        ListeningModule listeningModule = new ListeningModule();
+        listeningModule.setDifficulty(difficulty);
+        listeningModule.setAudio(image);
+        listeningModule.setOrganization(organization);
+        listeningModuleRepository.save(listeningModule);
+        return listeningModule.toResponse();
+    }
+
+    @Override
+    public JResponse uploadAudio(User currentUser, MultipartFile file, String listeningPart) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        Image image = fileService.audioUpload(currentUser, file);
+        ListeningResponse response = createListening(organization, image, listeningPart);
+        return JResponse.success(new SaveResponse(response.getId()));
+    }
+
+    @Override
+    public JResponse deleteListeningQuestion(User currentUser, Long listeningId, Long questionId, String type) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        ListeningModule listening = listeningModuleRepository.findByIdAndOrganization(listeningId, organization);
+        if (listening == null) return JResponse.error(400, "This Listening is not for you.");
+
+        ListeningQuestion question = listeningQuestionRepository.findByIdAndListening(questionId, listening);
+        if (question == null) return JResponse.error(400, "This listening question is not for you.");
+
+        setQuestionNewOrder(question, listening.getQuestions());
+        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+            List<RMultipleChoice> choices = question.getChoices();
+            rMultipleChoiceRepository.deleteAll(choices);
+        }
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(type)) {
+            matchingSentenceRepository.delete(question.getMatching());
+        }
+
+        listeningQuestionRepository.delete(question);
+        return JResponse.success();
+    }
+
+    private void setQuestionNewOrder(ListeningQuestion deletedQuestion, List<ListeningQuestion> questions) {
+        int startQuestion = Utils.getStartUpdatedQuestionForListening(deletedQuestion);
+
+        questions.sort(Comparator.comparing(ListeningQuestion::getSort));
+        questions = getWithoutDeleteQuestions(startQuestion, questions, deletedQuestion);
+        for (var question : questions) {
+            if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+                List<RMultipleChoice> choices = question.getChoices();
+                for (var choice : question.getChoices()) {
+                    choice.setSort(startQuestion);
+                    startQuestion++;
+                }
+                rMultipleChoiceRepository.saveAll(choices);
+                continue;
+            }
+
+            if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
+                MatchingSentence sentence = question.getMatching();
+                List<Form> forms = sentence.getSentence();
+                for (Form form : forms) {
+                    form.setOrder(startQuestion);
+                    startQuestion++;
+                }
+                sentence.setAnswers(forms);
+                matchingSentenceRepository.save(sentence);
+                continue;
+            }
+
+            if (question.getContent() != null && question.isHtml()) {
+                String newContent = jsoupService.setOrderForHtmlContent(startQuestion, question.getContent());
+                question.setContent(newContent);
+            }
+
+            List<Form> forms = question.getQuestions();
+            for (Form form : forms) {
+                form.setOrder(startQuestion);
+                startQuestion++;
+            }
+            question.setQuestions(forms);
+            listeningQuestionRepository.save(question);
+        }
+    }
+
+    private List<ListeningQuestion> getWithoutDeleteQuestions(int startQuestion, List<ListeningQuestion> questions, ListeningQuestion deletedQuestion) {
+        List<ListeningQuestion> newQuestions = new ArrayList<>();
+        for (ListeningQuestion question : questions) {
+            var oldQuestion = Utils.getStartUpdatedQuestionForListening(question);
+            if (oldQuestion > startQuestion && !question.equals(deletedQuestion)) {
+                newQuestions.add(question);
+            }
+        }
+
+        return newQuestions;
     }
 
     @NotNull
-    private static ListeningQuestion getListeningQuestion(ListeningAnswerDto dto, ListeningModule listeningModule) {
+    private ListeningQuestion getListeningQuestion(ListeningAnswerDto dto, ListeningModule listeningModule) {
         ListeningQuestion question = new ListeningQuestion();
         question.setListening(listeningModule);
-        question.setHtml(dto.content() != null);
-        question.setContent(dto.content());
-        question.setInstruction(dto.instruction());
-
-        question.setQustions(dto.questions());
-        List<Form> answers = new ArrayList<>();
-        for (Form form : dto.questions()) {
-            if (form.getAnswer() == null) {
-                throw new BadRequestException("Please Enter question answers: " + form.getText());
-            }
-            Form newForm = new Form();
-            newForm.setAnswer(form.getAnswer());
-            newForm.setOrder(form.getOrder());
-            answers.add(newForm);
+        if (dto.content() != null && !dto.content().isEmpty()) {
+            question.setContent(dto.content());
+            question.setHtml(true);
         }
-        question.setAnswers(answers);
+        question.setInstruction(dto.instruction());
+        question.setQuestions(dto.questions());
+        question.setTypes(ReadingQuestionTypes.getTypeByName(dto.type()));
+
+        listeningQuestionRepository.save(question);
+
+        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(dto.type())) {
+            MatchingSentence sentence = new MatchingSentence();
+            sentence.setListening(question);
+            sentence.setSentence(dto.questions());
+            sentence.setAnswers(dto.questionSecond());
+            matchingSentenceRepository.save(sentence);
+        }
+
+        if (dto.type().equals(ReadingQuestionTypes.MULTIPLE_CHOICES.getDisplayName())) {
+            dto.choices().forEach(ques -> {
+                RMultipleChoice choice = new RMultipleChoice();
+                choice.setListening(question);
+                choice.setName(ques.getName());
+                choice.setChoices(ques.getAnswers());
+                choice.setSort(ques.getOrder());
+                choice.setCorrectAnswer(ques.getCorrectAnswer());
+                rMultipleChoiceRepository.save(choice);
+                question.getChoices().add(choice);
+            });
+            question.setInstruction(JsoupService.replaceInstruction(question.getInstruction(), dto.choices()));
+        }
+        listeningQuestionRepository.save(question);
         return question;
     }
 }

@@ -1,6 +1,7 @@
 package com.search.teacher.model.entities.modules.reading;
 
 import com.search.teacher.dto.modules.RMultipleChoiceDto;
+import com.search.teacher.model.entities.modules.listening.ListeningQuestion;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,6 +40,10 @@ public class RMultipleChoice {
     @ManyToOne
     @JoinColumn(name = "question_id", referencedColumnName = "id")
     private ReadingQuestion question;
+
+    @ManyToOne
+    @JoinColumn(name = "listening_id", referencedColumnName = "id")
+    private ListeningQuestion listening;
 
     public RMultipleChoiceDto toDto() {
         RMultipleChoiceDto dto = new RMultipleChoiceDto();
