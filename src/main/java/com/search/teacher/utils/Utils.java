@@ -174,10 +174,6 @@ public class Utils {
             return JsoupService.getLastQuestionNumberFromHtml(question.getContent());
         }
 
-        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
-            return question.getMatching().getSentence().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
-        }
-
         return question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
     }
 

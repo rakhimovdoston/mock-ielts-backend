@@ -32,6 +32,7 @@ public class ListeningModule extends BaseEntity {
     private Difficulty difficulty;
 
     @OneToMany(mappedBy = "listening")
+    @OrderBy("sort")
     private List<ListeningQuestion> questions = new ArrayList<>();
 
     @ManyToOne

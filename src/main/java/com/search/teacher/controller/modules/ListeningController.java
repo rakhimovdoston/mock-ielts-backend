@@ -3,6 +3,7 @@ package com.search.teacher.controller.modules;
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.ListeningAnswerDto;
 import com.search.teacher.dto.modules.ListeningDto;
+import com.search.teacher.dto.modules.PassageConfirmDto;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.FileService;
@@ -44,11 +45,21 @@ public class ListeningController {
         return listeningService.getListeningById(securityUtils.getCurrentUser(), id);
     }
 
+    @GetMapping("answers/{byId}}")
+    public JResponse getListeningAnswers(@PathVariable Long byId) {
+        return listeningService.getAnswerListening(securityUtils.getCurrentUser(), byId);
+    }
+
     @DeleteMapping("delete/question/{listeningId}")
     public JResponse deleteListeningQuestion(@PathVariable Long listeningId,
                                              @RequestParam Long questionId,
                                              @RequestParam String type) {
         return listeningService.deleteListeningQuestion(securityUtils.getCurrentUser(), listeningId, questionId, type);
+    }
+
+    @PostMapping("confirm")
+    public JResponse confirmReadingPassage(@RequestBody PassageConfirmDto confirm) {
+        return listeningService.confirmListening(securityUtils.getCurrentUser(), confirm);
     }
 
     @PostMapping("upload/audio")

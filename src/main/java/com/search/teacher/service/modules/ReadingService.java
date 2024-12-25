@@ -35,4 +35,6 @@ public interface ReadingService {
     JResponse getPassageQuestion(User currentUser, Long passageId);
 
     JResponse confirmPassage(User currentUser, PassageConfirmDto confirm);
+
+    JResponse getAnswerListening(User currentUser, Long byId);
 }

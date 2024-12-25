@@ -4,11 +4,13 @@ import com.search.teacher.dto.ImageDto;
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.ListeningAnswerDto;
 import com.search.teacher.dto.modules.ListeningDto;
+import com.search.teacher.dto.modules.PassageConfirmDto;
 import com.search.teacher.dto.modules.ReadingQuestionResponse;
 import com.search.teacher.dto.modules.listening.ListeningResponse;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
+import com.search.teacher.mapper.PassageAnswerMapper;
 import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
@@ -18,10 +20,7 @@ import com.search.teacher.model.entities.modules.reading.*;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
 import com.search.teacher.model.response.JResponse;
-import com.search.teacher.repository.modules.ListeningModuleRepository;
-import com.search.teacher.repository.modules.ListeningQuestionRepository;
-import com.search.teacher.repository.modules.MatchingSentenceRepository;
-import com.search.teacher.repository.modules.RMultipleChoiceRepository;
+import com.search.teacher.repository.modules.*;
 import com.search.teacher.service.FileService;
 import com.search.teacher.service.JsoupService;
 import com.search.teacher.service.modules.ListeningService;
@@ -53,13 +52,13 @@ public class ListeningModuleServiceImpl implements ListeningService {
     private final FileService fileService;
     private final MatchingSentenceRepository matchingSentenceRepository;
     private final JsoupService jsoupService;
+    private final PassageAnswerRepository passageAnswerRepository;
 
     @Override
     public JResponse saveQuestionListening(User currentUser, Long listeningId, ListeningAnswerDto dto) {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
 
-        ListeningModule listeningModule = Optional.ofNullable(listeningModuleRepository.findByIdAndOrganization(listeningId, organization))
-            .orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
+        ListeningModule listeningModule = Optional.ofNullable(listeningModuleRepository.findByIdAndOrganization(listeningId, organization)).orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
 
         getListeningQuestion(dto, listeningModule);
         return JResponse.success();
@@ -74,8 +73,7 @@ public class ListeningModuleServiceImpl implements ListeningService {
     public JResponse deleteListening(User currentUser, Long byId) {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
 
-        ListeningModule listeningModule = Optional.ofNullable(listeningModuleRepository.findByIdAndOrganization(byId, organization))
-            .orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
+        ListeningModule listeningModule = Optional.ofNullable(listeningModuleRepository.findByIdAndOrganization(byId, organization)).orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
 
         listeningModuleRepository.delete(listeningModule);
         fileService.removeAudio(currentUser.getId(), listeningModule.getAudio());
@@ -153,12 +151,35 @@ public class ListeningModuleServiceImpl implements ListeningService {
             rMultipleChoiceRepository.deleteAll(choices);
         }
 
-        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(type)) {
-            matchingSentenceRepository.delete(question.getMatching());
-        }
-
         listeningQuestionRepository.delete(question);
         return JResponse.success();
+    }
+
+    @Override
+    public JResponse confirmListening(User currentUser, PassageConfirmDto confirmDto) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        ListeningModule listeningModule = listeningModuleRepository.findByIdAndOrganization(confirmDto.getPassageId(), organization);
+        if (listeningModule == null) return JResponse.error(400, "This Listening is not for you.");
+
+        listeningModule.setActive(true);
+        for (var confirm : confirmDto.getAnswers()) {
+            PassageAnswer answer = new PassageAnswer();
+            answer.setListening(listeningModule);
+            answer.setQuestionId(confirm.getId());
+            answer.setAnswer(confirm.getAnswer());
+            passageAnswerRepository.save(answer);
+        }
+        listeningModuleRepository.save(listeningModule);
+        return JResponse.success();
+    }
+
+    @Override
+    public JResponse getAnswerListening(User currentUser, Long byId) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        ListeningModule listening = listeningModuleRepository.findByIdAndOrganization(byId, organization);
+        if (listening == null) return JResponse.error(404, "This Listening is not for you.");
+        List<PassageAnswer> answers = passageAnswerRepository.findAllByListening(listening);
+        return JResponse.success(PassageAnswerMapper.INSTANCE.toListDto(answers));
     }
 
     private void setQuestionNewOrder(ListeningQuestion deletedQuestion, List<ListeningQuestion> questions) {
@@ -177,17 +198,6 @@ public class ListeningModuleServiceImpl implements ListeningService {
                 continue;
             }
 
-            if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
-                MatchingSentence sentence = question.getMatching();
-                List<Form> forms = sentence.getSentence();
-                for (Form form : forms) {
-                    form.setOrder(startQuestion);
-                    startQuestion++;
-                }
-                sentence.setAnswers(forms);
-                matchingSentenceRepository.save(sentence);
-                continue;
-            }
 
             if (question.getContent() != null && question.isHtml()) {
                 String newContent = jsoupService.setOrderForHtmlContent(startQuestion, question.getContent());
@@ -220,23 +230,30 @@ public class ListeningModuleServiceImpl implements ListeningService {
     private ListeningQuestion getListeningQuestion(ListeningAnswerDto dto, ListeningModule listeningModule) {
         ListeningQuestion question = new ListeningQuestion();
         question.setListening(listeningModule);
+        int startQuestion = !listeningModule.getQuestions().isEmpty() ? Utils.countAnswerStart(listeningModule.getQuestions()) : 0;
         if (dto.content() != null && !dto.content().isEmpty()) {
+
+            if (JsoupService.checkListeningQuestion(dto.content(), startQuestion))
+                throw new BadRequestException("Each Listening section should not have more than 10 questions. Please reduce your questions.");
+
             question.setContent(dto.content());
             question.setHtml(true);
         }
+
+        if (dto.type().equals(ReadingQuestionTypes.MAP_PLAN_LABELLING.getDisplayName()) || dto.type().equals(ReadingQuestionTypes.MATCHING.getDisplayName())) {
+            question.setContent(JsoupService.replaceQuestionList(dto.content(), startQuestion));
+        }
+
+        if (dto.type().equals(ReadingQuestionTypes.MULTIPLE_CHOICES.getDisplayName()) && startQuestion + dto.choices().size() > 10) {
+            throw new BadRequestException("Each Listening section should not have more than 10 questions. Please reduce your questions.");
+        }
+
         question.setInstruction(dto.instruction());
         question.setQuestions(dto.questions());
+        question.setSort(listeningModule.getQuestions().isEmpty() ? 1 : listeningModule.getQuestions().get(listeningModule.getQuestions().size() - 1).getSort() + 1);
         question.setTypes(ReadingQuestionTypes.getTypeByName(dto.type()));
 
         listeningQuestionRepository.save(question);
-
-        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(dto.type())) {
-            MatchingSentence sentence = new MatchingSentence();
-            sentence.setListening(question);
-            sentence.setSentence(dto.questions());
-            sentence.setAnswers(dto.questionSecond());
-            matchingSentenceRepository.save(sentence);
-        }
 
         if (dto.type().equals(ReadingQuestionTypes.MULTIPLE_CHOICES.getDisplayName())) {
             dto.choices().forEach(ques -> {

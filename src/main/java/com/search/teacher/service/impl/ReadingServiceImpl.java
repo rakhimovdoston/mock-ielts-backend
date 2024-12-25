@@ -6,9 +6,11 @@ import com.search.teacher.dto.modules.*;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
+import com.search.teacher.mapper.PassageAnswerMapper;
 import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
+import com.search.teacher.model.entities.modules.listening.ListeningModule;
 import com.search.teacher.model.entities.modules.reading.*;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ModuleType;
@@ -225,13 +227,22 @@ public class ReadingServiceImpl implements ReadingService {
         return JResponse.success();
     }
 
+    @Override
+    public JResponse getAnswerListening(User currentUser, Long byId) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        ReadingPassage passage = readingRepository.findByIdAndOrganization(byId, organization);
+        if (passage == null) return JResponse.error(404, "This Listening is not for you.");
+        List<PassageAnswer> answers = passageAnswerRepository.findAllByPassage(passage);
+        return JResponse.success(PassageAnswerMapper.INSTANCE.toListDto(answers));
+    }
+
     private void saveConfirm(ReadingPassage passage, List<PassageAnswerDto> answers) {
         passage.setActive(true);
         for (var answer : answers) {
             PassageAnswer answerEntity = new PassageAnswer();
             answerEntity.setAnswer(answer.getAnswer());
             answerEntity.setPassage(passage);
-            answerEntity.setId(answer.getId());
+            answerEntity.setQuestionId(answer.getId());
             passageAnswerRepository.save(answerEntity);
         }
 

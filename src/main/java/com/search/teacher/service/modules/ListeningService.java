@@ -3,6 +3,7 @@ package com.search.teacher.service.modules;
 import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.ListeningAnswerDto;
 import com.search.teacher.dto.modules.ListeningDto;
+import com.search.teacher.dto.modules.PassageConfirmDto;
 import com.search.teacher.dto.modules.listening.ListeningResponse;
 import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
@@ -31,4 +32,8 @@ public interface ListeningService {
     JResponse uploadAudio(User currentUser, MultipartFile file, String listeningPart);
 
     JResponse deleteListeningQuestion(User currentUser, Long listeningId, Long questionId, String type);
+
+    JResponse confirmListening(User currentUser, PassageConfirmDto confirm);
+
+    JResponse getAnswerListening(User currentUser, Long byId);
 }

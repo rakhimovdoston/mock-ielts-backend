@@ -8,7 +8,7 @@ import org.springframework.core.env.Environment;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Optional;
-import io.sentry.Sentry;
+
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
@@ -36,11 +36,18 @@ public class TechLearnerApplication {
 			log.warn("The host name could not be determined, using `localhost` as fallback");
 		}
 		log.info(
-				"\n----------------------------------------------------------\n\t" +
-						"Application '{}' is running! Access URLs:\n\t" +
-						"Local: \t\t{}://localhost:{}{}\n\t" +
-						"External: \t{}://{}:{}{}\n\t" +
-						"Profile(s): \t{}\n----------------------------------------------------------",
+            """
+
+                ----------------------------------------------------------
+                \t\
+                Application '{}' is running! Access URLs:
+                \t\
+                Local: \t\t{}://localhost:{}{}
+                \t\
+                External: \t{}://{}:{}{}
+                \t\
+                Profile(s): \t{}
+                ----------------------------------------------------------""",
 				env.getProperty("spring.application.name"),
 				protocol,
 				serverPort,

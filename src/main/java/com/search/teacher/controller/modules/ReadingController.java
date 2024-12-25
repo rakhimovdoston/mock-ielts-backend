@@ -52,6 +52,11 @@ public class ReadingController {
         if (answer.getId() == null) return JResponse.error(400, "Please select Question Answer");
         return readingService.updateReadingAnswer(securityUtils.getCurrentUser(), readingId, answer);
     }
+    @GetMapping("answers/{byId}}")
+    public JResponse getListeningAnswers(@PathVariable Long byId) {
+        return readingService.getAnswerListening(securityUtils.getCurrentUser(), byId);
+    }
+
 
     @DeleteMapping("delete/passage/{id}")
     public JResponse deleteReadingPassage(@PathVariable("id") Long readingId) {
