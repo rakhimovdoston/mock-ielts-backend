@@ -6,6 +6,7 @@ import com.search.teacher.model.entities.modules.listening.ListeningQuestion;
 import com.search.teacher.model.entities.modules.reading.*;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
+import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.service.JsoupService;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class Utils {
     }
 
     public static String getCountString(ReadingQuestion question) {
-        return getString(question.getTypes(), question.getChoices(), question.getMatching(), question.isHtml(), question.getContent(), question.getQuestions());
+        return getString(question.getTypes(), question.getChoices(), question.isHtml(), question.getContent(), question.getQuestions());
     }
 
     public static int getLastQuestionsNumber(List<ReadingQuestion> questions) {
@@ -49,10 +50,6 @@ public class Utils {
 
         if (question.isHtml() && question.getContent() != null) {
             return JsoupService.getLastQuestionNumberFromHtml(question.getContent());
-        }
-
-        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
-            return question.getMatching().getSentence().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
         }
 
         return question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
@@ -122,9 +119,6 @@ public class Utils {
             return JsoupService.getStartQuestionNumber(question.getContent());
         }
 
-        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName()))
-            return question.getMatching().getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
-
         return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
     }
 
@@ -136,9 +130,6 @@ public class Utils {
         if (question.isHtml() && !StringUtils.isNullOrEmpty(question.getContent())) {
             return JsoupService.getStartQuestionNumber(question.getContent());
         }
-
-        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName()))
-            return question.getMatching().getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
 
         return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
     }
@@ -152,8 +143,7 @@ public class Utils {
         }
         List<String> audioFormats = Stream.concat(Arrays.stream(COMPRESSED_AUDIO_TYPES), Arrays.stream(UNCOMPRESSED_AUDIO_TYPES)).toList();
         for (String audioFormat : audioFormats) {
-            if (contentType.toLowerCase().equals(audioFormat))
-                return true;
+            if (contentType.toLowerCase().equals(audioFormat)) return true;
         }
 
         return false;
@@ -162,11 +152,19 @@ public class Utils {
     public static int countAnswerStart(List<ListeningQuestion> questions) {
         questions.sort(Comparator.comparing(ListeningQuestion::getSort));
         ListeningQuestion question = questions.get(questions.size() - 1);
-        return getLastQuestionLastQuestionOrder(question);
+        String startQuestion = question.getQuestionCount().split("-")[1];
+        return Integer.parseInt(startQuestion);
+    }
+
+    public static int countAnswerStartForReading(List<ReadingQuestion> questions) {
+        questions.sort(Comparator.comparing(ReadingQuestion::getSort));
+        ReadingQuestion question = questions.get(questions.size() - 1);
+        String startQuestion = question.getQuestionCount().split("-")[1];
+        return Integer.parseInt(startQuestion);
     }
 
     public static int getLastQuestionLastQuestionOrder(ListeningQuestion question) {
-        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
+        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICES) {
             return question.getChoices().stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
         }
 
@@ -178,29 +176,17 @@ public class Utils {
     }
 
     public static String getCountString(ListeningQuestion question) {
-        return getString(
-            question.getTypes(),
-            question.getChoices(),
-            question.getMatching(),
-            question.isHtml(),
-            question.getContent(),
-            question.getQuestions());
+        return getString(question.getTypes(), question.getChoices(), question.isHtml(), question.getContent(), question.getQuestions());
 
     }
 
     @NotNull
-    private static String getString(ReadingQuestionTypes types, List<RMultipleChoice> choices, MatchingSentence matching, boolean html, String content, List<Form> questions) {
+    private static String getString(ReadingQuestionTypes types, List<RMultipleChoice> choices, boolean html, String content, List<Form> questions) {
         int max, min;
         if (types == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
             min = choices.stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
             max = choices.stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
 
-            return min + "-" + max;
-        }
-
-        if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(types.getDisplayName())) {
-            min = matching.getSentence().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
-            max = matching.getSentence().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
             return min + "-" + max;
         }
 
@@ -210,5 +196,32 @@ public class Utils {
         min = questions.stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
         max = questions.stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
         return min + "-" + max;
+    }
+
+    public static int countAnswerStart(int startAnswer, Difficulty difficulty, ModuleType moduleType) {
+        if (moduleType == ModuleType.READING)
+            return readingCountAnswerStart(startAnswer, difficulty);
+
+        if (moduleType == ModuleType.LISTENING)
+            return listeningCountAnswerStart(startAnswer, difficulty);
+
+        return startAnswer;
+    }
+
+    private static int listeningCountAnswerStart(int startAnswer, Difficulty difficulty) {
+        return switch (difficulty) {
+            case semi_easy -> startAnswer;
+            case easy -> startAnswer + 10;
+            case medium -> startAnswer + 20;
+            case hard -> startAnswer + 30;
+        };
+    }
+
+    private static int readingCountAnswerStart(int startAnswer, Difficulty difficulty) {
+        return switch (difficulty) {
+            case medium -> startAnswer + 13;
+            case hard -> startAnswer + 26;
+            default -> startAnswer;
+        };
     }
 }

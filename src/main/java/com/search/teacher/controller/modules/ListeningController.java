@@ -4,6 +4,8 @@ import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.ListeningAnswerDto;
 import com.search.teacher.dto.modules.ListeningDto;
 import com.search.teacher.dto.modules.PassageConfirmDto;
+import com.search.teacher.dto.modules.listening.FileDto;
+import com.search.teacher.dto.modules.listening.ListeningUpdateRequest;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.FileService;
@@ -30,6 +32,11 @@ public class ListeningController {
     private final SecurityUtils securityUtils;
     private final ListeningService listeningService;
 
+    @PostMapping("update")
+    public JResponse updateListening(@RequestBody ListeningUpdateRequest request) {
+        return listeningService.updateListening(securityUtils.getCurrentUser(), request);
+    }
+
     @DeleteMapping("delete/{byId}")
     public JResponse deleteListening(@PathVariable Long byId) {
         return listeningService.deleteListening(securityUtils.getCurrentUser(), byId);
@@ -45,9 +52,9 @@ public class ListeningController {
         return listeningService.getListeningById(securityUtils.getCurrentUser(), id);
     }
 
-    @GetMapping("answers/{byId}}")
-    public JResponse getListeningAnswers(@PathVariable Long byId) {
-        return listeningService.getAnswerListening(securityUtils.getCurrentUser(), byId);
+    @GetMapping("answers/{id}")
+    public JResponse getListeningAnswers(@PathVariable Long id) {
+        return listeningService.getAnswerListening(securityUtils.getCurrentUser(), id);
     }
 
     @DeleteMapping("delete/question/{listeningId}")
@@ -64,13 +71,18 @@ public class ListeningController {
 
     @PostMapping("upload/audio")
     public JResponse uploadAudio(@RequestPart("file") MultipartFile file,
-                                 @RequestPart("listeningPart") String listeningPart) {
+                                 @RequestPart("listeningPart") String listeningPart,
+                                 @RequestParam(name = "id", required = false) Integer listeningId) {
 
         if (!Utils.isAudio(file.getContentType())) {
             throw new BadRequestException("Please upload listening audio file");
         }
 
-        return listeningService.uploadAudio(securityUtils.getCurrentUser(), file, listeningPart);
+        FileDto fileDto = new FileDto();
+        fileDto.setListeningId(listeningId);
+        fileDto.setFile(file);
+        fileDto.setListeningPart(listeningPart);
+        return listeningService.uploadAudio(securityUtils.getCurrentUser(), fileDto);
     }
 
     @GetMapping("all")

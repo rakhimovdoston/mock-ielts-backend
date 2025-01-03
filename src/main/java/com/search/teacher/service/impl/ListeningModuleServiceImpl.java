@@ -2,11 +2,15 @@ package com.search.teacher.service.impl;
 
 import com.search.teacher.dto.ImageDto;
 import com.search.teacher.dto.filter.ModuleFilter;
+import com.search.teacher.dto.filter.PaginationResponse;
 import com.search.teacher.dto.modules.ListeningAnswerDto;
 import com.search.teacher.dto.modules.ListeningDto;
 import com.search.teacher.dto.modules.PassageConfirmDto;
 import com.search.teacher.dto.modules.ReadingQuestionResponse;
+import com.search.teacher.dto.modules.listening.FileDto;
 import com.search.teacher.dto.modules.listening.ListeningResponse;
+import com.search.teacher.dto.modules.listening.ListeningUpdateRequest;
+import com.search.teacher.dto.modules.listening.MultipleQuestionSecondDto;
 import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
@@ -27,9 +31,12 @@ import com.search.teacher.service.modules.ListeningService;
 import com.search.teacher.service.organization.OrganizationService;
 import com.search.teacher.utils.Utils;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.dialect.unique.CreateTableUniqueDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -66,17 +73,54 @@ public class ListeningModuleServiceImpl implements ListeningService {
 
     @Override
     public JResponse getAllListening(User currentUser, ModuleFilter filter) {
-        return JResponse.success();
+        PageRequest pageRequest = PageRequest.of(filter.getPage(), filter.getSize());
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        Difficulty difficulty = Difficulty.getValue(filter.getType());
+        Page<ListeningModule> page;
+        if (filter.getType().equals("all"))
+            page = listeningModuleRepository.findAllByOrganization(organization, pageRequest);
+        else page = listeningModuleRepository.findAllByOrganizationAndDifficulty(organization, difficulty, pageRequest);
+
+        if (page.getContent().isEmpty()) return JResponse.error(404, "Listening Module not found.");
+
+        PaginationResponse response = getPaginationResponse(filter, page);
+        return JResponse.success(response);
+    }
+
+    @NotNull
+    private PaginationResponse getPaginationResponse(ModuleFilter filter, Page<ListeningModule> page) {
+        PaginationResponse response = new PaginationResponse();
+        response.setTotalPages(page.getTotalPages());
+        response.setTotalSizes(page.getTotalElements());
+        response.setCurrentSize(filter.getSize());
+        response.setCurrentPage(filter.getPage());
+        List<ListeningDto> list = new ArrayList<>();
+        for (ListeningModule listeningModule : page.getContent()) {
+            ListeningDto listening = new ListeningDto();
+            listening.setId(listeningModule.getId());
+            listening.setTitle(listeningModule.getTitle());
+            listening.setActive(listeningModule.isActive());
+            listening.setAnswers(passageAnswerRepository.existsAllByListening(listeningModule));
+            listening.setAudio(listeningModule.getAudio().getUrl());
+            listening.setTypes(listeningModule.getQuestions().stream().map(ques -> ques.getTypes().getDisplayName()).toList());
+            listening.setDifficulty(listeningModule.getDifficulty().name());
+            list.add(listening);
+        }
+        response.setData(list);
+        return response;
     }
 
     @Override
     public JResponse deleteListening(User currentUser, Long byId) {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
 
-        ListeningModule listeningModule = Optional.ofNullable(listeningModuleRepository.findByIdAndOrganization(byId, organization)).orElseThrow(() -> new NotfoundException("Listening audio file not found please upload audio"));
+        ListeningModule listeningModule = Optional.ofNullable(listeningModuleRepository.findByIdAndOrganization(byId, organization)).orElseThrow(() -> new NotfoundException("Listening module not found"));
 
-        listeningModuleRepository.delete(listeningModule);
+        if (!listeningModule.getQuestions().isEmpty())
+            listeningQuestionRepository.deleteAll(listeningModule.getQuestions());
+
         fileService.removeAudio(currentUser.getId(), listeningModule.getAudio());
+        listeningModuleRepository.delete(listeningModule);
         return JResponse.success();
     }
 
@@ -102,13 +146,14 @@ public class ListeningModuleServiceImpl implements ListeningService {
             response.setText(question.getContent());
             response.setTypes(question.getTypes().getDisplayName());
             response.setCount(Utils.getCountString(question));
-            response.setCondition(JsoupService.replaceInstruction(question.getInstruction(), response.getCount()));
-            response.setQuestions(question.getQuestions().stream().peek(form -> form.setAnswer(null)).toList());
-            if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
-                MatchingSentence sentence = question.getMatching();
-                response.setQuestions(sentence.getSentence());
-                response.setQuestionSeconds(sentence.getAnswers());
+
+            if (question.getTypes().equals(ReadingQuestionTypes.MULTIPLE_CHOICES_SECONDS)) {
+                response.setCount(question.getQuestionCount());
             }
+
+            response.setCondition(JsoupService.replaceInstruction(question.getInstruction(), response.getCount()));
+            if (question.getQuestions() != null)
+                response.setQuestions(question.getQuestions().stream().peek(form -> form.setAnswer(null)).toList());
             if (question.getTypes().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS))
                 response.setChoices(question.getChoices().stream().map(RMultipleChoice::toDto).toList());
 
@@ -117,10 +162,15 @@ public class ListeningModuleServiceImpl implements ListeningService {
         return responses;
     }
 
-    @Override
-    public ListeningResponse createListening(Organization organization, Image image, String listeningPart) {
-        Difficulty difficulty = Difficulty.getValue(listeningPart);
-        ListeningModule listeningModule = new ListeningModule();
+    public ListeningResponse createListening(Organization organization, Image image, FileDto fileDto) {
+        Difficulty difficulty = Difficulty.getValue(fileDto.getListeningPart());
+        ListeningModule listeningModule = null;
+        if (fileDto.getListeningId() != null)
+            listeningModule = listeningModuleRepository.findByIdAndOrganization(Long.valueOf(fileDto.getListeningId()), organization);
+
+        if (listeningModule == null) listeningModule = new ListeningModule();
+        else fileService.removeAudio(listeningModule.getAudio().getUserId(), listeningModule.getAudio());
+
         listeningModule.setDifficulty(difficulty);
         listeningModule.setAudio(image);
         listeningModule.setOrganization(organization);
@@ -129,10 +179,10 @@ public class ListeningModuleServiceImpl implements ListeningService {
     }
 
     @Override
-    public JResponse uploadAudio(User currentUser, MultipartFile file, String listeningPart) {
+    public JResponse uploadAudio(User currentUser, FileDto fileDto) {
         Organization organization = organizationService.getOrganisationByOwner(currentUser);
-        Image image = fileService.audioUpload(currentUser, file);
-        ListeningResponse response = createListening(organization, image, listeningPart);
+        Image image = fileService.audioUpload(currentUser, fileDto.getFile());
+        ListeningResponse response = createListening(organization, image, fileDto);
         return JResponse.success(new SaveResponse(response.getId()));
     }
 
@@ -162,15 +212,23 @@ public class ListeningModuleServiceImpl implements ListeningService {
         if (listeningModule == null) return JResponse.error(400, "This Listening is not for you.");
 
         listeningModule.setActive(true);
+        String title = getListeningTitle(listeningModule.getQuestions());
+        listeningModule.setTitle(title);
         for (var confirm : confirmDto.getAnswers()) {
             PassageAnswer answer = new PassageAnswer();
             answer.setListening(listeningModule);
             answer.setQuestionId(confirm.getId());
-            answer.setAnswer(confirm.getAnswer());
+            answer.setAnswer(confirm.getText());
             passageAnswerRepository.save(answer);
         }
         listeningModuleRepository.save(listeningModule);
         return JResponse.success();
+    }
+
+    private String getListeningTitle(List<ListeningQuestion> questions) {
+        return questions.isEmpty() ? "You have not questions" :
+            JsoupService.getTitleFromCondition(questions.get(0).getInstruction() == null || questions.get(0).getInstruction().isEmpty() ?
+                questions.get(0).getContent() : questions.get(0).getInstruction());
     }
 
     @Override
@@ -179,7 +237,35 @@ public class ListeningModuleServiceImpl implements ListeningService {
         ListeningModule listening = listeningModuleRepository.findByIdAndOrganization(byId, organization);
         if (listening == null) return JResponse.error(404, "This Listening is not for you.");
         List<PassageAnswer> answers = passageAnswerRepository.findAllByListening(listening);
+        if (answers.isEmpty()) return JResponse.error(404, "This Listening answer is not found.");
         return JResponse.success(PassageAnswerMapper.INSTANCE.toListDto(answers));
+    }
+
+    @Override
+    public JResponse updateListening(User currentUser, ListeningUpdateRequest request) {
+        Organization organization = organizationService.getOrganisationByOwner(currentUser);
+        ListeningModule listeningModule = listeningModuleRepository.findByIdAndOrganization(request.getPassageId(), organization);
+        if (listeningModule == null) return JResponse.error(404, "This Listening is not for you.");
+
+        String title = getListeningTitle(listeningModule.getQuestions());
+        listeningModule.setTitle(title);
+        listeningModule.setDifficulty(Difficulty.getValue(request.getListeningPart()));
+        listeningModuleRepository.save(listeningModule);
+        List<PassageAnswer> answers = passageAnswerRepository.findAllByListening(listeningModule);
+        for (var answer : answers) {
+            for (var requestAnswer : request.getAnswers()) {
+                if (answer.getQuestionId() != null) {
+                    if (answer.getQuestionId().equals(requestAnswer.getId())) {
+                        answer.setAnswer(requestAnswer.getText());
+                        break;
+                    }
+                } else if (answer.getQuestionIds().equals(requestAnswer.getCount())) {
+                    answer.setAnswers(requestAnswer.getAnswers());
+                }
+            }
+            passageAnswerRepository.save(answer);
+        }
+        return JResponse.success();
     }
 
     private void setQuestionNewOrder(ListeningQuestion deletedQuestion, List<ListeningQuestion> questions) {
@@ -244,15 +330,13 @@ public class ListeningModuleServiceImpl implements ListeningService {
             question.setContent(JsoupService.replaceQuestionList(dto.content(), startQuestion));
         }
 
+
         if (dto.type().equals(ReadingQuestionTypes.MULTIPLE_CHOICES.getDisplayName()) && startQuestion + dto.choices().size() > 10) {
             throw new BadRequestException("Each Listening section should not have more than 10 questions. Please reduce your questions.");
         }
-
+        question.setQuestions(dto.questions() == null ? new ArrayList<>() : dto.questions());
         question.setInstruction(dto.instruction());
-        question.setQuestions(dto.questions());
-        question.setSort(listeningModule.getQuestions().isEmpty() ? 1 : listeningModule.getQuestions().get(listeningModule.getQuestions().size() - 1).getSort() + 1);
         question.setTypes(ReadingQuestionTypes.getTypeByName(dto.type()));
-
         listeningQuestionRepository.save(question);
 
         if (dto.type().equals(ReadingQuestionTypes.MULTIPLE_CHOICES.getDisplayName())) {
@@ -268,6 +352,21 @@ public class ListeningModuleServiceImpl implements ListeningService {
             });
             question.setInstruction(JsoupService.replaceInstruction(question.getInstruction(), dto.choices()));
         }
+        listeningQuestionRepository.save(question);
+
+        question.setQuestionCount(Utils.getCountString(question));
+
+        if (dto.type().equals(ReadingQuestionTypes.MULTIPLE_CHOICES_SECONDS.getDisplayName())) {
+            question.setContent(null);
+            question.setHtml(false);
+            MultipleQuestionSecondDto questionSecondDto = JsoupService.replaceMultipleChoice(dto.content(), startQuestion);
+            question.setInstruction(questionSecondDto.getConditions() != null ? questionSecondDto.getConditions() : dto.instruction());
+            question.setQuestions(questionSecondDto.getForms());
+            question.setQuestionCount(questionSecondDto.getQuestionCount());
+        }
+
+        question.setSort(listeningModule.getQuestions().isEmpty() ? 1 : listeningModule.getQuestions().get(listeningModule.getQuestions().size() - 1).getSort() + 1);
+
         listeningQuestionRepository.save(question);
         return question;
     }

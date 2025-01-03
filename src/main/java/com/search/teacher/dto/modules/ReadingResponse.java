@@ -1,6 +1,7 @@
 package com.search.teacher.dto.modules;
 
 import com.search.teacher.model.entities.modules.reading.ReadingPassage;
+import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.utils.Utils;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,6 +37,6 @@ public class ReadingResponse {
         this.difficulty = passage.getDifficulty().name();
         this.headings = passage.isList() ? Utils.getHeadingList(passage.getCount()) : new ArrayList<>();
         this.question = withAnswer ? passage.toQuestionDto() : new ArrayList<>();
-        this.answerStart = !passage.getQuestions().isEmpty() ? Utils.getLastQuestionsNumber(passage.getQuestions()) : 0;
+        this.answerStart = Utils.countAnswerStart(!passage.getQuestions().isEmpty() ? Utils.getLastQuestionsNumber(passage.getQuestions()) : 0, passage.getDifficulty(), ModuleType.READING);
     }
 }

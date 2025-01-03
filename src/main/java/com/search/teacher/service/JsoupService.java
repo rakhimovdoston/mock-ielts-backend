@@ -1,8 +1,9 @@
 package com.search.teacher.service;
 
 import com.search.teacher.dto.modules.RMultipleChoiceDto;
+import com.search.teacher.dto.modules.listening.MultipleQuestionSecondDto;
 import com.search.teacher.exception.BadRequestException;
-import com.search.teacher.model.entities.modules.reading.ReadingQuestion;
+import com.search.teacher.model.entities.modules.reading.Form;
 import com.search.teacher.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
@@ -13,10 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -150,6 +148,62 @@ public class JsoupService {
         Document document = Jsoup.parse(content);
         Elements elements = document.getElementsByClass("reading-question-inputs");
         return elements.size() + startQuestion > 10;
+    }
+
+    private static String substringFromString(String str) {
+        String text = str.substring(0, 50);
+        char[] chars = text.toCharArray();
+        return chars[chars.length - 1] == ' ' ? text.substring(0, 49) : text + "...";
+    }
+
+    public static String getTitleFromCondition(String condition) {
+        Document document = Jsoup.parse(condition);
+        return substringFromString(document.body().text());
+    }
+
+    public static MultipleQuestionSecondDto replaceMultipleChoice(String content, int startQuestion) {
+        Document document = Jsoup.parse(content);
+        Elements elements = document.select("ol");
+        Element element = elements.first();
+        MultipleQuestionSecondDto multipleQuestionSecondDto = new MultipleQuestionSecondDto();
+        int questionCount = questionCountFromContent(document.body());
+        multipleQuestionSecondDto.setQuestionCount((startQuestion + 1) + "-" + (questionCount + startQuestion));
+
+        if (element != null) {
+            Elements liElements = element.select("li");
+            int order = 1;
+            List<Form> forms = new ArrayList<>();
+            for (Element liElement : liElements) {
+                forms.add(new Form(liElement.text(), order));
+                order++;
+            }
+            element.empty();
+            multipleQuestionSecondDto.setForms(forms);
+            multipleQuestionSecondDto.setConditions(document.body().html());
+        }
+
+        return multipleQuestionSecondDto;
+    }
+
+    private static int questionCountFromContent(Element body) {
+        Map<String, Integer> maps = new HashMap<>();
+        maps.put("ONE", 1);
+        maps.put("TWO", 2);
+        maps.put("THREE", 3);
+        maps.put("FOUR", 4);
+        maps.put("FIVE", 5);
+        for (var element : body.getAllElements()) {
+            for (var entry : maps.keySet()) {
+                if (element.text().equalsIgnoreCase(entry)) {
+                    return maps.get(entry);
+                }
+            }
+        }
+        return 2;
+    }
+
+    public static MultipleQuestionSecondDto replaceContent(String content, int startQuestion) {
+        return null;
     }
 
     public String setOrderForHtmlContent(int startQuestion, String content) {

@@ -50,8 +50,7 @@ public class ListeningQuestion extends BaseEntity {
     @JoinColumn(name = "listening_id", referencedColumnName = "id")
     private ListeningModule listening;
 
-    @OneToOne(mappedBy = "listening")
-    private MatchingSentence matching;
+    private String questionCount;
 
     @OneToMany(mappedBy = "listening")
     private List<RMultipleChoice> choices = new ArrayList<>();

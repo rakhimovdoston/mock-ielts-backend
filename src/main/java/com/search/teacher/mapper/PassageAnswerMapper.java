@@ -14,6 +14,8 @@ public interface PassageAnswerMapper {
     PassageAnswerMapper INSTANCE = Mappers.getMapper(PassageAnswerMapper.class);
 
     @Mapping(target = "id", source = "questionId")
+    @Mapping(target = "text", source = "answer")
+    @Mapping(target = "count", source = "questionIds")
     PassageAnswerDto toDto(PassageAnswer passageAnswer);
 
     List<PassageAnswerDto> toListDto(List<PassageAnswer> passageAnswers);

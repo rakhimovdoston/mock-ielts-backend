@@ -25,6 +25,7 @@ public class ReadingPassageDto {
     private List<String> passages = new ArrayList<>();
     private boolean withList = false;
     private boolean active;
+    private List<String> types = new ArrayList<>();
 
     public ReadingPassageDto() {
     }

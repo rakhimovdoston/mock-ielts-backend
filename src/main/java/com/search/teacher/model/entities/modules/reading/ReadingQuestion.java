@@ -41,13 +41,10 @@ public class ReadingQuestion extends BaseEntity {
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL)
     private List<RMultipleChoice> choices = new ArrayList<>();
 
-    @OneToOne(mappedBy = "question")
-    private MatchingSentence matching;
-
     @Enumerated(EnumType.STRING)
     private ReadingQuestionTypes types;
 
-    private Integer questionCount;
+    private String questionCount;
 
     private Long imageId;
 

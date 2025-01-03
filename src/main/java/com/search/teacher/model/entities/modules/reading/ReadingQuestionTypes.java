@@ -24,6 +24,7 @@ public enum ReadingQuestionTypes {
     //    Listening
     MATCHING("Matching", true),
     MULTIPLE_CHOICES("Multiple Choices", true),
+    MULTIPLE_CHOICES_SECONDS("Multiple Choices Second", true),
     NOTE_COMPLETION_LIS("Note completion", true),
     FORM_COMPLETION("Form Completion", true),
     TABLE_COMPLETION_LIS("Table Completion", true),

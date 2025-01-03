@@ -4,7 +4,9 @@ import com.search.teacher.dto.filter.ModuleFilter;
 import com.search.teacher.dto.modules.ListeningAnswerDto;
 import com.search.teacher.dto.modules.ListeningDto;
 import com.search.teacher.dto.modules.PassageConfirmDto;
+import com.search.teacher.dto.modules.listening.FileDto;
 import com.search.teacher.dto.modules.listening.ListeningResponse;
+import com.search.teacher.dto.modules.listening.ListeningUpdateRequest;
 import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
@@ -27,13 +29,13 @@ public interface ListeningService {
 
     JResponse getListeningById(User currentUser, Long id);
 
-    ListeningResponse createListening(Organization organization, Image image, String listeningPart);
-
-    JResponse uploadAudio(User currentUser, MultipartFile file, String listeningPart);
+    JResponse uploadAudio(User currentUser, FileDto fileDto);
 
     JResponse deleteListeningQuestion(User currentUser, Long listeningId, Long questionId, String type);
 
     JResponse confirmListening(User currentUser, PassageConfirmDto confirm);
 
     JResponse getAnswerListening(User currentUser, Long byId);
+
+    JResponse updateListening(User currentUser, ListeningUpdateRequest request);
 }

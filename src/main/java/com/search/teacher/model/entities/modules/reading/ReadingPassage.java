@@ -47,10 +47,6 @@ public class ReadingPassage extends BaseEntity {
 
     private Date deleteDate;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private List<String> passages = new ArrayList<>();
-
     @OneToMany(mappedBy = "passage")
     @OrderBy("sort")
     private List<ReadingQuestion> questions = new ArrayList<>();
@@ -72,11 +68,6 @@ public class ReadingPassage extends BaseEntity {
             response.setCount(Utils.getCountString(question));
             response.setCondition(JsoupService.replaceInstruction(question.getInstruction(), response.getCount()));
             response.setQuestions(question.getQuestions().stream().peek(form -> form.setAnswer(null)).toList());
-            if (ReadingQuestionTypes.isMatchingSentenceOrFeatures(question.getTypes().getDisplayName())) {
-                MatchingSentence sentence = question.getMatching();
-                response.setQuestions(sentence.getSentence());
-                response.setQuestionSeconds(sentence.getAnswers());
-            }
             if (question.getTypes().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS))
                 response.setChoices(question.getChoices().stream().map(RMultipleChoice::toDto).toList());
 

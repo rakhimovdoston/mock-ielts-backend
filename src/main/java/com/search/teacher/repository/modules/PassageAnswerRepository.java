@@ -13,5 +13,7 @@ public interface PassageAnswerRepository extends JpaRepository<PassageAnswer, Lo
 
     List<PassageAnswer> findAllByListening(ListeningModule listeningModule);
 
+    boolean existsAllByListening(ListeningModule listening);
+
     List<PassageAnswer> findAllByPassage(ReadingPassage passage);
 }

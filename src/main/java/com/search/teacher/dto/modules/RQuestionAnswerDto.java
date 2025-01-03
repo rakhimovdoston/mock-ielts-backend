@@ -21,9 +21,7 @@ public class RQuestionAnswerDto {
     private String content;
     private String instruction;
     private String type;
-    private String image;
     private Integer questionCount;
-    private List<Form> questionList = new ArrayList<>();
-    private List<Form> questionSeconds = new ArrayList<>();
+    private List<Form> questions = new ArrayList<>();
     private List<RMultipleChoiceDto> choices = new ArrayList<>();
 }
