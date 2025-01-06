@@ -5,6 +5,7 @@ import com.search.teacher.dto.filter.PaginationResponse;
 import com.search.teacher.dto.modules.writing.WritingDto;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
+import com.search.teacher.model.entities.Image;
 import com.search.teacher.model.entities.Organization;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.entities.modules.writing.WritingModule;
@@ -20,7 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -102,9 +102,7 @@ public class WritingServiceImpl implements WritingService {
         if (module == null)
             throw new NotfoundException("Writing Module not found");
 
-        module.setActive(false);
-        module.setDeleteDate(new Date());
-        writingModuleRepository.save(module);
+        writingModuleRepository.delete(module);
         return JResponse.success();
     }
 
