@@ -21,6 +21,7 @@ public enum ReadingQuestionTypes {
     NOTE_COMPLETION("Note Completion", true),
     YES_NO_NOT_GIVEN("Yes/No/Not Given", true),
     TABLE_COMPLETION("Table Completion", false),
+    MULTIPLE_CHOICES_QUESTION_SECONDS("Multiple Choices Questions Second", true),
     //    Listening
     MATCHING("Matching", true),
     MULTIPLE_CHOICES("Multiple Choices", true),
@@ -34,6 +35,18 @@ public enum ReadingQuestionTypes {
     MAP_PLAN_LABELLING("Map & Plan Labelling", true),
     DIAGRAM_AND_FLOWCHART_COMPLETION("Diagram & flowchart completion", true),
     ;
+
+    public static boolean isYesOrTrue(String type) {
+        return isTrueFalse(type) | isYesNo(type);
+    }
+
+    public static boolean isTrueFalse(String type) {
+        return type == TRUE_FALSE_NOT_GIVEN.getDisplayName();
+    }
+
+    public static boolean isYesNo(String type) {
+        return type == YES_NO_NOT_GIVEN.getDisplayName();
+    }
 
     public static ReadingQuestionTypes getType(String type) {
         for (var name : ReadingQuestionTypes.values()) {

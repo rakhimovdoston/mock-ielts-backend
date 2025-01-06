@@ -208,7 +208,7 @@ public class Utils {
         return startAnswer;
     }
 
-    private static int listeningCountAnswerStart(int startAnswer, Difficulty difficulty) {
+    public static int listeningCountAnswerStart(int startAnswer, Difficulty difficulty) {
         return switch (difficulty) {
             case semi_easy -> startAnswer;
             case easy -> startAnswer + 10;
@@ -217,7 +217,7 @@ public class Utils {
         };
     }
 
-    private static int readingCountAnswerStart(int startAnswer, Difficulty difficulty) {
+    public static int readingCountAnswerStart(int startAnswer, Difficulty difficulty) {
         return switch (difficulty) {
             case medium -> startAnswer + 13;
             case hard -> startAnswer + 26;

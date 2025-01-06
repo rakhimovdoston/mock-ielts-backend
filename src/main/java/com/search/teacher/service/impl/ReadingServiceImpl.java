@@ -221,6 +221,11 @@ public class ReadingServiceImpl implements ReadingService {
             answerEntity.setAnswer(answer.getText());
             answerEntity.setPassage(passage);
             answerEntity.setQuestionId(answer.getId());
+            answerEntity.setPassage(passage);
+            answerEntity.setQuestionId(answer.getId());
+            answerEntity.setAnswer(answer.getText());
+            answerEntity.setAnswers(answer.getAnswers());
+            answerEntity.setQuestionIds(answer.getCount());
             passageAnswerRepository.save(answerEntity);
         }
 
@@ -284,7 +289,7 @@ public class ReadingServiceImpl implements ReadingService {
             throw new NotfoundException("Question type not found.");
         }
 
-        int startQuestion = !reading.getQuestions().isEmpty() ? Utils.countAnswerStartForReading(reading.getQuestions()) : 0;
+        int startQuestion = !reading.getQuestions().isEmpty() ? Utils.countAnswerStartForReading(reading.getQuestions()) : Utils.readingCountAnswerStart(0, reading.getDifficulty());
 
         ReadingQuestion question = new ReadingQuestion();
         ReadingQuestionTypes type = ReadingQuestionTypes.getType(questionTypes.getType());
@@ -293,44 +298,57 @@ public class ReadingServiceImpl implements ReadingService {
         question.setSort(sort + 1);
         question.setInstruction(rAnswer.getInstruction());
 
-
+        MultipleQuestionSecondDto content = null;
         if (!StringUtils.isNullOrEmpty(rAnswer.getContent())) {
-            MultipleQuestionSecondDto content = JsoupService.replaceContent(rAnswer.getContent(), startQuestion);
-            question.setContent(content.getQuestionCount());
+            content = JsoupService.replaceContent(rAnswer.getContent(), startQuestion, rAnswer.getType(), reading);
             question.setHtml(true);
+            question.setContent(content.getConditions());
+            question.setQuestionCount(content.getQuestionCount());
         }
 
         if (!rAnswer.getQuestions().isEmpty()) {
             question.setQuestions(rAnswer.getQuestions());
         }
 
+        if (content != null && rAnswer.getType().equals(ReadingQuestionTypes.MULTIPLE_CHOICES_QUESTION_SECONDS.getDisplayName())) {
+            if (content.getForms().isEmpty())
+                throw new BadRequestException("Please Enter Multiple Choices questions");
+            question.setQuestions(content.getForms());
+            question.setContent(null);
+            question.setHtml(false);
+            question.setInstruction(content.getConditions() != null ? content.getConditions() : rAnswer.getInstruction());
+        }
+
         question.setPassage(reading);
-        question.setQuestionCount("");
         readingQuestionRepository.save(question);
 
-        if (questionTypes.getType().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS.name())) {
+        if (rAnswer.getType().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS.getDisplayName())) {
 
             if (rAnswer.getChoices().isEmpty()) {
                 throw new BadRequestException("Please enter multiple choice question");
             }
-            question.setChoices(choice(rAnswer.getChoices(), question));
+            question.setChoices(choice(rAnswer.getChoices(), question, startQuestion));
             question.setInstruction(JsoupService.replaceInstruction(question.getInstruction(), rAnswer.getChoices()));
         }
         readingQuestionRepository.save(question);
         return question;
     }
 
-    private List<RMultipleChoice> choice(List<RMultipleChoiceDto> choices, ReadingQuestion question) {
+    private List<RMultipleChoice> choice(List<RMultipleChoiceDto> choices, ReadingQuestion question, int startQuestion) {
         List<RMultipleChoice> list = new ArrayList<>();
-        choices.forEach(choice -> {
+        String countQuestion = (startQuestion + 1) + "-";
+        for (var choice : choices) {
+            startQuestion++;
             RMultipleChoice newChoice = new RMultipleChoice();
             newChoice.setName(choice.getName());
-            newChoice.setSort(choice.getOrder());
+            newChoice.setSort(startQuestion);
             newChoice.setCorrectAnswer(choice.getCorrectAnswer());
             newChoice.setChoices(choice.getAnswers());
             newChoice.setQuestion(question);
             list.add(newChoice);
-        });
+        }
+        countQuestion += startQuestion;
+        question.setQuestionCount(countQuestion);
         return list;
     }
 }

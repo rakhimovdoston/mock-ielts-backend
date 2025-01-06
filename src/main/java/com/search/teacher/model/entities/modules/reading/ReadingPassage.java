@@ -65,7 +65,7 @@ public class ReadingPassage extends BaseEntity {
             response.setId(question.getId());
             response.setText(question.getContent());
             response.setTypes(question.getTypes().getDisplayName());
-            response.setCount(Utils.getCountString(question));
+            response.setCount(question.getQuestionCount());
             response.setCondition(JsoupService.replaceInstruction(question.getInstruction(), response.getCount()));
             response.setQuestions(question.getQuestions().stream().peek(form -> form.setAnswer(null)).toList());
             if (question.getTypes().equals(ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS))

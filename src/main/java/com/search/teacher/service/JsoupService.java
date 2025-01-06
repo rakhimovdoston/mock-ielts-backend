@@ -4,6 +4,8 @@ import com.search.teacher.dto.modules.RMultipleChoiceDto;
 import com.search.teacher.dto.modules.listening.MultipleQuestionSecondDto;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.model.entities.modules.reading.Form;
+import com.search.teacher.model.entities.modules.reading.ReadingPassage;
+import com.search.teacher.model.entities.modules.reading.ReadingQuestionTypes;
 import com.search.teacher.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
@@ -96,49 +98,15 @@ public class JsoupService {
 
         if (!map.isEmpty()) {
             for (var el : olElement.children()) {
-                Element span = new Element("span");
-                span.text(el.text());
-                el.empty();
-                Element select = new Element("select");
+                el.appendChild(spanElement(el));
                 answerStart++;
-                select.attr("id", "ques-" + answerStart).attr("class", "question-type-select");
-                select.attr("style", """
-                    width: 100px;
-                    border:1px solid gray;
-                    border-radius:20px;
-                    padding:4px 8px;
-                    outline:none;
-                    margin-left: 14px;
-                    """);
-                select.appendChild(new Element("option").attr("value", ""));
-                for (var mapEntry : map.keySet()) {
-                    select.appendChild(new Element("option").attr("value", map.get(mapEntry)).text(String.valueOf(mapEntry)));
-                }
-                el.appendChild(span);
-                el.appendChild(select);
+                el.appendChild(selectElementWithKeyValue(map, answerStart));
             }
         } else {
             for (var el : olElement.children()) {
+                el.appendChild(spanElement(el));
                 answerStart++;
-                Element span = new Element("span");
-                span.text(el.text());
-                el.empty();
-                Element input = new Element("input");
-                input.attr("type", "text").attr("value", "").attr("class", "reading-question-inputs").attr("tabIndex", String.valueOf(answerStart)).attr("id", "ques-" + answerStart).attr("placeholder", String.valueOf(answerStart));
-
-                input.attr("style", """
-                    display: inline-block;
-                    width:150px;
-                    text-align:center;
-                    border:1px solid gray;
-                    border-radius:20px;
-                    padding:4px 8px;
-                    outline:none;
-                    margin-left: 14px;
-                    vertical-align: center
-                    """);
-                el.appendChild(span);
-                el.appendChild(input);
+                el.appendChild(defaultInputElement(answerStart));
             }
         }
         return document.body().html();
@@ -163,24 +131,25 @@ public class JsoupService {
 
     public static MultipleQuestionSecondDto replaceMultipleChoice(String content, int startQuestion) {
         Document document = Jsoup.parse(content);
-        Elements elements = document.select("ol");
+        Elements elements = document.select("ul");
         Element element = elements.first();
+        if (element == null)
+            throw new BadRequestException("Please enter correct format for Multiple choices questions");
+
         MultipleQuestionSecondDto multipleQuestionSecondDto = new MultipleQuestionSecondDto();
         int questionCount = questionCountFromContent(document.body());
         multipleQuestionSecondDto.setQuestionCount((startQuestion + 1) + "-" + (questionCount + startQuestion));
 
-        if (element != null) {
-            Elements liElements = element.select("li");
-            int order = 1;
-            List<Form> forms = new ArrayList<>();
-            for (Element liElement : liElements) {
-                forms.add(new Form(liElement.text(), order));
-                order++;
-            }
-            element.empty();
-            multipleQuestionSecondDto.setForms(forms);
-            multipleQuestionSecondDto.setConditions(document.body().html());
+        Elements liElements = element.select("li");
+        int order = 1;
+        List<Form> forms = new ArrayList<>();
+        for (Element liElement : liElements) {
+            forms.add(new Form(liElement.text(), order));
+            order++;
         }
+        element.empty();
+        multipleQuestionSecondDto.setForms(forms);
+        multipleQuestionSecondDto.setConditions(document.body().html());
 
         return multipleQuestionSecondDto;
     }
@@ -202,8 +171,185 @@ public class JsoupService {
         return 2;
     }
 
-    public static MultipleQuestionSecondDto replaceContent(String content, int startQuestion) {
-        return null;
+    public static MultipleQuestionSecondDto replaceContent(String content, int startQuestion, String type, ReadingPassage passage) {
+        Document doc = Jsoup.parse(content);
+        MultipleQuestionSecondDto question = new MultipleQuestionSecondDto();
+        int countPassage = countHeadingFromPassage(passage);
+        int listStartQuestion = startQuestion;
+        if (type.equals(ReadingQuestionTypes.LOCATING_INFORMATION.getDisplayName())) {
+            if (countPassage == 0)
+                throw new BadRequestException("Passage content is not list so you don't use this question type");
+            Elements elements = doc.select("ol");
+            Element element = elements.first();
+            if (element == null)
+                throw new BadRequestException("Please enter questions");
+
+            element.attr("style", "list-style-type: decimal; list-style-position: inside;");
+            element.attr("start", String.valueOf(listStartQuestion + 1));
+            for (var el : element.getElementsByTag("li")) {
+                el.appendChild(spanElement(el));
+                listStartQuestion++;
+                List<String> options = new ArrayList<>();
+                for (int i = 0; i < countPassage; i++) {
+                    char value = (char) ('A' + i);
+                    options.add(String.valueOf(value));
+                }
+                el.appendChild(selectElement(options, listStartQuestion));
+            }
+        } else if (ReadingQuestionTypes.isYesOrTrue(type)) {
+            Elements elements = doc.select("ol");
+            Element element = elements.first();
+            if (element == null)
+                throw new BadRequestException("Please correct enter " + (ReadingQuestionTypes.isYesNo(type) ? "True or False" : "Yes or No") + " or Not Given");
+            element.attr("style", "list-style-type: decimal;list-style-position: inside;");
+            element.attr("start", String.valueOf(listStartQuestion + 1));
+            for (var el : element.getElementsByTag("li")) {
+                el.appendChild(spanElement(el));
+                listStartQuestion++;
+                List<String> options = new ArrayList<>();
+                if (ReadingQuestionTypes.isYesNo(type)) {
+                    options.add("Yes");
+                    options.add("No");
+                    options.add("Not Given");
+                } else {
+                    options.add("True");
+                    options.add("False");
+                    options.add("Not Given");
+                }
+                el.appendChild(selectElement(options, listStartQuestion));
+            }
+        } else if (type.equals(ReadingQuestionTypes.MULTIPLE_CHOICES_QUESTION_SECONDS.getDisplayName())) {
+            return replaceMultipleChoice(content, startQuestion);
+        } else if (type.equals(ReadingQuestionTypes.MATCHING_SENTENCE_ENDINGS.getDisplayName()) || type.equals(ReadingQuestionTypes.MATCHING_FEATURES.getDisplayName())) {
+            question = matchingForReading(doc, listStartQuestion);
+        } else {
+            return replaceContent(doc, startQuestion);
+        }
+        question.setConditions(doc.body().html());
+        question.setQuestionCount((startQuestion + 1) + "-" + listStartQuestion);
+        return question;
+    }
+
+    private static MultipleQuestionSecondDto matchingForReading(Document doc, int listStartQuestion) {
+        Elements olElements = doc.select("ol");
+        Elements ulElements = doc.select("ul");
+        Element olElement = olElements.first();
+        Element ulElement = ulElements.first();
+        int start = listStartQuestion;
+        if (ulElement == null) {
+            throw new BadRequestException("Please enter for second statement, For example A. something, ...");
+        }
+        if (olElement == null) {
+            throw new BadRequestException("Please enter the questions");
+        }
+
+        ulElement.replaceWith(replaceUlToOlStyleWithAlphabet(ulElement));
+        Map<String, String> maps = new HashMap<>();
+        int i = 0;
+        for (Element element : ulElement.getElementsByTag("li")) {
+            char value = (char) ('A' + i);
+            maps.put(element.text(), String.valueOf(value));
+            i++;
+        }
+
+        olElement.attr("style", "list-style-type: decimal;list-style-position: inside;");
+        olElement.attr("start", String.valueOf(listStartQuestion + 1));
+        for (var el : olElement.getElementsByTag("li")) {
+            el.appendChild(spanElement(el));
+            listStartQuestion++;
+            el.appendChild(selectElementWithKeyValue(maps, listStartQuestion));
+        }
+        MultipleQuestionSecondDto question = new MultipleQuestionSecondDto();
+        question.setConditions(doc.body().html());
+        question.setQuestionCount((start + 1) + "-" + listStartQuestion);
+        return question;
+    }
+
+    private static Element replaceUlToOlStyleWithAlphabet(Element ulElement) {
+        Element newOlElement = new Element("ol");
+        newOlElement.attr("type", "A").attr("start", "1");
+        newOlElement.attr("style", "list-style-type: upper-alpha;list-style-position: inside;");
+        newOlElement.insertChildren(0, ulElement.children());
+        return newOlElement;
+    }
+
+    private static Element spanElement(Element liElement) {
+        Element span = new Element("span");
+        span.text(liElement.text());
+        liElement.empty();
+        return span;
+    }
+
+    private static Element selectElementWithKeyValue(Map<String, String> optionValues, int listStartQuestion) {
+        Element select = defaultSelectElement(listStartQuestion);
+        for (String key : optionValues.keySet()) {
+            select.appendChild(new Element("option").attr("value", key).text(optionValues.get(key)));
+        }
+        return select;
+    }
+
+    private static Element selectElement(List<String> optionValues, int listStartQuestion) {
+        Element select = defaultSelectElement(listStartQuestion);
+        for (String value : optionValues) {
+            select.appendChild(new Element("option").attr("value", String.valueOf(value)).text(String.valueOf(value)));
+        }
+        return select;
+    }
+
+    private static Element defaultInputElement(int answerStart) {
+        Element input = new Element("input");
+        input.attr("type", "text");
+        input.attr("value", "");
+        input.attr("class", "reading-question-inputs");
+        input.attr("tabIndex", String.valueOf(answerStart));
+        input.attr("id", "ques-" + answerStart);
+        input.attr("placeholder", String.valueOf(answerStart));
+
+        input.attr("style", """
+            display: inline-block;
+            width:150px;
+            text-align:center;
+            border:1px solid gray;
+            border-radius:20px;
+            padding:4px 8px;
+            outline:none;
+            margin-left: 14px;
+            vertical-align: center
+            """);
+        return input;
+    }
+
+    private static Element defaultSelectElement(int listStartQuestion) {
+        Element select = new Element("select");
+        select.attr("id", "ques-" + listStartQuestion);
+        select.attr("class", "question-type-select");
+        select.attr("style", """
+            width: 100px;
+            border:1px solid gray;
+            border-radius:20px;
+            padding:4px 8px;
+            outline:none;
+            margin-left: 14px;
+            """);
+        select.appendChild(new Element("option").attr("value", ""));
+        return select;
+    }
+
+    private static int countHeadingFromPassage(ReadingPassage passage) {
+        Document document = Jsoup.parse(passage.getContent());
+        Elements elements = document.select("ol");
+        Element element = elements.first();
+        if (element == null)
+            return 0;
+        return element.getElementsByTag("li").size();
+    }
+
+    public static MultipleQuestionSecondDto replaceContent(Document document, int startQuestion) {
+        Elements elements = document.getElementsByClass("reading-question-inputs");
+        MultipleQuestionSecondDto multipleQuestionSecondDto = new MultipleQuestionSecondDto();
+        multipleQuestionSecondDto.setConditions(document.body().html());
+        multipleQuestionSecondDto.setQuestionCount((startQuestion + 1) + "-" + (startQuestion + elements.size()));
+        return multipleQuestionSecondDto;
     }
 
     public String setOrderForHtmlContent(int startQuestion, String content) {

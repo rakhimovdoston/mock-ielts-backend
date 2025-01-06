@@ -119,8 +119,9 @@ public class ListeningModuleServiceImpl implements ListeningService {
         if (!listeningModule.getQuestions().isEmpty())
             listeningQuestionRepository.deleteAll(listeningModule.getQuestions());
 
-        fileService.removeAudio(currentUser.getId(), listeningModule.getAudio());
+        Image image = listeningModule.getAudio();
         listeningModuleRepository.delete(listeningModule);
+        fileService.removeAudio(currentUser.getId(), image);
         return JResponse.success();
     }
 
@@ -219,6 +220,8 @@ public class ListeningModuleServiceImpl implements ListeningService {
             answer.setListening(listeningModule);
             answer.setQuestionId(confirm.getId());
             answer.setAnswer(confirm.getText());
+            answer.setAnswers(confirm.getAnswers());
+            answer.setQuestionIds(confirm.getCount());
             passageAnswerRepository.save(answer);
         }
         listeningModuleRepository.save(listeningModule);
@@ -227,7 +230,7 @@ public class ListeningModuleServiceImpl implements ListeningService {
 
     private String getListeningTitle(List<ListeningQuestion> questions) {
         return questions.isEmpty() ? "You have not questions" :
-            JsoupService.getTitleFromCondition(questions.get(0).getInstruction() == null || questions.get(0).getInstruction().isEmpty() ?
+            JsoupService.getTitleFromCondition(questions.get(0).getInstruction().isEmpty() || questions.get(0).getInstruction() == null ?
                 questions.get(0).getContent() : questions.get(0).getInstruction());
     }
 

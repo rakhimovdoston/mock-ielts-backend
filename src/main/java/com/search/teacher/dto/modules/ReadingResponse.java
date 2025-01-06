@@ -37,6 +37,6 @@ public class ReadingResponse {
         this.difficulty = passage.getDifficulty().name();
         this.headings = passage.isList() ? Utils.getHeadingList(passage.getCount()) : new ArrayList<>();
         this.question = withAnswer ? passage.toQuestionDto() : new ArrayList<>();
-        this.answerStart = Utils.countAnswerStart(!passage.getQuestions().isEmpty() ? Utils.getLastQuestionsNumber(passage.getQuestions()) : 0, passage.getDifficulty(), ModuleType.READING);
+        this.answerStart = !passage.getQuestions().isEmpty() ? Utils.getLastQuestionsNumber(passage.getQuestions()) : Utils.countAnswerStart(0, passage.getDifficulty(), ModuleType.READING);
     }
 }
