@@ -36,16 +36,12 @@ public enum ReadingQuestionTypes {
     DIAGRAM_AND_FLOWCHART_COMPLETION("Diagram & flowchart completion", true),
     ;
 
-    public static boolean isYesOrTrue(String type) {
-        return isTrueFalse(type) | isYesNo(type);
+    public static boolean isTrueFalse(ReadingQuestionTypes type) {
+        return type == TRUE_FALSE_NOT_GIVEN;
     }
 
-    public static boolean isTrueFalse(String type) {
-        return type == TRUE_FALSE_NOT_GIVEN.getDisplayName();
-    }
-
-    public static boolean isYesNo(String type) {
-        return type == YES_NO_NOT_GIVEN.getDisplayName();
+    public static boolean isYesNo(ReadingQuestionTypes type) {
+        return type == YES_NO_NOT_GIVEN;
     }
 
     public static ReadingQuestionTypes getType(String type) {

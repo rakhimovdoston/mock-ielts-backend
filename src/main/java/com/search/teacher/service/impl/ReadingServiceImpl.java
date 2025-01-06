@@ -300,7 +300,7 @@ public class ReadingServiceImpl implements ReadingService {
 
         MultipleQuestionSecondDto content = null;
         if (!StringUtils.isNullOrEmpty(rAnswer.getContent())) {
-            content = JsoupService.replaceContent(rAnswer.getContent(), startQuestion, rAnswer.getType(), reading);
+            content = JsoupService.replaceContent(rAnswer.getContent(), startQuestion, type, reading);
             question.setHtml(true);
             question.setContent(content.getConditions());
             question.setQuestionCount(content.getQuestionCount());

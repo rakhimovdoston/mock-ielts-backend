@@ -171,62 +171,71 @@ public class JsoupService {
         return 2;
     }
 
-    public static MultipleQuestionSecondDto replaceContent(String content, int startQuestion, String type, ReadingPassage passage) {
+    public static MultipleQuestionSecondDto replaceContent(String content, int startQuestion, ReadingQuestionTypes type, ReadingPassage passage) {
         Document doc = Jsoup.parse(content);
-        MultipleQuestionSecondDto question = new MultipleQuestionSecondDto();
         int countPassage = countHeadingFromPassage(passage);
-        int listStartQuestion = startQuestion;
-        if (type.equals(ReadingQuestionTypes.LOCATING_INFORMATION.getDisplayName())) {
-            if (countPassage == 0)
-                throw new BadRequestException("Passage content is not list so you don't use this question type");
-            Elements elements = doc.select("ol");
-            Element element = elements.first();
-            if (element == null)
-                throw new BadRequestException("Please enter questions");
+        return switch (type) {
+            case LOCATING_INFORMATION -> locationInformation(doc, countPassage, startQuestion);
+            case YES_NO_NOT_GIVEN, TRUE_FALSE_NOT_GIVEN -> trueFalseYesNo(doc, type, startQuestion);
+            case MULTIPLE_CHOICES_QUESTION_SECONDS -> replaceMultipleChoice(content, startQuestion);
+            case MATCHING_FEATURES, MATCHING_SENTENCE_ENDINGS -> matchingForReading(doc, startQuestion);
+            default -> replaceContent(doc, startQuestion);
+        };
+    }
 
-            element.attr("style", "list-style-type: decimal; list-style-position: inside;");
-            element.attr("start", String.valueOf(listStartQuestion + 1));
-            for (var el : element.getElementsByTag("li")) {
-                el.appendChild(spanElement(el));
-                listStartQuestion++;
-                List<String> options = new ArrayList<>();
-                for (int i = 0; i < countPassage; i++) {
-                    char value = (char) ('A' + i);
-                    options.add(String.valueOf(value));
-                }
-                el.appendChild(selectElement(options, listStartQuestion));
+    private static MultipleQuestionSecondDto trueFalseYesNo(Document doc, ReadingQuestionTypes type, int listStartQuestion) {
+        MultipleQuestionSecondDto question = new MultipleQuestionSecondDto();
+        Elements elements = doc.select("ol");
+        Element element = elements.first();
+        int start = listStartQuestion;
+        if (element == null)
+            throw new BadRequestException("Please correct enter " + (ReadingQuestionTypes.isYesNo(type) ? "True or False" : "Yes or No") + " or Not Given");
+        element.attr("style", "list-style-type: decimal;list-style-position: inside;");
+        element.attr("start", String.valueOf(listStartQuestion + 1));
+        for (var el : element.getElementsByTag("li")) {
+            el.appendChild(spanElement(el));
+            listStartQuestion++;
+            List<String> options = new ArrayList<>();
+            if (ReadingQuestionTypes.isYesNo(type)) {
+                options.add("Yes");
+                options.add("No");
+                options.add("Not Given");
+            } else {
+                options.add("True");
+                options.add("False");
+                options.add("Not Given");
             }
-        } else if (ReadingQuestionTypes.isYesOrTrue(type)) {
-            Elements elements = doc.select("ol");
-            Element element = elements.first();
-            if (element == null)
-                throw new BadRequestException("Please correct enter " + (ReadingQuestionTypes.isYesNo(type) ? "True or False" : "Yes or No") + " or Not Given");
-            element.attr("style", "list-style-type: decimal;list-style-position: inside;");
-            element.attr("start", String.valueOf(listStartQuestion + 1));
-            for (var el : element.getElementsByTag("li")) {
-                el.appendChild(spanElement(el));
-                listStartQuestion++;
-                List<String> options = new ArrayList<>();
-                if (ReadingQuestionTypes.isYesNo(type)) {
-                    options.add("Yes");
-                    options.add("No");
-                    options.add("Not Given");
-                } else {
-                    options.add("True");
-                    options.add("False");
-                    options.add("Not Given");
-                }
-                el.appendChild(selectElement(options, listStartQuestion));
-            }
-        } else if (type.equals(ReadingQuestionTypes.MULTIPLE_CHOICES_QUESTION_SECONDS.getDisplayName())) {
-            return replaceMultipleChoice(content, startQuestion);
-        } else if (type.equals(ReadingQuestionTypes.MATCHING_SENTENCE_ENDINGS.getDisplayName()) || type.equals(ReadingQuestionTypes.MATCHING_FEATURES.getDisplayName())) {
-            question = matchingForReading(doc, listStartQuestion);
-        } else {
-            return replaceContent(doc, startQuestion);
+            el.appendChild(selectElement(options, listStartQuestion));
         }
         question.setConditions(doc.body().html());
-        question.setQuestionCount((startQuestion + 1) + "-" + listStartQuestion);
+        question.setQuestionCount((start + 1) + "-" + (listStartQuestion));
+        return question;
+    }
+
+    private static MultipleQuestionSecondDto locationInformation(Document doc, int countPassage, int listStartQuestion) {
+        if (countPassage == 0)
+            throw new BadRequestException("Passage content is not list so you don't use this question type");
+        MultipleQuestionSecondDto question = new MultipleQuestionSecondDto();
+        final int start = listStartQuestion;
+        Elements elements = doc.select("ol");
+        Element element = elements.first();
+        if (element == null)
+            throw new BadRequestException("Please enter questions");
+
+        element.attr("style", "list-style-type: decimal; list-style-position: inside;");
+        element.attr("start", String.valueOf(listStartQuestion + 1));
+        for (var el : element.getElementsByTag("li")) {
+            el.appendChild(spanElement(el));
+            listStartQuestion++;
+            List<String> options = new ArrayList<>();
+            for (int i = 0; i < countPassage; i++) {
+                char value = (char) ('A' + i);
+                options.add(String.valueOf(value));
+            }
+            el.appendChild(selectElement(options, listStartQuestion));
+        }
+        question.setConditions(doc.body().html());
+        question.setQuestionCount((start + 1) + "-" + (listStartQuestion));
         return question;
     }
 
@@ -242,13 +251,13 @@ public class JsoupService {
         if (olElement == null) {
             throw new BadRequestException("Please enter the questions");
         }
-
-        ulElement.replaceWith(replaceUlToOlStyleWithAlphabet(ulElement));
+        Element newOlElement = replaceUlToOlStyleWithAlphabet(ulElement);
+        ulElement.replaceWith(newOlElement);
         Map<String, String> maps = new HashMap<>();
         int i = 0;
-        for (Element element : ulElement.getElementsByTag("li")) {
+        for (Element element : newOlElement.getElementsByTag("li")) {
             char value = (char) ('A' + i);
-            maps.put(element.text(), String.valueOf(value));
+            maps.put(String.valueOf(value), element.text());
             i++;
         }
 
@@ -283,7 +292,7 @@ public class JsoupService {
     private static Element selectElementWithKeyValue(Map<String, String> optionValues, int listStartQuestion) {
         Element select = defaultSelectElement(listStartQuestion);
         for (String key : optionValues.keySet()) {
-            select.appendChild(new Element("option").attr("value", key).text(optionValues.get(key)));
+            select.appendChild(new Element("option").attr("value", optionValues.get(key)).text(key));
         }
         return select;
     }
