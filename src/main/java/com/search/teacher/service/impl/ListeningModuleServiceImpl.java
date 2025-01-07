@@ -289,8 +289,9 @@ public class ListeningModuleServiceImpl implements ListeningService {
 
 
             if (question.getContent() != null && question.isHtml()) {
-                String newContent = jsoupService.setOrderForHtmlContent(startQuestion, question.getContent());
-                question.setContent(newContent);
+                MultipleQuestionSecondDto dto = jsoupService.setOrderForHtmlContent(startQuestion, question.getContent());
+                question.setContent(dto.getConditions());
+                question.setQuestionCount(question.getQuestionCount());
             }
 
             List<Form> forms = question.getQuestions();

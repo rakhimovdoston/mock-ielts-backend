@@ -177,10 +177,38 @@ public class JsoupService {
         return switch (type) {
             case LOCATING_INFORMATION -> locationInformation(doc, countPassage, startQuestion);
             case YES_NO_NOT_GIVEN, TRUE_FALSE_NOT_GIVEN -> trueFalseYesNo(doc, type, startQuestion);
+            case DIAGRAM_LABELLING -> diagramContent(doc, startQuestion);
             case MULTIPLE_CHOICES_QUESTION_SECONDS -> replaceMultipleChoice(content, startQuestion);
             case MATCHING_FEATURES, MATCHING_SENTENCE_ENDINGS -> matchingForReading(doc, startQuestion);
             default -> replaceContent(doc, startQuestion);
         };
+    }
+
+    private static MultipleQuestionSecondDto diagramContent(Document doc, int startQuestion) {
+        MultipleQuestionSecondDto question = new MultipleQuestionSecondDto();
+        Elements elements = doc.select("ol");
+        Element olElement = elements.first();
+        if (olElement == null)
+            throw new BadRequestException("Please enter questions.");
+        int start = startQuestion;
+        olElement.attr("style", "list-style-type: decimal; list-style-position: inside;");
+        olElement.attr("start", String.valueOf(startQuestion + 1));
+
+        Elements inputElement = olElement.select("input");
+        if (!inputElement.isEmpty()) {
+            question.setConditions(doc.body().html());
+            question.setQuestionCount((startQuestion + 1) + "-" + (startQuestion + inputElement.size()));
+            return question;
+        }
+
+        for (Element liElement : olElement.select("li")) {
+            liElement.appendChild(spanElement(liElement));
+            startQuestion++;
+            liElement.appendChild(defaultInputElement(startQuestion));
+        }
+        question.setConditions(doc.body().html());
+        question.setQuestionCount((start + 1) + "-" + start);
+        return question;
     }
 
     private static MultipleQuestionSecondDto trueFalseYesNo(Document doc, ReadingQuestionTypes type, int listStartQuestion) {
@@ -361,7 +389,7 @@ public class JsoupService {
         return multipleQuestionSecondDto;
     }
 
-    public String setOrderForHtmlContent(int startQuestion, String content) {
+    public MultipleQuestionSecondDto setOrderForHtmlContent(int startQuestion, String content) {
         Document doc = Jsoup.parse(content);
         final int listStart = startQuestion;
         Elements olElements = doc.select("ol");
@@ -398,8 +426,10 @@ public class JsoupService {
             element.attr("tabindex", startQuestion + "");
             startQuestion++;
         }
-
-        return doc.body().html();
+        MultipleQuestionSecondDto questionSecondDto = new MultipleQuestionSecondDto();
+        questionSecondDto.setConditions(doc.body().html());
+        questionSecondDto.setQuestionCount((listStart + 1) + "-" + startQuestion);
+        return questionSecondDto;
     }
 
     public static int getLastQuestionNumberFromHtml(String content) {

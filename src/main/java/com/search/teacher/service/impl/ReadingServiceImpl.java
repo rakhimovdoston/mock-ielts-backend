@@ -123,6 +123,7 @@ public class ReadingServiceImpl implements ReadingService {
 
         questions.sort(Comparator.comparing(ReadingQuestion::getSort));
         questions = getWithoutDeleteQuestions(startQuestion, questions, deletedQuestion);
+        final int listStart = startQuestion;
         for (var question : questions) {
             if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
                 List<RMultipleChoice> choices = question.getChoices();
@@ -130,21 +131,21 @@ public class ReadingServiceImpl implements ReadingService {
                     choice.setSort(startQuestion);
                     startQuestion++;
                 }
+                question.setQuestionCount((listStart + 1) + "-" + startQuestion);
                 rMultipleChoiceRepository.saveAll(choices);
-                continue;
+            }else if (question.getContent() != null && question.isHtml()) {
+                MultipleQuestionSecondDto multipleQuestionSecondDto = jsoupService.setOrderForHtmlContent(startQuestion, question.getContent());
+                question.setContent(multipleQuestionSecondDto.getConditions());
+                question.setQuestionCount(multipleQuestionSecondDto.getQuestionCount());
+            } else {
+                List<Form> forms = question.getQuestions();
+                for (Form form : forms) {
+                    form.setOrder(startQuestion);
+                    startQuestion++;
+                }
+                question.setQuestionCount((listStart + 1) + "-" + startQuestion);
+                question.setQuestions(forms);
             }
-
-            if (question.getContent() != null && question.isHtml()) {
-                String newContent = jsoupService.setOrderForHtmlContent(startQuestion, question.getContent());
-                question.setContent(newContent);
-            }
-
-            List<Form> forms = question.getQuestions();
-            for (Form form : forms) {
-                form.setOrder(startQuestion);
-                startQuestion++;
-            }
-            question.setQuestions(forms);
             readingQuestionRepository.save(question);
         }
     }
