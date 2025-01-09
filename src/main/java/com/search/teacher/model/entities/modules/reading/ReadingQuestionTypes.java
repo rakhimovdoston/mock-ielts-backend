@@ -66,8 +66,8 @@ public enum ReadingQuestionTypes {
         return type.equals(MATCHING_FEATURES.displayName) || type.equals(MATCHING_SENTENCE_ENDINGS.displayName);
     }
 
-    private String displayName;
-    private boolean active;
+    private final String displayName;
+    private final boolean active;
 
     ReadingQuestionTypes(String displayName, boolean active) {
         this.displayName = displayName;

@@ -1,6 +1,8 @@
 package com.search.teacher.controller.modules;
 
 import com.search.teacher.dto.filter.ModuleFilter;
+import com.search.teacher.dto.modules.listening.CheckListeningRequest;
+import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ModuleType;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.modules.ModuleService;
@@ -28,5 +30,31 @@ public class ModuleController {
     @GetMapping("question-types")
     public ResponseEntity<JResponse> getQuestionTypes(@RequestParam(name = "module_type") ModuleType moduleType) {
         return ResponseEntity.ok(moduleService.getQuestionTypes(moduleType));
+    }
+
+    @PostMapping("check/listening")
+    public ResponseEntity<JResponse> checkListening(@RequestBody CheckListeningRequest request) {
+        return ResponseEntity.ok(moduleService.checkListening(securityUtils.getCurrentUser(), request));
+    }
+
+    @PostMapping("check/reading")
+    public ResponseEntity<JResponse> checkReading(@RequestBody Object request) {
+        return ResponseEntity.ok(null);
+    }
+
+    @PostMapping("check/writing")
+    public ResponseEntity<JResponse> checkWriting(@RequestBody Object request) {
+        return ResponseEntity.ok(null);
+    }
+
+
+    @GetMapping("reading")
+    public ResponseEntity<JResponse> getReading( @RequestParam Difficulty difficulty) {
+        return ResponseEntity.ok(moduleService.getReading(securityUtils.getCurrentUser(), difficulty));
+    }
+
+    @GetMapping("listening")
+    private ResponseEntity<JResponse> getListening(@RequestParam(name = "module_id") Integer moduleId, @RequestParam Difficulty difficulty) {
+        return ResponseEntity.ok(moduleService.getListening(moduleId, difficulty));
     }
 }

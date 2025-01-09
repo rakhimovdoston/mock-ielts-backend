@@ -27,6 +27,12 @@ public interface ReadingRepository extends JpaRepository<ReadingPassage, Long> {
     @Query(value = "select new com.search.teacher.dto.modules.ReadingPassageDto(id, difficulty, title, description, SUBSTRING(content, 9, 200),list, active) from ReadingPassage where organization=?1 and difficulty=?2")
     Page<ReadingPassageDto> findAllOrganizationAndDifficulty(Organization organization, Difficulty difficulty, Pageable pageable);
 
+    List<ReadingPassage> findAllOrganizationAndDifficulty(Organization organization, Difficulty difficulty);
+
+
+
+
     @Query(value = "select distinct difficulty from ReadingPassage where active and id in (?1) and organization=?2")
     List<Difficulty> findDifficultiesByIdInAndOrganization(List<Long> ids, Organization organization);
+
 }
