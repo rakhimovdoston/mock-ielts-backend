@@ -1,7 +1,6 @@
 package com.search.teacher.config.filter;
 
 import com.search.teacher.model.entities.User;
-import com.search.teacher.model.enums.Status;
 import com.search.teacher.service.user.UserTokenService;
 import com.search.teacher.utils.GsonUtils;
 import com.search.teacher.utils.ResponseMessage;
@@ -9,7 +8,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -54,17 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-
-        if (user.getStatus().equals(Status.block)) {
-            GsonUtils.responseError(409, ResponseMessage.USER_BLOCKED, response);
-            return;
-        }
-
-        if (user.getStatus().equals(Status.confirm)) {
-            GsonUtils.responseError(410, ResponseMessage.USER_NOT_ACTIVATED, response);
-            return;
-        }
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), null, getAuthorities(user));
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), null, getAuthorities(user));
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
@@ -72,7 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName().name())));
+        user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
         return authorities;
     }
 }

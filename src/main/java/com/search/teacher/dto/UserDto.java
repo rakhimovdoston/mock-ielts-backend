@@ -1,7 +1,6 @@
 package com.search.teacher.dto;
 
 import com.search.teacher.model.entities.User;
-import com.search.teacher.model.enums.Type;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

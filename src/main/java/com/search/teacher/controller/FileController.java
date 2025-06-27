@@ -4,6 +4,7 @@ import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.FileService;
+import com.search.teacher.service.module.WritingService;
 import com.search.teacher.utils.SecurityUtils;
 import com.search.teacher.utils.Utils;
 import io.swagger.annotations.Api;
@@ -11,10 +12,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.service.SecurityService;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -30,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
 
     private final FileService fileService;
+    private final WritingService writingService;
     private final SecurityUtils securityUtils;
 
     @PostMapping(value = "photo", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
@@ -43,5 +42,24 @@ public class FileController {
             throw new BadRequestException("Please upload only photo or image");
 
         return fileService.uploadPhoto(securityUtils.getCurrentUser(), file, type);
+    }
+
+    @PostMapping(value = "audio", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @ApiOperation("Uploading Audio")
+    public JResponse uploadAudio(@RequestPart(name = "audio") MultipartFile file) {
+        if (file.isEmpty())
+            throw new BadRequestException("File is not empty");
+
+        if (!Utils.isAudio(file.getContentType()))
+            throw new BadRequestException("Please upload only audio");
+
+        String type = "AUDIO";
+
+        return fileService.uploadPhoto(securityUtils.getCurrentUser(), file, type);
+    }
+
+    @DeleteMapping("delete/{writingId}")
+    public JResponse deleteAudioFile(@PathVariable Long writingId, @RequestParam(name = "url") String url) {
+        return writingService.deleteAudioByUrl(securityUtils.getCurrentUser(), url, writingId);
     }
 }

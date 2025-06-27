@@ -77,7 +77,7 @@ public class FileUploadService {
     private String getBucket(ImageType imageType) {
         return switch (imageType) {
             case LOGO -> "logos";
-            case PROFILE_PICTURE -> "profiles";
+            case PROFILE_PICTURE -> "profile_pictures";
             case READING, LISTENING, WRITING, SPEAKING -> "modules";
             case AUDIO -> "audios";
             default -> "photos";

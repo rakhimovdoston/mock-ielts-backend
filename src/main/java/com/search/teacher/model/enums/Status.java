@@ -1,5 +1,5 @@
 package com.search.teacher.model.enums;
 
 public enum Status {
-    active, block, confirm;
+    pending, opened, closed, cancelled, lated, assessment
 }

@@ -1,14 +1,9 @@
 package com.search.teacher.utils;
 
-import com.search.teacher.dto.modules.ReadingQuestionResponse;
-import com.search.teacher.model.entities.modules.listening.ListeningModule;
-import com.search.teacher.model.entities.modules.listening.ListeningQuestion;
-import com.search.teacher.model.entities.modules.reading.*;
+
+import com.search.teacher.model.entities.ExamScore;
 import com.search.teacher.model.enums.Difficulty;
 import com.search.teacher.model.enums.ImageType;
-import com.search.teacher.model.enums.ModuleType;
-import com.search.teacher.service.JsoupService;
-import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -31,28 +26,6 @@ public class Utils {
             randomNumber = random.nextInt(0, colors.length - 1);
         }
         return colors[randomNumber];
-    }
-
-    public static String getCountString(ReadingQuestion question) {
-        return getString(question.getTypes(), question.getChoices(), question.isHtml(), question.getContent(), question.getQuestions());
-    }
-
-    public static int getLastQuestionsNumber(List<ReadingQuestion> questions) {
-        questions.sort(Comparator.comparing(ReadingQuestion::getSort));
-        ReadingQuestion question = questions.get(questions.size() - 1);
-        return getLastQuestionNumber(question);
-    }
-
-    public static int getLastQuestionNumber(ReadingQuestion question) {
-        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
-            return question.getChoices().stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
-        }
-
-        if (question.isHtml() && question.getContent() != null) {
-            return JsoupService.getLastQuestionNumberFromHtml(question.getContent());
-        }
-
-        return question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
     }
 
     public static String getBucketWithType(ImageType imageType) {
@@ -110,30 +83,6 @@ public class Utils {
         return false;
     }
 
-    public static int getStartUpdatedQuestion(ReadingQuestion question) {
-        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
-            return question.getChoices().stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
-        }
-
-        if (question.isHtml() && !StringUtils.isNullOrEmpty(question.getContent())) {
-            return JsoupService.getStartQuestionNumber(question.getContent());
-        }
-
-        return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
-    }
-
-    public static int getStartUpdatedQuestionForListening(ListeningQuestion question) {
-        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
-            return question.getChoices().stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
-        }
-
-        if (question.isHtml() && !StringUtils.isNullOrEmpty(question.getContent())) {
-            return JsoupService.getStartQuestionNumber(question.getContent());
-        }
-
-        return question.getQuestions().stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
-    }
-
     public static boolean isAudio(String contentType) {
         if (contentType == null) {
             return false;
@@ -149,79 +98,26 @@ public class Utils {
         return false;
     }
 
-    public static int countAnswerStart(List<ListeningQuestion> questions) {
-        questions.sort(Comparator.comparing(ListeningQuestion::getSort));
-        ListeningQuestion question = questions.get(questions.size() - 1);
-        String startQuestion = question.getQuestionCount().split("-")[1];
-        return Integer.parseInt(startQuestion);
+    public static String countOverall(ExamScore examScore) {
+        double writing = Double.parseDouble(examScore.getWriting());
+        double listening = Double.parseDouble(examScore.getListening());
+        double reading = Double.parseDouble(examScore.getReading());
+        double speaking = Double.parseDouble(examScore.getSpeaking());
+        double total = (writing + listening + reading + speaking) / 4.0;
+        double rounded = roundToNearestHalfBand(total);
+        return String.valueOf(rounded);
     }
 
-    public static int countAnswerStartForReading(List<ReadingQuestion> questions) {
-        questions.sort(Comparator.comparing(ReadingQuestion::getSort));
-        ReadingQuestion question = questions.get(questions.size() - 1);
-        String startQuestion = question.getQuestionCount().split("-")[1];
-        return Integer.parseInt(startQuestion);
-    }
+    private static double roundToNearestHalfBand(double score) {
+        double floor = Math.floor(score);
+        double decimal = score - floor;
 
-    public static int getLastQuestionLastQuestionOrder(ListeningQuestion question) {
-        if (question.getTypes() == ReadingQuestionTypes.MULTIPLE_CHOICES) {
-            return question.getChoices().stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
+        if (decimal < 0.25) {
+            return floor; // 7.1 → 7.0
+        } else if (decimal < 0.75) {
+            return floor + 0.5; // 7.4 → 7.5
+        } else {
+            return floor + 1.0; // 7.8 → 8.0
         }
-
-        if (question.isHtml() && question.getContent() != null) {
-            return JsoupService.getLastQuestionNumberFromHtml(question.getContent());
-        }
-
-        return question.getQuestions().stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
-    }
-
-    public static String getCountString(ListeningQuestion question) {
-        return getString(question.getTypes(), question.getChoices(), question.isHtml(), question.getContent(), question.getQuestions());
-
-    }
-
-    @NotNull
-    private static String getString(ReadingQuestionTypes types, List<RMultipleChoice> choices, boolean html, String content, List<Form> questions) {
-        int max, min;
-        if (types == ReadingQuestionTypes.MULTIPLE_CHOICE_QUESTIONS) {
-            min = choices.stream().map(RMultipleChoice::getSort).min(Integer::compareTo).orElse(1);
-            max = choices.stream().map(RMultipleChoice::getSort).max(Integer::compareTo).orElse(1);
-
-            return min + "-" + max;
-        }
-
-        if (html && content != null) {
-            return JsoupService.questionCountString(content);
-        }
-        min = questions.stream().map(Form::getOrder).min(Integer::compareTo).orElse(1);
-        max = questions.stream().map(Form::getOrder).max(Integer::compareTo).orElse(1);
-        return min + "-" + max;
-    }
-
-    public static int countAnswerStart(int startAnswer, Difficulty difficulty, ModuleType moduleType) {
-        if (moduleType == ModuleType.READING)
-            return readingCountAnswerStart(startAnswer, difficulty);
-
-        if (moduleType == ModuleType.LISTENING)
-            return listeningCountAnswerStart(startAnswer, difficulty);
-
-        return startAnswer;
-    }
-
-    public static int listeningCountAnswerStart(int startAnswer, Difficulty difficulty) {
-        return switch (difficulty) {
-            case semi_easy -> startAnswer;
-            case easy -> startAnswer + 10;
-            case medium -> startAnswer + 20;
-            case hard -> startAnswer + 30;
-        };
-    }
-
-    public static int readingCountAnswerStart(int startAnswer, Difficulty difficulty) {
-        return switch (difficulty) {
-            case medium -> startAnswer + 13;
-            case hard -> startAnswer + 26;
-            default -> startAnswer;
-        };
     }
 }

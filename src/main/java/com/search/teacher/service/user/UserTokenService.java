@@ -41,7 +41,7 @@ public class UserTokenService {
             return null;
         }
         User user = userToken.getUser();
-        if (email.equals(user.getEmail())) return user;
+        if (email.equals(user.getUsername())) return user;
         return null;
     }
 

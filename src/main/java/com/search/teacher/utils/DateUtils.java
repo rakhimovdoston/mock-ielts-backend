@@ -5,9 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
@@ -16,6 +15,8 @@ import java.util.Date;
 public class DateUtils {
 
     public static Long EXPIRATION_CODE = 120000L;
+
+    public static Long TEST_START_TIME = 3_600_000L;
 
     public static boolean isExpirationCode(Date date) {
 
@@ -57,5 +58,24 @@ public class DateUtils {
         calendar.setTime(currentDate);
         calendar.add(Calendar.MONTH, month);
         return dateToString(calendar.getTime());
+    }
+
+    public static boolean checkTestStartTime(Date testStartDate) {
+        ZonedDateTime targetZoned = testStartDate.toInstant().atZone(ZoneId.systemDefault());
+        LocalDateTime target = targetZoned.toLocalDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime oneHourLater = target.plusHours(1);
+
+        if (target.isAfter(now)) {
+            return false;
+        } else return now.isBefore(oneHourLater);
+    }
+
+    public static String formatMockResult(Date testDate) {
+        Instant instant = testDate.toInstant();
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate localDate = instant.atZone(zone).toLocalDate();
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
+        return localDate.format(outputFormatter);
     }
 }

@@ -1,8 +1,6 @@
 package com.search.teacher.model.entities;
 
 import com.search.teacher.model.base.BaseEntity;
-import com.search.teacher.model.enums.IStatus;
-import com.search.teacher.model.enums.Status;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,18 +15,20 @@ import java.util.*;
 
 public class User extends BaseEntity implements Serializable {
 
+    private String username;
     private String firstname;
     private String lastname;
     private String email;
     private String password;
-    private String code;
-    @Enumerated(EnumType.STRING)
-    private Status status;
-    private boolean isForgotPassword = false;
-    @Column(name = "internet_status")
-    private IStatus internetStatus;
+    private String showPassword;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Date testStartDate;
+    private String phone;
+    private String telegramId;
+
+    private Long userId;
+
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),

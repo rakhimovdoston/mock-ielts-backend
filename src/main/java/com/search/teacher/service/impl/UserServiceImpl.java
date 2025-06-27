@@ -1,40 +1,39 @@
 package com.search.teacher.service.impl;
 
-import com.search.teacher.components.Constants;
-import com.search.teacher.config.rabbit.RabbitMqProducer;
 import com.search.teacher.dto.AuthenticationRequest;
-import com.search.teacher.dto.UserDto;
+import com.search.teacher.dto.filter.PaginationResponse;
+import com.search.teacher.dto.filter.UserFilter;
 import com.search.teacher.dto.message.UserResponse;
 import com.search.teacher.dto.request.*;
-import com.search.teacher.dto.response.RegisterResponse;
-import com.search.teacher.dto.response.SaveResponse;
+import com.search.teacher.dto.request.test.TestDateRequest;
+import com.search.teacher.dto.request.user.UserRequest;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
+import com.search.teacher.mapper.UserMapper;
+import com.search.teacher.model.entities.MockTestExam;
 import com.search.teacher.model.entities.Role;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.entities.UserToken;
 import com.search.teacher.model.enums.RoleType;
 import com.search.teacher.model.enums.Status;
-import com.search.teacher.model.enums.Type;
 import com.search.teacher.model.response.JResponse;
+import com.search.teacher.repository.MockTestExamRepository;
 import com.search.teacher.repository.RoleRepository;
 import com.search.teacher.repository.UserRepository;
-import com.search.teacher.service.organization.OrganizationService;
+import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.service.user.UserTokenService;
 import com.search.teacher.utils.DateUtils;
 import com.search.teacher.utils.ResponseMessage;
-import com.search.teacher.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.util.StringUtils;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -44,148 +43,39 @@ import java.util.Set;
 public class UserServiceImpl implements UserService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final SecurityUtils securityUtils;
-    private final OrganizationService organizationService;
     private final UserTokenService userTokenService;
-    private final RabbitMqProducer rabbitMqProducer;
-
-    @Override
-    public JResponse registerUser(UserDto userDto) {
-        validateEmailNotRegistered(userDto.email());
-        User user = createUser(userDto);
-
-        userRepository.save(user);
-        logger.info("User saved: {}", user.getId());
-
-        sendConfirmationEmail(user);
-
-        return JResponse.success(new RegisterResponse(user.getEmail()));
-    }
-
-    private void validateEmailNotRegistered(String email) {
-        if (userRepository.existsByEmail(email)) {
-            throw new BadRequestException(JResponse.error(400, "This email has already been registered!"));
-        }
-    }
-
-    private User createUser(UserDto userDto) {
-        User user = userDto.toUser();
-        user.setPassword(passwordEncoder.encode(userDto.password()));
-
-        Role role = roleRepository.findByName(RoleType.ROLE_STUDENT);
-        if (role == null) throw new NotfoundException("Role not found");
-        user.setRoles(Set.of(role));
-
-        user.setStatus(Status.confirm);
-        user.setCode(getRandomCode(100000, 999999));
-
-        return user;
-    }
-
-    private void sendConfirmationEmail(User user) {
-        String confirmationCode = user.getCode();
-        rabbitMqProducer.sendNotificationToEmail(user.getEmail(), confirmationCode);
-    }
+    private final ExamService examService;
+    private final RoleRepository roleRepository;
+    private final MockTestExamRepository mockTestExamRepository;
 
     @Override
     public JResponse authenticate(AuthenticationRequest request) {
-        User user = userRepository.findByEmail(request.email());
+        User user = userRepository.findByUsername(request.username());
         if (user == null) return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
         if (!passwordEncoder.matches(request.password(), user.getPassword()))
             return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
-        if (user.getStatus().equals(Status.block)) {
-            return JResponse.error(409, ResponseMessage.USER_BLOCKED);
-        }
-        if (!user.isActive() || !user.getStatus().equals(Status.active)) {
-            return JResponse.error(410, ResponseMessage.USER_NOT_ACTIVATED);
+        if (!user.isActive())
+            return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+
+        if (user.getRoles().stream().anyMatch(role -> !role.getName().equals(RoleType.ROLE_ADMIN.name())) && user.getUserId() != null) {
+            if (!DateUtils.checkTestStartTime(user.getTestStartDate())) {
+                return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+            }
         }
         return userTokenService.generateToken(user);
     }
 
     @Override
-    public JResponse confirmationUser(ConfirmationRequest request) {
-        User user = userRepository.findByEmail(request.getEmail());
-        if (user == null) {
-            throw new NotfoundException("This email not found user");
-        }
-
-        if (!DateUtils.isExpirationCode(user.getUpdatedDate()))
-            throw new BadRequestException("The time to enter the code has expired.");
-
-        if (!user.getCode().equals(request.getCode())) {
-            throw new BadRequestException("You have entered an incorrect code");
-        }
-
-        user.setCode(null);
-        if (!request.isForgotPassword()) {
-            user.setStatus(Status.active);
-            user.setActive(true);
-        } else {
-            user.setForgotPassword(false);
-        }
-        userRepository.save(user);
-        return JResponse.success(new SaveResponse(user.getId()));
-    }
-
-    @Override
-    public JResponse resendEmailCode(ResendRequest request) {
-        User user = userRepository.findByEmail(request.getEmail());
-        if (user == null) {
-            return JResponse.error(400, "This email not exist!");
-        }
-
-        if (user.isActive() && user.getStatus() == Status.active && !request.isForgotPassword()) {
-            return JResponse.error(400, "This user already verified");
-        }
-        String code = getRandomCode(100000, 999999);
-        user.setCode(code);
-        user.setForgotPassword(request.isForgotPassword());
-        user.setUpdatedDate(new Date());
-        userRepository.save(user);
-        if (user.isForgotPassword()) {
-            rabbitMqProducer.sendForgotPasswordEmail(user.getEmail(), code);
-        } else {
-            rabbitMqProducer.sendNotificationToEmail(user.getEmail(), code);
-        }
-        return JResponse.success(new RegisterResponse(user.getEmail()));
-    }
-
-    @Override
-    public JResponse forgotPassword(ForgotPasswordReq request) {
-        User user = userRepository.findByEmail(request.getEmail());
-        if (user == null) {
-            return JResponse.error(400, "This email not exist!");
-        }
-
-        if (StringUtils.isEmpty(user.getCode())) {
-            if (request.getPassword().equals(request.getConfirmPassword())) {
-                user.setPassword(passwordEncoder.encode(request.getPassword()));
-                user.setForgotPassword(false);
-                userRepository.save(user);
-                return JResponse.success();
-            } else return JResponse.error(400, "Password non match");
-        }
-        return JResponse.error(400, "You should confirm your password");
-    }
-
-    @Override
     public JResponse getProfileData(User currentUser) {
-
         Set<Role> roles = currentUser.getRoles();
-        String role = "User";
-        if (roles.contains("ROLE_ADMIN")) {
-            role = "Admin";
-        }
         UserResponse response = UserResponse.builder()
                 .id(currentUser.getId())
                 .image("")
                 .email(currentUser.getEmail())
                 .firstname(currentUser.getFirstname())
                 .lastname(currentUser.getLastname())
-                .role(role)
+                .roles(roles.stream().map(Role::getName).toList())
                 .build();
         return JResponse.success(response);
     }
@@ -195,6 +85,115 @@ public class UserServiceImpl implements UserService {
         currentUser.setFirstname(userDto.getFirstname());
         currentUser.setLastname(userDto.getLastname());
         userRepository.save(currentUser);
+        return JResponse.success();
+    }
+
+    @Override
+    public JResponse createUsers(User currentUser, UserRequest request) {
+        if (checkUsername(request.username()))
+            return JResponse.error(400, "Username is already taken");
+
+        User newUser = new User();
+        newUser.setActive(true);
+        Role role = roleRepository.findByName(RoleType.ROLE_USER.name());
+        newUser.setUsername(request.username());
+        newUser.setPassword(passwordEncoder.encode(request.password()));
+        newUser.setEmail(request.email());
+        newUser.setFirstname(request.firstname());
+        newUser.setLastname(request.lastname());
+        newUser.setPhone(request.phone());
+        newUser.setShowPassword(request.password());
+        newUser.getRoles().add(role);
+        newUser.setUserId(currentUser.getId());
+        userRepository.save(newUser);
+        return JResponse.success();
+    }
+
+    @Override
+    public boolean checkUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    @Override
+    public JResponse allUsersByFilter(User currentUser, UserFilter userFilter) {
+        int countAllUsers = userRepository.countUsers(List.of(currentUser.getId()), userFilter);
+        List<User> users = userRepository.findAllUsersByModuleFilter(List.of(currentUser.getId()), userFilter);
+        PaginationResponse response = new PaginationResponse();
+        response.setCurrentPage(userFilter.getPage());
+        response.setCurrentSize(userFilter.getSize());
+        response.setTotalPages((int) Math.ceil((double) countAllUsers / userFilter.getSize()));
+        response.setTotalSizes(countAllUsers);
+        var usersDto = UserMapper.INSTANCE.toList(users);
+//        for (User user : users) {
+//            UserResponse dto = UserMapper.INSTANCE.toResponse(user);
+//            if (!DateUtils.checkTestStartTime(dto.getTestStartDate())) {
+//                dto.setTestStartDate(null);
+//                user.setTestStartDate(null);
+//                userRepository.save(user);
+//            }
+//        }
+        response.setData(usersDto);
+        return JResponse.success(response);
+    }
+
+    @Override
+    public JResponse createTeacher(User currentUser, UserRequest request) {
+        if (checkUsername(request.username()))
+            return JResponse.error(400, "Username is already taken");
+
+        User newUser = new User();
+        newUser.setActive(true);
+        Role role = roleRepository.findByName(RoleType.ROLE_TEACHER.name());
+        newUser.setUsername(request.username());
+        newUser.setPassword(passwordEncoder.encode(request.password()));
+        newUser.setEmail(request.email());
+        newUser.setFirstname(request.firstname());
+        newUser.setLastname(request.lastname());
+        newUser.setPhone(request.phone());
+        newUser.setShowPassword(request.password());
+        newUser.getRoles().add(role);
+        newUser.setUserId(currentUser.getId());
+        userRepository.save(newUser);
+        return JResponse.success();
+    }
+
+    @Override
+    public int countUser(User currentUser) {
+        return userRepository.countAllByUserIdIn(List.of(currentUser.getId()));
+    }
+
+    @Override
+    public JResponse getUserBydId(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new NotfoundException("User Not found"));
+        UserResponse response = UserMapper.INSTANCE.toResponse(user);
+        return JResponse.success(response);
+    }
+
+    @Override
+    public JResponse updateUser(User currentUser, Long id, UserRequest request) {
+        User user = getUserByIdAndUser(id, currentUser);
+        user.setFirstname(request.firstname());
+        user.setLastname(request.lastname());
+        user.setEmail(request.email());
+        user.setUsername(request.username());
+        user.setPassword(passwordEncoder.encode(request.password()));
+        userRepository.save(user);
+        return JResponse.success();
+    }
+
+    @Override
+    public JResponse deleteUsers(User currentUser, Long id) {
+        User user = getUserByIdAndUser(id, currentUser);
+        user.setActive(false);
+        userRepository.save(user);
+        return JResponse.success();
+    }
+
+    @Override
+    public JResponse setTestDate(User currentUser, Long id, TestDateRequest testDate) {
+        User user = getUserByIdAndUser(id, currentUser);
+        user.setTestStartDate(testDate.date());
+        userRepository.save(user);
         return JResponse.success();
     }
 
@@ -212,5 +211,11 @@ public class UserServiceImpl implements UserService {
     private String getRandomCode(int min, int max) {
         Random random = new Random();
         return String.valueOf(random.nextInt(min, max));
+    }
+
+    private User getUserByIdAndUser(Long id, User user) {
+        User userById = userRepository.findByIdAndUserId(id, user.getId());
+        if (userById == null) throw new NotfoundException("User Not found");
+        return userById;
     }
 }

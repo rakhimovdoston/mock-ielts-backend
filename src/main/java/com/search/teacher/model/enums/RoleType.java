@@ -4,10 +4,10 @@ import lombok.Getter;
 
 @Getter
 public enum RoleType {
-    ROLE_STUDENT("Student"),
+    ROLE_SUPER_ADMIN("Super Admin"),
+    ROLE_USER("User"),
     ROLE_TEACHER("Teacher"),
-    ROLE_ADMIN("Admin"),
-    ROLE_ORGANISATION("Organisation");
+    ROLE_ADMIN("Admin");
 
     private final String value;
 

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mock Exam Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .score {
+            font-size: 18px;
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="header" th:text="'Dear ' + ${fullName}"></h2>
+    <p class="score">Thank you for choosing <strong>EVEREST CDI MOCK</strong>.</p>
+    <p class="score">Here are the provisional results of the mock exam you sat on <br /> <strong th:text="${testDate}"></strong>:</p>
+    <hr>
+    <p class="score"><span class="highlight">Overall:</span> <span th:text="${overall}"></span></p>
+    <p class="score"><span class="highlight">Listening (L):</span> <span th:text="${listening}"></span> (<span th:text="${listeningCount}"></span>/40)</p>
+    <p class="score"><span class="highlight">Reading (R):</span> <span th:text="${reading}"></span> (<span th:text="${readingCount}"></span>/40)</p>
+    <p class="score"><span class="highlight">Writing (W):</span> <span th:text="${writing}"></span></p>
+    <p class="score"><span class="highlight">Speaking (S):</span> <span th:text="${speaking}"></span></p>
+</div>
+</body>
+</html>

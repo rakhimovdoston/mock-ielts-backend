@@ -13,7 +13,7 @@ public enum ImageType {
 
     public static ImageType getValue(String type) {
         for (ImageType imageType : ImageType.values()) {
-            if (imageType.toString().equals(type)) {
+            if (imageType.name().equals(type)) {
                 return imageType;
             }
         }

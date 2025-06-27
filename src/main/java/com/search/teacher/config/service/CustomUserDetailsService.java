@@ -1,7 +1,6 @@
 package com.search.teacher.config.service;
 
 import com.search.teacher.model.entities.User;
-import com.search.teacher.model.enums.Status;
 import com.search.teacher.repository.UserRepository;
 import com.search.teacher.utils.ResponseMessage;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,13 +17,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email);
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username);
         if (user == null)
             throw new UsernameNotFoundException(ResponseMessage.INCORRECT_USERNAME_PASSWORD);
 
-        if (!user.isActive() || user.getStatus() != Status.active)
-            throw new UsernameNotFoundException(ResponseMessage.USER_NOT_ACTIVATED);
+//        if (!user.isActive() || user.getStatus() != Status.active)
+//            throw new UsernameNotFoundException(ResponseMessage.USER_NOT_ACTIVATED);
 
         return new UserManager(user);
     }
