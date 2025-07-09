@@ -4,7 +4,6 @@ import com.search.teacher.model.entities.ExamScore;
 import com.search.teacher.utils.DateUtils;
 import com.search.teacher.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.context.Context;
@@ -16,9 +15,7 @@ public class HtmlFileService {
 
     @Autowired
     private SpringTemplateEngine templateEngine;
-    @Autowired
-    private ConversionService conversionService;
-
+    
     public String generateMockResultHtml(Date testDate, ExamScore examScore, String fullName) {
         Context context = new Context();
         context.setVariable("fullName", fullName);

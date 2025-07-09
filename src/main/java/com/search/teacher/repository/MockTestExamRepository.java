@@ -14,6 +14,8 @@ public interface MockTestExamRepository extends JpaRepository<MockTestExam, Long
 
     MockTestExam findByActiveIsTrueAndUserAndStatus(User user, String status);
 
+    MockTestExam findByActiveIsTrueAndStatus(String status);
+
     Page<MockTestExam> findAllByUserOrderByCreatedDateDesc(User user, Pageable pageable);
 
     List<MockTestExam> findAllByUser(User user);

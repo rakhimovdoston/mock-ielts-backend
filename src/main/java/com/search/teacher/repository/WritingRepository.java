@@ -24,6 +24,9 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
     @Query(value = "select distinct on (task) * from writings where deleted is false and active is true and task in (:tasks) and id not in (:ids) and user_id in (:userId) ORDER BY task, random() limit 2", nativeQuery = true)
     List<Writing> findAllRandomAndIdNotInAndUserIn(@Param("tasks") List<Boolean> tasks, @Param("ids") List<Long> ids, @Param("userId") List<Long> userId);
 
+    @Query(value = "select distinct on (task) * from writings where deleted is false and active is true and task in (:tasks) ORDER BY task, random() limit 2", nativeQuery = true)
+    List<Writing> findAllByTypeIn(@Param("tasks") List<Boolean> tasks);
+
     @Query(value = "select w from Writing w where w.deleted is false and w.task = :task order by random() limit 1")
     Writing findRandomByType(@Param("task") Boolean task);
 

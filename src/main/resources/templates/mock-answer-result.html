@@ -5,44 +5,109 @@
     <title>Mock Exam Results</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f8f8;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
+
+        .email-wrapper {
             max-width: 600px;
-            margin: auto;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+
         .header {
-            color: #2c3e50;
+            background-color: #0061f2;
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 30px;
+            color: #333;
+        }
+
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .info {
+            font-size: 16px;
             margin-bottom: 20px;
         }
-        .score {
-            font-size: 18px;
-            color: #34495e;
-            margin-bottom: 10px;
+
+        .result-section {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
         }
-        .highlight {
-            font-weight: bold;
-            color: #2980b9;
+
+        .score-item {
+            margin: 12px 0;
+            font-size: 16px;
+        }
+
+        .score-label {
+            font-weight: 600;
+            color: #0061f2;
+        }
+
+        .footer {
+            background-color: #f4f6f8;
+            text-align: center;
+            font-size: 13px;
+            color: #999;
+            padding: 15px 30px;
+        }
+
+        strong {
+            font-weight: 600;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .content, .header, .footer {
+                padding: 20px !important;
+            }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h2 class="header" th:text="'Dear ' + ${fullName}"></h2>
-    <p class="score">Thank you for choosing <strong>EVEREST CDI MOCK</strong>.</p>
-    <p class="score">Here are the provisional results of the mock exam you sat on <br /> <strong th:text="${testDate}"></strong>:</p>
-    <hr>
-    <p class="score"><span class="highlight">Overall:</span> <span th:text="${overall}"></span></p>
-    <p class="score"><span class="highlight">Listening (L):</span> <span th:text="${listening}"></span> (<span th:text="${listeningCount}"></span>/40)</p>
-    <p class="score"><span class="highlight">Reading (R):</span> <span th:text="${reading}"></span> (<span th:text="${readingCount}"></span>/40)</p>
-    <p class="score"><span class="highlight">Writing (W):</span> <span th:text="${writing}"></span></p>
-    <p class="score"><span class="highlight">Speaking (S):</span> <span th:text="${speaking}"></span></p>
+<div class="email-wrapper">
+    <div class="header">
+        <h1>Mock IELTS Exam Results</h1>
+    </div>
+    <div class="content">
+        <p class="greeting" th:text="'Dear ' + ${fullName} + ','"></p>
+
+        <p class="info">
+            Thank you for taking the <strong>MOCK IELTS EXAM</strong>. Below are your provisional scores from the test taken on:
+            <br><strong th:text="${testDate}"></strong>
+        </p>
+
+        <div class="result-section">
+            <div class="score-item"><span class="score-label">Overall Band Score:</span> <span th:text="${overall}"></span></div>
+            <div class="score-item"><span class="score-label">Listening:</span> <span th:text="${listening}"></span> (<span th:text="${listeningCount}"></span>/40)</div>
+            <div class="score-item"><span class="score-label">Reading:</span> <span th:text="${reading}"></span> (<span th:text="${readingCount}"></span>/40)</div>
+            <div class="score-item"><span class="score-label">Writing:</span> <span th:text="${writing}"></span></div>
+            <div class="score-item"><span class="score-label">Speaking:</span> <span th:text="${speaking}"></span></div>
+        </div>
+    </div>
+    <div class="footer">
+        This is an automated email. Please do not reply directly.<br>
+        © 2025 MOCK IELTS EXAM. All rights reserved.
+    </div>
 </div>
 </body>
 </html>
+

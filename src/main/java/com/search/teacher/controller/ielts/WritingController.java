@@ -8,6 +8,9 @@ import com.search.teacher.service.module.WritingService;
 import com.search.teacher.utils.SecurityUtils;
 import com.search.teacher.utils.Utils;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -64,9 +67,19 @@ public class WritingController {
         return writingService.deleteWriting(securityUtils.getCurrentUser(), listeningId);
     }
 
+    @Operation(
+            summary = "Get all Writing Module",
+            description = "Fetches a paginated list of all Writing module, optionally filtered by type",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Writing Module retrieved successfully")
+            }
+    )
     @GetMapping("all")
-    public JResponse getAllWriting(@RequestParam(name = "page", required = false, defaultValue = "0") int page,
+    public JResponse getAllWriting(@Parameter(description = "Page number for pagination")
+                                   @RequestParam(name = "page", required = false, defaultValue = "0") int page,
+                                   @Parameter(description = "Page size for pagination")
                                    @RequestParam(name = "size", required = false, defaultValue = "10") int size,
+                                   @Parameter(description = "Type of Writing module to filter by, task_1, task_2")
                                    @RequestParam(name = "type", required = false, defaultValue = "all") String type) {
         ModuleFilter filter = new ModuleFilter();
         filter.setPage(page);

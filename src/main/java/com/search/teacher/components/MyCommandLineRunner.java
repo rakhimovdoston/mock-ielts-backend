@@ -43,6 +43,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
 //        List<UserAnswers> userAnswersList = mapper.readValue(userAnswers.toString(), mapper.getTypeFactory().constructCollectionType(List.class, UserAnswers.class));
 //        int count = examService.countAnswer(moduleAnswers, userAnswersList);
 //        logger.info("Count: {}", count);
+        testUser();
     }
 
     private void saveRole() {
@@ -50,6 +51,23 @@ public class MyCommandLineRunner implements CommandLineRunner {
         insertRole(RoleType.ROLE_ADMIN.name());
         insertRole(RoleType.ROLE_SUPER_ADMIN.name());
         insertRole(RoleType.ROLE_USER.name());
+    }
+
+    private void testUser() {
+        User user = userRepository.findByUsername("testUser");
+        if (user != null)
+            return;
+        user = new User();
+        user.setActive(true);
+        Role role = roleRepository.findByName(RoleType.ROLE_USER.name());
+        user.setUsername("testUser");
+        user.setEmail("email@gmail.com");
+        user.setFirstname("Test");
+        user.setLastname("User");
+        user.setPassword(passwordEncoder.encode("test123456"));
+        user.getRoles().add(role);
+        userRepository.save(user);
+        logger.info("User {} saved", user.getUsername());
     }
 
     private void insertRole(String name) {

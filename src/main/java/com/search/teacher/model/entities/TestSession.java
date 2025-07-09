@@ -6,13 +6,14 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Entity
-@Table(name = "scores")
+@Table(name = "test_sessions")
 @Getter
 @Setter
-public class Score extends BaseEntity {
-    private String band;
-    private String listening;
-    private String reading;
+public class TestSession extends BaseEntity {
     private Long userId;
+    private Long studentId;
+    private Date enterTime;
 }

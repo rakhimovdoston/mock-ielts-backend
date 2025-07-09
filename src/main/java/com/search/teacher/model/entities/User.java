@@ -28,6 +28,13 @@ public class User extends BaseEntity implements Serializable {
 
     private Long userId;
 
+    //    to'lov uchun ishlab chiqilgan
+    private String paymentType;
+    private Date subscriptionExpireDate;
+    private String centerName;
+
+    private Integer count; // can enter all student which is only per_test in payment_type
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",

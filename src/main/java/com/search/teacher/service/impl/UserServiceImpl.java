@@ -10,21 +10,20 @@ import com.search.teacher.dto.request.user.UserRequest;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.mapper.UserMapper;
-import com.search.teacher.model.entities.MockTestExam;
-import com.search.teacher.model.entities.Role;
-import com.search.teacher.model.entities.User;
-import com.search.teacher.model.entities.UserToken;
+import com.search.teacher.model.entities.*;
 import com.search.teacher.model.enums.RoleType;
 import com.search.teacher.model.enums.Status;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.MockTestExamRepository;
 import com.search.teacher.repository.RoleRepository;
+import com.search.teacher.repository.TestSessionsRepository;
 import com.search.teacher.repository.UserRepository;
 import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.service.user.UserTokenService;
 import com.search.teacher.utils.DateUtils;
 import com.search.teacher.utils.ResponseMessage;
+import com.search.teacher.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -48,22 +45,43 @@ public class UserServiceImpl implements UserService {
     private final ExamService examService;
     private final RoleRepository roleRepository;
     private final MockTestExamRepository mockTestExamRepository;
+    private final TestSessionsRepository testSessionsRepository;
 
     @Override
     public JResponse authenticate(AuthenticationRequest request) {
         User user = userRepository.findByUsername(request.username());
         if (user == null) return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+
         if (!passwordEncoder.matches(request.password(), user.getPassword()))
             return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
         if (!user.isActive())
             return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
 
-        if (user.getRoles().stream().anyMatch(role -> !role.getName().equals(RoleType.ROLE_ADMIN.name())) && user.getUserId() != null) {
-            if (!DateUtils.checkTestStartTime(user.getTestStartDate())) {
-                return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+        if (!Objects.equals(user.getUsername(), "testUser")) {
+            if (user.getRoles().stream().anyMatch(role -> !role.getName().equals(RoleType.ROLE_ADMIN.name())) && user.getUserId() != null) {
+                if (!DateUtils.checkTestStartTime(user.getTestStartDate())) {
+                    return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+                }
+                User studyCenterUser = userRepository.findByIdAndActiveIsTrue(user.getUserId());
+                if (studyCenterUser != null && Utils.isSubscriptionActive(studyCenterUser) && checkCountUser(studyCenterUser)) {
+                    return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+                }
+                TestSession testSession = new TestSession();
+                testSession.setUserId(user.getUserId());
+                testSession.setStudentId(user.getId());
+                testSession.setEnterTime(new Date());
+                testSessionsRepository.save(testSession);
             }
         }
         return userTokenService.generateToken(user);
+    }
+
+    private boolean checkCountUser(User studyCenterUser) {
+        int count = testSessionsRepository.countAllByUserId(studyCenterUser.getId());
+        if (studyCenterUser.getCount() != null) {
+            return studyCenterUser.getCount() >= count;
+        }
+        return false;
     }
 
     @Override

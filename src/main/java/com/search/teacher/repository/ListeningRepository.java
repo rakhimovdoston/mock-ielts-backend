@@ -1,6 +1,7 @@
 package com.search.teacher.repository;
 
 import com.search.teacher.model.entities.Listening;
+import com.search.teacher.model.entities.Reading;
 import com.search.teacher.model.entities.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,9 @@ public interface ListeningRepository extends JpaRepository<Listening, Long> {
 
     @Query(value = "select distinct on (type) * from listening where deleted is false and active is true and type in (:types) and id not in (:ids) and user_id in (:userId) ORDER BY type, random() limit 4", nativeQuery = true)
     List<Listening> findAllRandomAndIdNotInAndUserIn(@Param("types") List<String> types, @Param("ids") List<Long> ids, @Param("userId") List<Long> userId);
+
+    @Query(value = "select distinct on (type) * from listening where deleted is false and active is true and type in (:types) ORDER BY type, random() limit 4", nativeQuery = true)
+    List<Listening> findAllByTypeIn(List<String> types);
 
     @Query(value = "select distinct on (type) * from listening where deleted is false and type in (:types) ORDER BY type, random() limit :limit", nativeQuery = true)
     List<Listening> findAllRandomTypeAndLimit(List<String> types, int limit);
