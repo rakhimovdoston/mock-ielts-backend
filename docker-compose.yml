@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-exam
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: mock_exam_test
+      POSTGRES_USER: mock_exam_test
+      POSTGRES_PASSWORD: mockExamPass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mock_exam_net
+
+  minio:
+    image: minio/minio
+    container_name: minio-exam
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioAdmin
+      MINIO_ROOT_PASSWORD: fileMinioFiles
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    networks:
+      - mock_exam_net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mockexam_app
+    depends_on:
+      postgres:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mock_exam_test
+      SPRING_DATASOURCE_USERNAME: mock_exam_test
+      SPRING_DATASOURCE_PASSWORD: mockExamPass
+    networks:
+      - mock_exam_net
+
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  mock_exam_net:
+    driver: bridge
