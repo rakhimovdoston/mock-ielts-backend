@@ -28,4 +28,6 @@ public interface ListeningService {
     JResponse deleteListeningQuestion(User currentUser, Long listeningId, DeleteQuestionRequest request);
 
     JResponse updateListening(User currentUser, Long listeningId, DeleteQuestionRequest request);
+
+    JResponse updateListeningAudio(User currentUser, Long listeningId, ListeningRequest request);
 }

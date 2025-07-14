@@ -44,6 +44,11 @@ public class ListeningController {
         return listeningService.getListeningQuestionByListening(securityUtils.getCurrentUser(), listeningId);
     }
 
+    @PutMapping("update/{listeningId}")
+    public JResponse updateListening(@PathVariable(name = "listeningId") Long listeningId, @RequestBody ListeningRequest request) {
+        return listeningService.updateListeningAudio(securityUtils.getCurrentUser(), listeningId, request);
+    }
+
     @DeleteMapping("delete/{byId}")
     public JResponse deleteListening(@PathVariable(name = "byId") Long listeningId) {
         return listeningService.deleteListening(securityUtils.getCurrentUser(), listeningId);

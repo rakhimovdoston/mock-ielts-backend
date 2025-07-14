@@ -27,6 +27,11 @@ public class ReadingController {
         return readingService.createPassage(securityUtils.getCurrentUser(), passage);
     }
 
+    @PutMapping("update/{byId}")
+    public JResponse updateReading(@PathVariable(name = "byId") Long readingId, @RequestBody ReadingPassageRequest passage) {
+        return readingService.updateReadingPassage(securityUtils.getCurrentUser(), readingId, passage);
+    }
+
     @PostMapping("passage/{reading}/save/question")
     public JResponse saveQuestion(
             @PathVariable(name = "reading") Long readingId,

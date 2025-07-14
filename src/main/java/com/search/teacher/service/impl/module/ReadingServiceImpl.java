@@ -52,6 +52,16 @@ public class ReadingServiceImpl implements ReadingService {
     }
 
     @Override
+    public JResponse updateReadingPassage(User currentUser, Long readingId, ReadingPassageRequest passage) {
+        Reading reading = getReadingByUserAndId(currentUser, readingId);
+        reading.setType(passage.type());
+        reading.setTitle(passage.title());
+        reading.setContent(passage.content());
+        readingRepository.save(reading);
+        return JResponse.success();
+    }
+
+    @Override
     public JResponse getPassage(User currentUser, Long readingId) {
         Reading reading = getReadingByUserAndId(currentUser, readingId);
         return JResponse.success(ReadingMapper.INSTANCE.toResponse(reading));

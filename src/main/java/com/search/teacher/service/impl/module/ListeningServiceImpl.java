@@ -49,6 +49,15 @@ public class ListeningServiceImpl implements ListeningService {
     }
 
     @Override
+    public JResponse updateListeningAudio(User currentUser, Long listeningId, ListeningRequest request) {
+        Listening listening = getListeningByUserAndId(currentUser, listeningId);
+        listening.setAudio(request.audio());
+        listening.setTitle(request.title());
+        listeningRepository.save(listening);
+        return JResponse.success();
+    }
+
+    @Override
     public JResponse getListening(User currentUser, Long id) {
         Listening listening = getListeningByUserAndId(currentUser, id);
         return JResponse.success(ListeningMapper.INSTANCE.toResponse(listening));
