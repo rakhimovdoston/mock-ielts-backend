@@ -17,7 +17,7 @@ public class SecurityUtils {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() != null) {
             String phoneNumber = (String) authentication.getPrincipal();
-            user = userRepository.findByUsername(phoneNumber);
+            user = userRepository.findByEmail(phoneNumber);
         }
         return user;
     }

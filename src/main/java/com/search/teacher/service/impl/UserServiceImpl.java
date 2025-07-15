@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public JResponse authenticate(AuthenticationRequest request) {
-        User user = userRepository.findByUsername(request.username());
+        User user = userRepository.findByEmail(request.username());
         if (user == null) return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
 
         if (!passwordEncoder.matches(request.password(), user.getPassword()))
