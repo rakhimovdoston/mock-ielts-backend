@@ -20,6 +20,7 @@ public class MockTestExam extends BaseEntity {
     private Date testDate;
     private Date submittedDate;
     private Date startDate;
+    private String examUniqueId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")

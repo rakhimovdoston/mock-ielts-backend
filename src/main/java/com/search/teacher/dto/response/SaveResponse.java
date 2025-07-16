@@ -11,6 +11,10 @@ public class SaveResponse {
         this.id = id;
     }
 
+    public SaveResponse(String name) {
+        this.name = name;
+    }
+
     public SaveResponse(Long id, String name) {
         this.id = id;
         this.name = name;

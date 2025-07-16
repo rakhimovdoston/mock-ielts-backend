@@ -59,11 +59,11 @@ public class ExamServiceImpl implements ExamService {
     private final ScoreRepository scoreRepository;
 
     @Override
-    public JResponse getExam(User currentUser, Long id) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(id, currentUser);
-        if (currentUser.getUsername().equals("testUser")) {
-            mockTestExam = mockTestExamRepository.findById(id).orElse(null);
-        }
+    public JResponse getExam(User currentUser, String id) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
+//        if (currentUser.getUsername().equals("testUser")) {
+//            mockTestExam = mockTestExamRepository.findById(id).orElse(null);
+//        }
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
 //            JResponse response = setExamsToUser(currentUser);
@@ -102,7 +102,7 @@ public class ExamServiceImpl implements ExamService {
     public JResponse setExamsToUser(User user) {
         MockTestExam oldMockExam = mockTestExamRepository.findByActiveIsTrueAndUserAndStatus(user, Status.opened.name());
         if (oldMockExam != null) {
-            return JResponse.success(new SaveResponse(oldMockExam.getId()));
+            return JResponse.success(new SaveResponse(oldMockExam.getExamUniqueId()));
         }
 
         List<MockTestExam> mockTestExams = mockTestExamRepository.findAllByUser(user);
@@ -132,12 +132,13 @@ public class ExamServiceImpl implements ExamService {
         MockTestExam mockTestExam = new MockTestExam();
         mockTestExam.setStatus(Status.opened.name());
         mockTestExam.setActive(true);
+        mockTestExam.setExamUniqueId(UUID.randomUUID().toString().replaceAll("-", ""));
         mockTestExam.setUser(user);
         mockTestExam.setReadings(readings.stream().map(Reading::getId).toList());
         mockTestExam.setWritings(writings.stream().map(Writing::getId).toList());
         mockTestExam.setListening(listenings.stream().map(Listening::getId).toList());
         mockTestExamRepository.save(mockTestExam);
-        return JResponse.success(new SaveResponse(mockTestExam.getId()));
+        return JResponse.success(new SaveResponse(mockTestExam.getId(), mockTestExam.getExamUniqueId()));
     }
 
     @Override

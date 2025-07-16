@@ -10,7 +10,7 @@ import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
 
 public interface ExamService {
-    JResponse getExam(User currentUser, Long id);
+    JResponse getExam(User currentUser, String id);
 
     JResponse setExamsToUser(User currentUser);
 

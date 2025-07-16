@@ -25,7 +25,7 @@ public class ExamController {
     }
 
     @GetMapping("get/{id}")
-    public JResponse getExam(@PathVariable Long id) {
+    public JResponse getExam(@PathVariable String id) {
         return examService.getExam(securityUtils.getCurrentUser(), id);
     }
 

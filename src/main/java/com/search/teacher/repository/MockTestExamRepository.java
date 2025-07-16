@@ -22,5 +22,7 @@ public interface MockTestExamRepository extends JpaRepository<MockTestExam, Long
 
     MockTestExam findByIdAndUser(Long id, User user);
 
+    MockTestExam findByExamUniqueIdAndUser(String uuid, User user);
+
     MockTestExam findFirstByUser_IdOrderByCreatedDate(Long userId);
 }
