@@ -3,6 +3,7 @@ package com.search.teacher.service.impl;
 import com.search.teacher.dto.filter.UserFilter;
 import com.search.teacher.dto.request.history.EmailAnswerRequest;
 import com.search.teacher.dto.request.history.ScoreRequest;
+import com.search.teacher.dto.request.module.AICheckerRequest;
 import com.search.teacher.dto.request.module.ModuleAnswersRequest;
 import com.search.teacher.dto.request.module.ModuleQuestionAnswerRequest;
 import com.search.teacher.dto.request.history.ModuleScoreRequest;
@@ -57,10 +58,11 @@ public class ExamServiceImpl implements ExamService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final ScoreRepository scoreRepository;
+//    private final AIService aiService;
 
     @Override
-    public JResponse getExam(User currentUser, Long id) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(id, currentUser);
+    public JResponse getExam(User currentUser, String id) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
 //            JResponse response = setExamsToUser(currentUser);
@@ -99,7 +101,7 @@ public class ExamServiceImpl implements ExamService {
     public JResponse setExamsToUser(User user) {
         MockTestExam oldMockExam = mockTestExamRepository.findByActiveIsTrueAndUserAndStatus(user, Status.opened.name());
         if (oldMockExam != null) {
-            return JResponse.success(new SaveResponse(oldMockExam.getId()));
+            return JResponse.success(new SaveResponse(oldMockExam.getExamUniqueId()));
         }
 
         List<MockTestExam> mockTestExams = mockTestExamRepository.findAllByUser(user);
@@ -122,18 +124,19 @@ public class ExamServiceImpl implements ExamService {
 
         MockTestExam mockTestExam = new MockTestExam();
         mockTestExam.setStatus(Status.opened.name());
+        mockTestExam.setExamUniqueId(UUID.randomUUID().toString().replaceAll("-", ""));
         mockTestExam.setActive(true);
         mockTestExam.setUser(user);
         mockTestExam.setReadings(readings.stream().map(Reading::getId).toList());
         mockTestExam.setWritings(writings.stream().map(Writing::getId).toList());
         mockTestExam.setListening(listenings.stream().map(Listening::getId).toList());
         mockTestExamRepository.save(mockTestExam);
-        return JResponse.success(new SaveResponse(mockTestExam.getId()));
+        return JResponse.success(new SaveResponse(mockTestExam.getExamUniqueId()));
     }
 
     @Override
-    public JResponse getExamQuestionByModule(User currentUser, Long id, String type) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(id, currentUser);
+    public JResponse getExamQuestionByModule(User currentUser, String id, String type) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
         }
@@ -145,8 +148,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public JResponse saveModuleAnswers(User currentUser, Long id, TestUserAnswerRequest request) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(id, currentUser);
+    public JResponse saveModuleAnswers(User currentUser, String id, TestUserAnswerRequest request) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
         }
@@ -168,8 +171,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public JResponse saveWritingModuleAnswer(User currentUser, Long id, WritingTestRequest request) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(id, currentUser);
+    public JResponse saveWritingModuleAnswer(User currentUser, String id, WritingTestRequest request) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
         }
@@ -222,6 +225,17 @@ public class ExamServiceImpl implements ExamService {
         score.setStatus(response);
         examScoreRepository.save(score);
         return JResponse.success();
+    }
+
+    @Override
+    public JResponse checkWriting(User currentUser, AICheckerRequest request) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(request.examId(), currentUser);
+        if (mockTestExam == null) {
+            return JResponse.error(404, "This exam not found.");
+        }
+        List<UserWritingAnswer> writingsAnswers =  mockTestExam.getWritingAnswers();
+
+        return null;
     }
 
     @Override

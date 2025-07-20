@@ -119,6 +119,8 @@ public class ReadingServiceImpl implements ReadingService {
             ModuleAnswer moduleAnswer = new ModuleAnswer();
             moduleAnswer.setReading(reading);
             moduleAnswer.setKey(answer.key());
+            moduleAnswer.setValues(answer.values());
+            moduleAnswer.setKeys(answer.keys());
             moduleAnswer.setValue(answer.value());
             moduleAnswerRepository.save(moduleAnswer);
         }

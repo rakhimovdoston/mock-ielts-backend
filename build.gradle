@@ -38,6 +38,10 @@ dependencies {
     implementation 'io.swagger:swagger-annotations:1.5.0'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+//    implementation platform("org.springframework.ai:spring-ai-bom:1.0.0-SNAPSHOT")
+//    // Replace the following with the starter dependencies of specific modules you wish to use
+//    implementation 'org.springframework.ai:spring-ai-openai'
+
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     implementation 'com.fasterxml.jackson.core:jackson-core:2.15.2'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'

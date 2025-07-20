@@ -52,7 +52,7 @@ public class ListeningServiceImpl implements ListeningService {
     public JResponse updateListeningAudio(User currentUser, Long listeningId, ListeningRequest request) {
         Listening listening = getListeningByUserAndId(currentUser, listeningId);
         listening.setAudio(request.audio());
-        listening.setTitle(request.title());
+//        listening.setTitle(request.title());
         listeningRepository.save(listening);
         return JResponse.success();
     }

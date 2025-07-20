@@ -4,6 +4,8 @@ import com.search.teacher.dto.filter.UserFilter;
 import com.search.teacher.dto.request.history.EmailAnswerRequest;
 import com.search.teacher.dto.request.history.ModuleScoreRequest;
 import com.search.teacher.dto.request.history.ScoreRequest;
+import com.search.teacher.dto.request.module.AICheckerRequest;
+import com.search.teacher.dto.request.module.WritingRequest;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.utils.SecurityUtils;
@@ -51,6 +53,11 @@ public class MockExamController {
         }
 
         return JResponse.error(400, "Invalid type");
+    }
+
+    @PostMapping("check")
+    public JResponse checkWriting(@RequestBody AICheckerRequest request) {
+        return examService.checkWriting(securityUtils.getCurrentUser(), request);
     }
 
     @GetMapping("mock-exam/{byId}")

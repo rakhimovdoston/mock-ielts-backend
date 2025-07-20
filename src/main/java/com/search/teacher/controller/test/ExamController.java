@@ -25,12 +25,12 @@ public class ExamController {
     }
 
     @GetMapping("get/{id}")
-    public JResponse getExam(@PathVariable Long id) {
+    public JResponse getExam(@PathVariable String id) {
         return examService.getExam(securityUtils.getCurrentUser(), id);
     }
 
     @GetMapping("module/{id}")
-    public JResponse getExamQuestionByModule(@PathVariable("id") Long id, @RequestParam(name = "moduleType") String moduleType) {
+    public JResponse getExamQuestionByModule(@PathVariable("id") String id, @RequestParam(name = "moduleType") String moduleType) {
 
         if (moduleType.equals("reading") || moduleType.equals("writing") || moduleType.equals("listening"))
             return examService.getExamQuestionByModule(securityUtils.getCurrentUser(), id, moduleType);
@@ -39,7 +39,7 @@ public class ExamController {
     }
 
     @PostMapping("answers/{id}")
-    public JResponse saveReadingAnswers(@PathVariable("id") Long id, @RequestBody TestUserAnswerRequest request) {
+    public JResponse saveReadingAnswers(@PathVariable("id") String id, @RequestBody TestUserAnswerRequest request) {
         if (request.type().equals("reading") || request.type().equals("listening"))
             return examService.saveModuleAnswers(securityUtils.getCurrentUser(), id, request);
 
@@ -47,7 +47,7 @@ public class ExamController {
     }
 
     @PostMapping("writing/{id}")
-    public JResponse saveWritingAnswers(@PathVariable("id") Long id, @RequestBody WritingTestRequest request) {
+    public JResponse saveWritingAnswers(@PathVariable("id") String id, @RequestBody WritingTestRequest request) {
         return examService.saveWritingModuleAnswer(securityUtils.getCurrentUser(), id, request);
     }
 }

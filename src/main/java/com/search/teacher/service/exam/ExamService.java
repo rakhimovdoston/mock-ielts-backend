@@ -4,21 +4,22 @@ import com.search.teacher.dto.filter.UserFilter;
 import com.search.teacher.dto.request.history.EmailAnswerRequest;
 import com.search.teacher.dto.request.history.ModuleScoreRequest;
 import com.search.teacher.dto.request.history.ScoreRequest;
+import com.search.teacher.dto.request.module.AICheckerRequest;
 import com.search.teacher.dto.request.test.TestUserAnswerRequest;
 import com.search.teacher.dto.request.test.WritingTestRequest;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
 
 public interface ExamService {
-    JResponse getExam(User currentUser, Long id);
+    JResponse getExam(User currentUser, String id);
 
     JResponse setExamsToUser(User currentUser);
 
-    JResponse getExamQuestionByModule(User currentUser, Long id, String type);
+    JResponse getExamQuestionByModule(User currentUser, String id, String type);
 
-    JResponse saveModuleAnswers(User currentUser, Long id, TestUserAnswerRequest request);
+    JResponse saveModuleAnswers(User currentUser, String id, TestUserAnswerRequest request);
 
-    JResponse saveWritingModuleAnswer(User currentUser, Long id, WritingTestRequest request);
+    JResponse saveWritingModuleAnswer(User currentUser, String id, WritingTestRequest request);
 
     JResponse allExams(User currentUser, UserFilter filter, Long userId);
 
@@ -29,4 +30,6 @@ public interface ExamService {
     JResponse setScoreToUser(User currentUser, Long userId, ScoreRequest request);
 
     JResponse sendAnswerToEmail(User currentUser, EmailAnswerRequest request);
+
+    JResponse checkWriting(User currentUser, AICheckerRequest request);
 }

@@ -1,9 +1,12 @@
 package com.search.teacher.controller;
 
+import com.search.teacher.dto.ImageDto;
+import com.search.teacher.dto.request.module.ListeningRequest;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.FileService;
+import com.search.teacher.service.module.ListeningService;
 import com.search.teacher.service.module.WritingService;
 import com.search.teacher.utils.SecurityUtils;
 import com.search.teacher.utils.Utils;
@@ -30,6 +33,7 @@ public class FileController {
     private final FileService fileService;
     private final WritingService writingService;
     private final SecurityUtils securityUtils;
+    private final ListeningService listeningService;
 
     @PostMapping(value = "photo", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @ApiOperation("Uploading Photo file")
@@ -46,7 +50,8 @@ public class FileController {
 
     @PostMapping(value = "audio", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @ApiOperation("Uploading Audio")
-    public JResponse uploadAudio(@RequestPart(name = "audio") MultipartFile file) {
+    public JResponse uploadAudio(@RequestParam(name = "audio") MultipartFile file,
+                                 @RequestParam(name = "id", required = false) Long id) {
         if (file.isEmpty())
             throw new BadRequestException("File is not empty");
 
@@ -55,7 +60,11 @@ public class FileController {
 
         String type = "AUDIO";
 
-        return fileService.uploadPhoto(securityUtils.getCurrentUser(), file, type);
+        JResponse response = fileService.uploadPhoto(securityUtils.getCurrentUser(), file, type);
+        if (id != null && response.isSuccess() && response.getData() instanceof ImageDto imageDto) {
+            response = listeningService.updateListeningAudio(securityUtils.getCurrentUser(), id, new ListeningRequest("title", imageDto.getUrl(), "type"));
+        }
+        return response;
     }
 
     @DeleteMapping("delete/{writingId}")
