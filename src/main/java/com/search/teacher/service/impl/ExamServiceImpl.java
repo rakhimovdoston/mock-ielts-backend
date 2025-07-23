@@ -31,6 +31,7 @@ import com.search.teacher.model.response.ErrorMessages;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.*;
 import com.search.teacher.service.EmailService;
+import com.search.teacher.service.exam.BookingService;
 import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.utils.Constants;
 import com.search.teacher.utils.ExamUtils;
@@ -58,18 +59,13 @@ public class ExamServiceImpl implements ExamService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final ScoreRepository scoreRepository;
-//    private final AIService aiService;
+    private final BookingService bookingService;
 
     @Override
     public JResponse getExam(User currentUser, String id) {
         MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
-//            JResponse response = setExamsToUser(currentUser);
-//            if (response.isSuccess()) {
-//                return response;
-//            }
-//            mockTestExam = mockTestExamRepository.findByActiveIsTrueAndUserAndStatus(currentUser, Status.opened.name());
         }
         Date nowDate = new Date();
         long now = nowDate.getTime();
@@ -84,9 +80,24 @@ public class ExamServiceImpl implements ExamService {
         boolean listening = userExamAnswerRepository.existsByMockTestExamAndListeningIdIn(mockTestExam, mockTestExam.getListening());
         boolean reading = userExamAnswerRepository.existsByMockTestExamAndReadingIdIn(mockTestExam, mockTestExam.getReadings());
         boolean writing = userWritingAnswerRepository.existsByMockTestExamAndWritingIdIn(mockTestExam, mockTestExam.getWritings());
+        Booking booking = mockTestExam.getBooking();
+        if (booking == null) {
+            booking = new Booking();
+            booking.setUserId(currentUser.getId());
+            booking.setMockTestExam(mockTestExam);
+            booking.setStatus(Status.CREATED.name());
+            bookingService.saveBooking(booking);
+        }
         if (listening && reading && writing) {
             mockTestExam.setSubmittedDate(new Date());
             mockTestExam.setStatus(Status.closed.name());
+            booking.setStatus(Status.COMPLETED.name());
+            bookingService.saveBooking(booking);
+        } else {
+            if (!booking.getStatus().equals(Status.IN_COMPLETED.name()) && !booking.getStatus().equals(Status.COMPLETED.name())) {
+                booking.setStatus(Status.IN_COMPLETED.name());
+                bookingService.saveBooking(booking);
+            }
         }
         mockTestExamRepository.save(mockTestExam);
         return JResponse.success(new ExamResponse(
@@ -109,23 +120,34 @@ public class ExamServiceImpl implements ExamService {
         List<Long> writingIds = extractExamIds(mockTestExams, MockTestExam::getWritings);
         List<Long> listeningIds = extractExamIds(mockTestExams, MockTestExam::getListening);
 
-        List<Reading> readings = readingRepository.findAllRandomAndIdNotInAndUserIn(List.of("easy", "medium", "hard"), readingIds.isEmpty() ? List.of(0L) : readingIds, user.getUserId() != null ? List.of(user.getUserId()) : List.of(0L));
+        List<Reading> readings = user.getUsername().equals("testUser") ?
+                readingRepository.findAllByTypeIn(List.of("easy", "medium", "hard"))
+                : readingRepository.findAllRandomAndIdNotInAndUserIn(List.of("easy", "medium", "hard"), readingIds.isEmpty() ? List.of(0L) : readingIds, user.getUserId() != null ? List.of(user.getUserId()) : List.of(0L));
         if (readings.isEmpty() || readings.size() < 3) {
             return JResponse.error(404, ErrorMessages.NO_READING_LEFT);
         }
-        List<Listening> listenings = listeningRepository.findAllRandomAndIdNotInAndUserIn(List.of("part_1", "part_2", "part_3", "part_4"), listeningIds.isEmpty() ? List.of(0L) : listeningIds, user.getUserId() != null ? List.of(user.getUserId()) : List.of(0L));
+        List<Listening> listenings = user.getUsername().equals("testUser") ?
+                listeningRepository.findAllByTypeIn(List.of("part_1", "part_2", "part_3", "part_4")) :
+                listeningRepository.findAllRandomAndIdNotInAndUserIn(List.of("part_1", "part_2", "part_3", "part_4"), listeningIds.isEmpty() ? List.of(0L) : listeningIds, user.getUserId() != null ? List.of(user.getUserId()) : List.of(0L));
         if (listenings.isEmpty() || listenings.size() < 4) {
             return JResponse.error(404, ErrorMessages.NO_LISTENING_LEFT);
         }
-        List<Writing> writings = writingRepository.findAllRandomAndIdNotInAndUserIn(List.of(true, false), writingIds.isEmpty() ? List.of(0L) : writingIds, user.getUserId() != null ? List.of(user.getUserId()) : List.of(0L));
+        List<Writing> writings = user.getUsername().equals("testUser") ?
+                writingRepository.findAllByTypeIn(List.of(true, false)) : writingRepository.findAllRandomAndIdNotInAndUserIn(List.of(true, false), writingIds.isEmpty() ? List.of(0L) : writingIds, user.getUserId() != null ? List.of(user.getUserId()) : List.of(0L));
         if (writings.isEmpty() || writings.size() < 2) {
             return JResponse.error(404, ErrorMessages.NO_WRITING_LEFT);
         }
 
         MockTestExam mockTestExam = new MockTestExam();
+        Booking booking = bookingService.getUserExistBooking(user);
+        if (booking != null && booking.getStatus().equals(Status.CREATED.name())) {
+            booking.setStatus(Status.PROCESS.name());
+            bookingService.saveBooking(booking);
+        }
         mockTestExam.setStatus(Status.opened.name());
         mockTestExam.setExamUniqueId(UUID.randomUUID().toString().replaceAll("-", ""));
         mockTestExam.setActive(true);
+        mockTestExam.setBooking(booking);
         mockTestExam.setUser(user);
         mockTestExam.setReadings(readings.stream().map(Reading::getId).toList());
         mockTestExam.setWritings(writings.stream().map(Writing::getId).toList());
@@ -233,7 +255,7 @@ public class ExamServiceImpl implements ExamService {
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
         }
-        List<UserWritingAnswer> writingsAnswers =  mockTestExam.getWritingAnswers();
+        List<UserWritingAnswer> writingsAnswers = mockTestExam.getWritingAnswers();
 
         return null;
     }
@@ -251,19 +273,32 @@ public class ExamServiceImpl implements ExamService {
         for (MockTestExam exam : exams) {
             MockExamResponse response = new MockExamResponse();
             ExamScore score = exam.getScore();
-            if (score == null)
+            Booking booking = exam.getBooking();
+            if (score == null && booking != null && booking.getStatus().equals(Status.COMPLETED.name())) {
                 score = setScore(exam, currentUser);
+
+                response.setSpeaking(score.getSpeaking());
+                response.setWriting(score.getWriting());
+                response.setReading(score.getReading());
+                response.setListening(score.getListening());
+                response.setStatus(score.getStatus());
+                response.setExamStatus(getExamStatus(booking.getStatus()));
+            }
             response.setStartDate(exam.getStartDate());
             response.setEndDate(exam.getSubmittedDate());
             response.setId(exam.getId());
-            response.setSpeaking(score.getSpeaking());
-            response.setWriting(score.getWriting());
-            response.setReading(score.getReading());
-            response.setListening(score.getListening());
-            response.setStatus(score.getStatus());
             responses.add(response);
         }
         return JResponse.success(responses);
+    }
+
+    private String getExamStatus(String status) {
+        return switch (status) {
+            case "COMPLETED" -> "Completed";
+            case "PROCESS" -> "Processing";
+            case "CREATED" -> "Created";
+            default -> "Unknown";
+        };
     }
 
     private ExamScore setScore(MockTestExam mockTestExam, User currentUser) {

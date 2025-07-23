@@ -28,4 +28,7 @@ public interface ListeningRepository extends JpaRepository<Listening, Long> {
     List<Listening> findAllRandomTypeAndLimit(List<String> types, int limit);
 
     int countAllByUser(User currentUser);
+
+    @Query(value = "select distinct on (type) * from listening where deleted is false and active is true and type in (:types) ORDER BY type, random() limit 4", nativeQuery = true)
+    List<Listening> findAllByTypeIn(List<String> types);
 }

@@ -16,4 +16,5 @@ public class MockExamResponse {
     private String writing;
     private String speaking;
     private String status;
+    private String examStatus;
 }

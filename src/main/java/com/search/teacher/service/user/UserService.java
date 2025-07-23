@@ -39,4 +39,6 @@ public interface UserService {
     JResponse deleteUsers(User currentUser, Long id);
 
     JResponse setTestDate(User currentUser, Long id, TestDateRequest testDate);
+
+    User getUserById(Long id);
 }

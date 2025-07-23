@@ -1,5 +1,8 @@
 package com.search.teacher.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.search.teacher.config.ApplicationProperties;
 import com.search.teacher.dto.ImageDto;
 import com.search.teacher.model.entities.Image;
@@ -9,6 +12,7 @@ import com.search.teacher.repository.ImageRepository;
 import com.search.teacher.utils.Utils;
 import io.minio.*;
 import io.minio.errors.*;
+import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,20 +38,22 @@ public class FileUploadService {
     private final ImageRepository imageRepository;
     private final ApplicationProperties applicationProperties;
     private final MinioClient minioClient;
+    private final ObjectMapper objectMapper;
 
-    public FileUploadService(ImageRepository imageRepository, ApplicationProperties applicationProperties, MinioClient minioClient) {
+    public FileUploadService(ImageRepository imageRepository, ApplicationProperties applicationProperties, MinioClient minioClient, ObjectMapper objectMapper) {
         this.imageRepository = imageRepository;
         this.applicationProperties = applicationProperties;
         this.minioClient = minioClient;
+        this.objectMapper = objectMapper;
     }
 
 
     public void removeObject(Image image, String bucket) {
         try {
             minioClient.removeObject(RemoveObjectArgs.builder()
-                .bucket(bucket)
-                .object(image.getObjectName())
-                .build());
+                    .bucket(bucket)
+                    .object(image.getObjectName())
+                    .build());
 
             imageRepository.deleteById(image.getId());
         } catch (ErrorResponseException |
@@ -95,13 +101,13 @@ public class FileUploadService {
             byte[] bytes = file.getBytes();
             ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
             this.uploadWithPutObject(
-                PutObjectArgs
-                    .builder()
-                    .bucket(bucket)
-                    .object(objectName)
-                    .stream(stream, bytes.length, -1)
-                    .contentType(file.getContentType())
-                    .build()
+                    PutObjectArgs
+                            .builder()
+                            .bucket(bucket)
+                            .object(objectName)
+                            .stream(stream, bytes.length, -1)
+                            .contentType(file.getContentType())
+                            .build()
             );
             image.setUrl(StringUtils.join(applicationProperties.getMinio().getHost(), "/", bucket, "/", objectName));
             return objectName;
@@ -125,13 +131,13 @@ public class FileUploadService {
             ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
             checkBucket(bucket, isPublic);
             this.uploadWithPutObject(
-                PutObjectArgs
-                    .builder()
-                    .bucket(bucket)
-                    .object(fileName)
-                    .stream(stream, bytes.length, -1)
-                    .contentType(file.getContentType())
-                    .build()
+                    PutObjectArgs
+                            .builder()
+                            .bucket(bucket)
+                            .object(fileName)
+                            .stream(stream, bytes.length, -1)
+                            .contentType(file.getContentType())
+                            .build()
             );
 
             Image image = new Image();
@@ -149,37 +155,22 @@ public class FileUploadService {
         }
     }
 
-    private void checkBucket(String bucket, boolean isPublic) {
+    public void checkBucket(String bucket, boolean isPublic) {
         try {
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
                 minioClient.makeBucket(MakeBucketArgs
-                    .builder()
-                    .bucket(bucket)
-                    .build());
-
-                if (isPublic) {
-                    String publicPolicy = "{\n" +
-                        "  \"Version\"::" + Utils.getCurrentDateStandardFormat() + ",\n" +
-                        "  \"Statement\": [\n" +
-                        "    {\n" +
-                        "      \"Effect\": \"Allow\",\n" +
-                        "      \"Principal\": \"*\",\n" +
-                        "      \"Action\": [\n" +
-                        "        \"s3:GetObject\"\n" +
-                        "      ],\n" +
-                        "      \"Resource\": [\n" +
-                        "        \"arn:aws:s3:::" + bucket + "/*\"\n" +
-                        "      ]\n" +
-                        "    }\n" +
-                        "  ]\n" +
-                        "}";
-
-                    minioClient.setBucketPolicy(SetBucketPolicyArgs
                         .builder()
                         .bucket(bucket)
-                        .config(publicPolicy)
                         .build());
 
+                if (isPublic) {
+                    String publicPolicy = buildPublicReadPolicy(bucket);
+
+                    minioClient.setBucketPolicy(SetBucketPolicyArgs
+                            .builder()
+                            .bucket(bucket)
+                            .config(publicPolicy)
+                            .build());
                 }
             }
         } catch (ErrorResponseException |
@@ -196,13 +187,38 @@ public class FileUploadService {
         }
     }
 
+    private String buildPublicReadPolicy(String bucketName) throws IOException {
+        ObjectNode policy = objectMapper.createObjectNode();
+        policy.put("Version", "2025-07-20");
+
+        ArrayNode statements = policy.putArray("Statement");
+        ObjectNode statement = objectMapper.createObjectNode();
+
+        statement.put("Effect", "Allow");
+        statement.put("Principal", "*");
+
+        ArrayNode actions = objectMapper.createArrayNode();
+        actions.add("s3:GetObject");
+        actions.add("s3:PutObject");
+        actions.add("s3:DeleteObject");
+        statement.set("Action", actions);
+
+        ArrayNode resources = objectMapper.createArrayNode();
+        resources.add("arn:aws:s3:::" + bucketName + "/*");
+        statement.set("Resource", resources);
+
+        statements.add(statement);
+
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(policy);
+    }
+
     private void uploadWithPutObject(PutObjectArgs objectArgs) {
         try {
             ObjectWriteResponse response = minioClient.putObject(objectArgs);
 
             String builder = "\nObject: --------   " + response.object() +
-                "\nVersion Id: --------   " + response.versionId() +
-                "\nEtag: --------   " + response.etag();
+                    "\nVersion Id: --------   " + response.versionId() +
+                    "\nEtag: --------   " + response.etag();
             log.info(builder);
             log.info("Uploaded successfully");
 

@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
  * Date: 17/10/24
  * Time: 17:45
  **/
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("api/v1/file")
 @Api(tags = "FILE API")

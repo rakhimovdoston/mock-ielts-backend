@@ -29,6 +29,10 @@ public class MockTestExam extends BaseEntity {
 
     private String status;
 
+    @OneToOne
+    @JoinColumn(name = "booking__id", referencedColumnName = "id")
+    private Booking booking;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private List<Long> readings = new ArrayList<>();

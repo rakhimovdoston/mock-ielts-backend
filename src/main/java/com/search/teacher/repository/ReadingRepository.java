@@ -26,4 +26,7 @@ public interface ReadingRepository extends JpaRepository<Reading, Long> {
     List<Reading> findAllRandomTypesAndLimit(@Param("types") List<String> types, @Param("limit") int limit);
 
     int countAllByUser(User currentUser);
+
+    @Query(value = "select distinct on (type) * from readings where deleted is false and active is true and type in (:types) ORDER BY type, random() limit 3", nativeQuery = true)
+    List<Reading> findAllByTypeIn(List<String> types);
 }

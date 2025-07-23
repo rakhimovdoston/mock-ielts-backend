@@ -7,19 +7,17 @@ import com.search.teacher.dto.message.UserResponse;
 import com.search.teacher.dto.request.*;
 import com.search.teacher.dto.request.test.TestDateRequest;
 import com.search.teacher.dto.request.user.UserRequest;
+import com.search.teacher.dto.response.SaveResponse;
 import com.search.teacher.exception.BadRequestException;
 import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.mapper.UserMapper;
-import com.search.teacher.model.entities.MockTestExam;
-import com.search.teacher.model.entities.Role;
-import com.search.teacher.model.entities.User;
-import com.search.teacher.model.entities.UserToken;
+import com.search.teacher.model.entities.*;
 import com.search.teacher.model.enums.RoleType;
-import com.search.teacher.model.enums.Status;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.MockTestExamRepository;
 import com.search.teacher.repository.RoleRepository;
 import com.search.teacher.repository.UserRepository;
+import com.search.teacher.service.exam.BookingService;
 import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.service.user.UserTokenService;
@@ -28,13 +26,11 @@ import com.search.teacher.utils.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 
@@ -48,6 +44,7 @@ public class UserServiceImpl implements UserService {
     private final ExamService examService;
     private final RoleRepository roleRepository;
     private final MockTestExamRepository mockTestExamRepository;
+    private final BookingService bookingService;
 
     @Override
     public JResponse authenticate(AuthenticationRequest request) {
@@ -58,9 +55,12 @@ public class UserServiceImpl implements UserService {
         if (!user.isActive())
             return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
 
-        if (user.getRoles().stream().anyMatch(role -> !role.getName().equals(RoleType.ROLE_ADMIN.name())) && user.getUserId() != null) {
-            if (!DateUtils.checkTestStartTime(user.getTestStartDate())) {
-                return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+        if (!Objects.equals(user.getUsername(), "testUser")) {
+            if (user.getRoles().stream().anyMatch(role -> !role.getName().equals(RoleType.ROLE_ADMIN.name())) && user.getUserId() != null) {
+                Booking booking = bookingService.getUserExistBooking(user);
+                if (booking == null) {
+                    return JResponse.error(401, ResponseMessage.INCORRECT_USERNAME_PASSWORD);
+                }
             }
         }
         return userTokenService.generateToken(user);
@@ -106,7 +106,7 @@ public class UserServiceImpl implements UserService {
         newUser.getRoles().add(role);
         newUser.setUserId(currentUser.getId());
         userRepository.save(newUser);
-        return JResponse.success();
+        return JResponse.success(new SaveResponse(newUser.getId()));
     }
 
     @Override
@@ -166,6 +166,7 @@ public class UserServiceImpl implements UserService {
     public JResponse getUserBydId(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new NotfoundException("User Not found"));
         UserResponse response = UserMapper.INSTANCE.toResponse(user);
+        response.setPassword(user.getShowPassword());
         return JResponse.success(response);
     }
 
@@ -196,6 +197,11 @@ public class UserServiceImpl implements UserService {
         user.setTestStartDate(testDate.date());
         userRepository.save(user);
         return JResponse.success();
+    }
+
+    @Override
+    public User getUserById(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new NotfoundException("User Not found"));
     }
 
     @Override

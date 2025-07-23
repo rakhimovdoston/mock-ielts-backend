@@ -16,9 +16,11 @@ public class UserResponse {
     private String email;
     private String firstname;
     private String lastname;
+    private String phone;
     private String username;
     private List<String> roles = new ArrayList<>();
     private String image;
     private String status;
     private Date testStartDate;
+    private String password;
 }

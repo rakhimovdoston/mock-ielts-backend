@@ -28,4 +28,7 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
     Writing findRandomByType(@Param("task") Boolean task);
 
     int countAllByUser(User currentUser);
+
+    @Query(value = "select distinct on (task) * from writings where deleted is false and active is true and task in (:tasks) ORDER BY task, random() limit 2", nativeQuery = true)
+    List<Writing> findAllByTypeIn(@Param("tasks") List<Boolean> booleans);
 }

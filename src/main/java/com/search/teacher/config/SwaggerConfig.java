@@ -21,8 +21,7 @@ import org.springframework.context.annotation.Configuration;
         security = @SecurityRequirement(name = "Authorization"),
         servers = {
                 @Server(url = "http://localhost:6464", description = "Local Server"),
-                @Server(url = "http://localhost:9090", description = "Local Prod Server"),
-                @Server(url = "https://app.ieltsmockexam.uz", description = "Production Server")
+                @Server(url = "https://api.everestexams.uz", description = "Production Server")
         }
 )
 public class SwaggerConfig {
