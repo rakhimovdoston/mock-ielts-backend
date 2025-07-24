@@ -14,11 +14,11 @@ public interface ExamService {
 
     JResponse setExamsToUser(User currentUser);
 
-    JResponse getExamQuestionByModule(User currentUser, Long id, String type);
+    JResponse getExamQuestionByModule(User currentUser, String id, String type);
 
-    JResponse saveModuleAnswers(User currentUser, Long id, TestUserAnswerRequest request);
+    JResponse saveModuleAnswers(User currentUser, String id, TestUserAnswerRequest request);
 
-    JResponse saveWritingModuleAnswer(User currentUser, Long id, WritingTestRequest request);
+    JResponse saveWritingModuleAnswer(User currentUser, String id, WritingTestRequest request);
 
     JResponse allExams(User currentUser, UserFilter filter, Long userId);
 

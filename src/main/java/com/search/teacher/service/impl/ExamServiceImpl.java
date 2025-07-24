@@ -142,8 +142,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public JResponse getExamQuestionByModule(User currentUser, Long id, String type) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(id, currentUser);
+    public JResponse getExamQuestionByModule(User currentUser, String id, String type) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
         }
@@ -155,8 +155,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public JResponse saveModuleAnswers(User currentUser, Long id, TestUserAnswerRequest request) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(id, currentUser);
+    public JResponse saveModuleAnswers(User currentUser, String id, TestUserAnswerRequest request) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
         }
@@ -178,8 +178,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public JResponse saveWritingModuleAnswer(User currentUser, Long id, WritingTestRequest request) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(id, currentUser);
+    public JResponse saveWritingModuleAnswer(User currentUser, String id, WritingTestRequest request) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
         }
