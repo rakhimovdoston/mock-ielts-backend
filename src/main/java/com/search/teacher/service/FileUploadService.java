@@ -189,7 +189,7 @@ public class FileUploadService {
 
     private String buildPublicReadPolicy(String bucketName) throws IOException {
         ObjectNode policy = objectMapper.createObjectNode();
-        policy.put("Version", "2025-07-20");
+        policy.put("Version", "2012-10-17");
 
         ArrayNode statements = policy.putArray("Statement");
         ObjectNode statement = objectMapper.createObjectNode();
