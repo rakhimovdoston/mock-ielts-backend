@@ -1,26 +1,19 @@
 package com.search.teacher.components;
 
-import aj.org.objectweb.asm.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.search.teacher.model.entities.ModuleAnswer;
 import com.search.teacher.model.entities.Role;
 import com.search.teacher.model.entities.User;
-import com.search.teacher.model.entities.UserAnswers;
 import com.search.teacher.model.enums.RoleType;
 import com.search.teacher.repository.ReadingRepository;
 import com.search.teacher.repository.RoleRepository;
 import com.search.teacher.repository.UserRepository;
 import com.search.teacher.service.impl.ExamServiceImpl;
-import io.swagger.v3.core.util.Json;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -43,7 +36,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
 //        List<UserAnswers> userAnswersList = mapper.readValue(userAnswers.toString(), mapper.getTypeFactory().constructCollectionType(List.class, UserAnswers.class));
 //        int count = examService.countAnswer(moduleAnswers, userAnswersList);
 //        logger.info("Count: {}", count);
-        testUser();
+//        testUser();
     }
 
     private void saveRole() {
