@@ -39,6 +39,23 @@ public class MyCommandLineRunner implements CommandLineRunner {
 //        testUser();
     }
 
+    private void enterClientUser() {
+        User user = userRepository.findByUsername("everbest");
+        if (user != null)
+            return;
+        user = new User();
+        user.setActive(true);
+        Role role = roleRepository.findByName(RoleType.ROLE_ADMIN.name());
+        user.setUsername("everbest");
+        user.setEmail("everbest@gmail.com");
+        user.setFirstname("Everbest");
+        user.setLastname("");
+        user.setPassword(passwordEncoder.encode("ever1199best"));
+        user.getRoles().add(role);
+        userRepository.save(user);
+        logger.info("User {} saved", user.getUsername());
+    }
+
     private void saveRole() {
         insertRole(RoleType.ROLE_TEACHER.name());
         insertRole(RoleType.ROLE_ADMIN.name());
