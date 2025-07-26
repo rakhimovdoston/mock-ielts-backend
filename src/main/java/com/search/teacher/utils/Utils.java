@@ -108,7 +108,7 @@ public class Utils {
         return String.valueOf(rounded);
     }
 
-    private static double roundToNearestHalfBand(double score) {
+    public static double roundToNearestHalfBand(double score) {
         double floor = Math.floor(score);
         double decimal = score - floor;
 

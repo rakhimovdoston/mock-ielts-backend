@@ -1,5 +1,10 @@
 package com.search.teacher.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.search.teacher.dto.ai.WritingAIFeedback;
+import com.search.teacher.dto.ai.WritingAIResponse;
 import com.search.teacher.dto.filter.UserFilter;
 import com.search.teacher.dto.request.history.EmailAnswerRequest;
 import com.search.teacher.dto.request.history.ScoreRequest;
@@ -27,18 +32,25 @@ import com.search.teacher.mapper.ModuleAnswerMapper;
 import com.search.teacher.mapper.WritingMapper;
 import com.search.teacher.model.entities.*;
 import com.search.teacher.model.enums.Status;
+import com.search.teacher.model.response.AIResponse;
 import com.search.teacher.model.response.ErrorMessages;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.*;
 import com.search.teacher.service.EmailService;
+import com.search.teacher.service.ai.AIService;
 import com.search.teacher.service.exam.BookingService;
 import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.utils.Constants;
 import com.search.teacher.utils.ExamUtils;
+import com.search.teacher.utils.Utils;
+import jdk.jshell.execution.Util;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -48,6 +60,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class ExamServiceImpl implements ExamService {
 
+    private final Logger logger = LoggerFactory.getLogger(ExamServiceImpl.class);
     private final MockTestExamRepository mockTestExamRepository;
     private final ReadingRepository readingRepository;
     private final ListeningRepository listeningRepository;
@@ -60,6 +73,9 @@ public class ExamServiceImpl implements ExamService {
     private final EmailService emailService;
     private final ScoreRepository scoreRepository;
     private final BookingService bookingService;
+    private final AIService aiService;
+    private final CheckWritingRepository checkWritingRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public JResponse getExam(User currentUser, String id) {
@@ -257,7 +273,38 @@ public class ExamServiceImpl implements ExamService {
         }
         List<UserWritingAnswer> writingsAnswers = mockTestExam.getWritingAnswers();
 
-        return null;
+        return JResponse.success();
+    }
+
+    @Override
+    public List<MockExamResponse> getAllMockExams(List<MockTestExam> exams, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotfoundException("User not found"));
+        List<MockExamResponse> responses = new ArrayList<>();
+        for (MockTestExam exam : exams) {
+            MockExamResponse response = new MockExamResponse();
+            ExamScore score = exam.getScore();
+            Booking booking = exam.getBooking();
+            if (booking != null && booking.getStatus().equals(Status.COMPLETED.name())) {
+                if (score == null) {
+                    score = setScore(exam, user);
+                }
+                response.setSpeaking(score.getSpeaking());
+
+                Double writingScore = checkWritingWithAI(exam);
+                response.setWriting(String.valueOf(writingScore));
+
+                response.setReading(score.getReading());
+                response.setListening(score.getListening());
+                response.setStatus(score.getStatus());
+                response.setExamStatus(getExamStatus(booking.getStatus()));
+            }
+            response.setStartDate(exam.getStartDate());
+            response.setEndDate(exam.getSubmittedDate());
+            response.setId(exam.getId());
+            responses.add(response);
+        }
+        return responses;
     }
 
     @Override
@@ -269,33 +316,79 @@ public class ExamServiceImpl implements ExamService {
         if (exams.isEmpty()) {
             return JResponse.error(404, "No exams found.");
         }
-        List<MockExamResponse> responses = new ArrayList<>();
-        for (MockTestExam exam : exams) {
-            MockExamResponse response = new MockExamResponse();
-            ExamScore score = exam.getScore();
-            Booking booking = exam.getBooking();
-            if (score == null && booking != null && booking.getStatus().equals(Status.COMPLETED.name())) {
-                score = setScore(exam, currentUser);
 
-                response.setSpeaking(score.getSpeaking());
-                response.setWriting(score.getWriting());
-                response.setReading(score.getReading());
-                response.setListening(score.getListening());
-                response.setStatus(score.getStatus());
-                response.setExamStatus(getExamStatus(booking.getStatus()));
+        return JResponse.success(getAllMockExams(exams.getContent(), user.getUserId()));
+    }
+
+    private Double checkWritingWithAI(MockTestExam mockTestExam) {
+        List<UserWritingAnswer> userWritingAnswer = mockTestExam.getWritingAnswers();
+        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
+
+        Writing taskOne = null;
+        Writing taskTwo = null;
+
+        for (Writing writing : writings) {
+            if (writing.isTask()) {
+                taskOne = writing;
+            } else {
+                taskTwo = writing;
             }
-            response.setStartDate(exam.getStartDate());
-            response.setEndDate(exam.getSubmittedDate());
-            response.setId(exam.getId());
-            responses.add(response);
         }
-        return JResponse.success(responses);
+
+        if (taskTwo == null || taskOne == null) return 0.0;
+
+        UserWritingAnswer answerOne = null;
+        UserWritingAnswer answerTwo = null;
+
+        for (UserWritingAnswer answer : userWritingAnswer) {
+            if (answer.getWritingId().equals(taskOne.getId()))
+                answerOne = answer;
+            if (answer.getWritingId().equals(taskTwo.getId()))
+                answerTwo = answer;
+        }
+
+        if (answerOne == null || answerTwo == null) return 0.0;
+
+        if (answerOne.getCheckWriting() == null && answerTwo.getCheckWriting() == null) {
+            AIResponse<JsonNode> aiResponse = aiService.getOverallReply(taskOne.getTitle(), taskTwo.getTitle(), answerOne.getAnswer(), answerTwo.getAnswer(), taskOne.getImage());
+            if (!aiResponse.isSuccess()) {
+                logger.error("Check Writing Method: {}", aiResponse.getMessage());
+                return 0.0;
+            }
+            JsonNode data = aiResponse.getData();
+            WritingAIResponse writingAIResponse = null;
+            try {
+                writingAIResponse = objectMapper.treeToValue(data, WritingAIResponse.class);
+            } catch (JsonProcessingException e) {
+                logger.warn("AI Response could not be parsed into WritingAIResponse for exam id {}", mockTestExam.getId());
+            }
+            if (writingAIResponse == null) return 0.0;
+
+            double totalScore = 0;
+            totalScore += saveCheckWriting(answerOne, writingAIResponse.getTaskOne());
+            totalScore += saveCheckWriting(answerTwo, writingAIResponse.getTaskTwo());
+            return Utils.roundToNearestHalfBand(totalScore / 2);
+        }
+        CheckWriting writingOne = answerOne.getCheckWriting();
+        CheckWriting writingTwo = answerTwo.getCheckWriting();
+        double totalScore = writingOne.getScore() + writingTwo.getScore();
+        return Utils.roundToNearestHalfBand(totalScore / 2);
+    }
+
+    private double saveCheckWriting(UserWritingAnswer answer, WritingAIFeedback feedback) {
+        CheckWriting checkWriting = new CheckWriting();
+        checkWriting.setUserWritingAnswer(answer);
+        checkWriting.setResponse(feedback);
+        checkWriting.setScore(feedback.getOverallScore());
+        checkWriting.setSummary(feedback.getSummary());
+        checkWritingRepository.save(checkWriting);
+        return feedback.getOverallScore();
     }
 
     private String getExamStatus(String status) {
         return switch (status) {
             case "COMPLETED" -> "Completed";
-            case "PROCESS" -> "Processing";
+            case "IN_COMPLETED" -> "Processing";
             case "CREATED" -> "Created";
             default -> "Unknown";
         };

@@ -26,6 +26,7 @@ configurations {
 
 repositories {
     mavenCentral()
+//    maven {url 'https://repo.spring.io/snapshot'}
 }
 
 dependencies {
@@ -38,8 +39,8 @@ dependencies {
     implementation 'io.swagger:swagger-annotations:1.5.0'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
-//    implementation platform("org.springframework.ai:spring-ai-bom:1.0.0-SNAPSHOT")
-//    // Replace the following with the starter dependencies of specific modules you wish to use
+//    implementation platform("org.springframework.ai:spring-ai-bom:1.0.0")
+//    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 //    implementation 'org.springframework.ai:spring-ai-openai'
 
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
@@ -51,17 +52,9 @@ dependencies {
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
 
     implementation 'org.jsoup:jsoup:1.18.2'
-//
-//	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-//	implementation 'org.springframework.boot:spring-boot-starter-cache'
-//	implementation 'org.redisson:redisson-spring-boot-starter:3.27.1'
-
-//	Excel
     implementation 'org.apache.poi:poi:5.2.5'
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
 
-//	redisson client
-//	implementation 'org.redisson:redisson:3.27.0'
     implementation "io.minio:minio:8.5.9"
     implementation 'commons-io:commons-io:2.7'
 
@@ -73,11 +66,6 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-
-//    implementation group: 'com.vladmihalcea', name: 'hibernate-types-52', version: '2.12.1'
-//	Amazon Aws
-//	implementation 'com.amazonaws:aws-java-sdk:1.12.594'
-
 
     implementation 'com.google.code.gson:gson:2.9.0'
 

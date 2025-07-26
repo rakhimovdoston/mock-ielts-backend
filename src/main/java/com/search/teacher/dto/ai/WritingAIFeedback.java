@@ -1,0 +1,30 @@
+package com.search.teacher.dto.ai;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class WritingAIFeedback {
+
+    @JsonProperty("task_response")
+    private TaskAIResponse taskResponse;
+
+    @JsonProperty("coherence_and_cohesion")
+    private TaskAIResponse coherenceAndCohesion;
+
+    @JsonProperty("lexical_resource")
+    private TaskAIResponse lexicalResource;
+
+    @JsonProperty("grammatical_range_and_accuracy")
+    private TaskAIResponse grammaticalRangeAndAccuracy;
+
+    @JsonProperty("task_achievement")
+    private TaskAIResponse taskAchievement;
+
+    @JsonProperty("overall_score")
+    private Double overallScore;
+
+    private String summary;
+}

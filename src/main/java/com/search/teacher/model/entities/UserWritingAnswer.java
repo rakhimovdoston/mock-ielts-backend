@@ -19,4 +19,7 @@ public class UserWritingAnswer extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "mock_test_exam_id", referencedColumnName = "id")
     private MockTestExam mockTestExam;
+
+    @OneToOne(mappedBy = "userWritingAnswer")
+    private CheckWriting checkWriting;
 }

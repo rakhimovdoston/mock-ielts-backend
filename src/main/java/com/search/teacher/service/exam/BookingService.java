@@ -2,11 +2,12 @@ package com.search.teacher.service.exam;
 
 import com.search.teacher.dto.filter.PaginationResponse;
 import com.search.teacher.dto.request.session.BookGroupRequest;
+import com.search.teacher.dto.response.history.MockExamResponse;
+import com.search.teacher.dto.response.session.BookingGroupResponse;
 import com.search.teacher.dto.response.session.BookingResponse;
 import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.model.entities.*;
 import com.search.teacher.model.enums.Status;
-import com.search.teacher.model.projection.BookingProjection;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -14,10 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -36,6 +35,7 @@ public class BookingService {
     private final SpeakingBookingRepository speakingBookingRepository;
     private final BranchRepository branchRepository;
     private final UserRepository userRepository;
+    private final ExamService examService;
 
     @Transactional
     public JResponse setupBooking(User currentUser, BookGroupRequest request) {
@@ -197,7 +197,22 @@ public class BookingService {
 
     public JResponse getAllBookingsByUser(User currentUser, Long userId) {
         List<BookingGroup> bookingGroups = bookingGroupRepository.findAllByUser_Id(userId);
-
-        return JResponse.success();
+        if (bookingGroups.isEmpty()) {
+            return JResponse.error(404, "No bookings found.");
+        }
+        List<BookingGroupResponse> responses = new ArrayList<>();
+        for (BookingGroup bookingGroup : bookingGroups) {
+            BookingGroupResponse response = new BookingGroupResponse();
+            response.setId(bookingGroup.getId());
+            response.setDate(bookingGroup.getCreatedLocaleDate());
+            response.setMockPackages(bookingGroup.getMockPackages());
+            response.setResults(examService.getAllMockExams(
+                    bookingGroup.getBookings()
+                            .stream()
+                            .map(Booking::getMockTestExam)
+                            .toList(), userId));
+            responses.add(response);
+        }
+        return JResponse.success(responses);
     }
 }
