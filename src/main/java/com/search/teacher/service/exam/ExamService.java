@@ -11,6 +11,7 @@ import com.search.teacher.dto.response.history.MockExamResponse;
 import com.search.teacher.model.entities.MockTestExam;
 import com.search.teacher.model.entities.User;
 import com.search.teacher.model.response.JResponse;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -37,5 +38,9 @@ public interface ExamService {
 
     JResponse checkWriting(User currentUser, AICheckerRequest request);
 
-    List<MockExamResponse> getAllMockExams(List<MockTestExam> exams, Long userId);
+    List<MockExamResponse> getAllMockExams(List<MockTestExam> exams);
+
+    JResponse refreshUserAnswer(User currentUser, EmailAnswerRequest request);
+
+    ResponseEntity<byte[]> downloadPdfFile(String id);
 }

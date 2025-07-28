@@ -3,6 +3,7 @@ package com.search.teacher.dto.response.history;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Getter
@@ -17,4 +18,7 @@ public class MockExamResponse {
     private String speaking;
     private String status;
     private String examStatus;
+    private String type;
+    private LocalDate testDate;
+    private String time;
 }

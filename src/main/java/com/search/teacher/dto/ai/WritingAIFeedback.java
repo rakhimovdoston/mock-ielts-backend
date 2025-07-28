@@ -23,8 +23,9 @@ public class WritingAIFeedback {
     @JsonProperty("task_achievement")
     private TaskAIResponse taskAchievement;
 
-    @JsonProperty("overall_score")
+    @JsonProperty("overall_band")
     private Double overallScore;
 
+    @JsonProperty("summary")
     private String summary;
 }

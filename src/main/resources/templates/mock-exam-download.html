@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Mock Exam Feedback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 24px;
+            background-color: #f5f5f5;
+        }
+
+        .card {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .sub-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        .text-box {
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            background-color: #fafafa;
+            padding: 12px;
+            white-space: pre-wrap;
+            min-height: 300px;
+        }
+
+        .divider {
+            border-bottom: 1px solid #ccc;
+            margin: 24px 0;
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div th:each="view : ${questionViews}" class="card">
+    <div class="section-title" th:text="'Task ' + (${view.question.task} ? 'One' : 'Two')"></div>
+
+    <div>
+        <h3 class="sub-title">Topic</h3>
+        <p th:text="${view.question.title}"></p>
+        <div th:if="${not #strings.isEmpty(view.question.image)}">
+            <img th:src="${view.question.image}" width="500" alt="Task Image"/>
+        </div>
+    </div>
+
+    <div>
+        <div class="sub-title">User's Answer</div>
+        <div class="text-box" th:if="${view.answer != null}" th:text="${view.answer.answer}"></div>
+        <div class="text-box" th:if="${view.answer == null}">
+            <i>No answer provided</i>
+        </div>
+    </div>
+
+    <div th:if="${view.feedback != null}">
+        <div class="divider"></div>
+        <div class="section-title">Feedback:</div>
+
+        <div>
+            <strong>Overall: </strong>
+            <span th:text="${view.score}"></span>
+        </div>
+        <div th:text="${view.summary}"></div>
+
+        <!-- Feedback Sections -->
+        <div th:if="${view.feedback.taskResponse != null}">
+            <div class="sub-title">Task Response</div>
+            <div th:insert="~{::feedbackFragment(${view.feedback.taskResponse})}"></div>
+        </div>
+        <div th:if="${view.feedback.taskAchievement != null}">
+            <div class="sub-title">Task Achievement</div>
+            <div th:insert="~{::feedbackFragment(${view.feedback.taskAchievement})}"></div>
+        </div>
+        <div th:if="${view.feedback.coherenceAndCohesion}">
+            <div class="sub-title">Coherence and Cohesion</div>
+            <div th:insert="~{::feedbackFragment(${view.feedback.coherenceAndCohesion})}"></div>
+        </div>
+        <div th:if="${view.feedback.lexicalResource}">
+            <div class="sub-title">Lexical Resource</div>
+            <div th:insert="~{::feedbackFragment(${view.feedback.lexicalResource})}"></div>
+        </div>
+        <div th:if="${view.feedback.grammaticalRangeAndAccuracy}">
+            <div class="sub-title">Grammatical Range and Accuracy</div>
+            <div th:insert="~{::feedbackFragment(${view.feedback.grammaticalRangeAndAccuracy})}"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Fragment -->
+<th:block th:fragment="feedbackFragment(feedback)">
+    <div th:if="${feedback != null}">
+        <div><strong>Score:</strong> <span th:text="${feedback.score}"></span></div>
+        <div><strong>Reason:</strong> <span th:text="${feedback.reason}"></span></div>
+
+        <div th:each="mistake : ${feedback.mistakes}">
+            <div style="margin-top: 8px;">
+                <div><strong>Mistake:</strong> <span th:text="${mistake.mistake}"></span></div>
+                <div><strong>Explanation:</strong> <span th:text="${mistake.explanation}"></span></div>
+                <div><strong>Improved Version:</strong> <span th:text="${mistake.improvedVersion}"></span></div>
+            </div>
+        </div>
+        <div class="divider"></div>
+    </div>
+</th:block>
+
+</body>
+</html>

@@ -20,7 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -133,14 +136,6 @@ public class BookingService {
         return JResponse.success(response);
     }
 
-    private List<BookingResponse> toResponses(List<Booking> bookings) {
-        List<BookingResponse> responses = new ArrayList<>();
-        for (Booking booking : bookings) {
-            responses.add(toDto(booking));
-        }
-        return responses;
-    }
-
     public JResponse getBookingId(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new NotfoundException("Booking not found."));
@@ -191,10 +186,6 @@ public class BookingService {
         return response;
     }
 
-    public void saveBooking(Booking booking) {
-        bookingRepository.save(booking);
-    }
-
     public JResponse getAllBookingsByUser(User currentUser, Long userId) {
         List<BookingGroup> bookingGroups = bookingGroupRepository.findAllByUser_Id(userId);
         if (bookingGroups.isEmpty()) {
@@ -204,15 +195,47 @@ public class BookingService {
         for (BookingGroup bookingGroup : bookingGroups) {
             BookingGroupResponse response = new BookingGroupResponse();
             response.setId(bookingGroup.getId());
-            response.setDate(bookingGroup.getCreatedLocaleDate());
+            response.setDate(bookingGroup.getCreatedDate());
             response.setMockPackages(bookingGroup.getMockPackages());
-            response.setResults(examService.getAllMockExams(
-                    bookingGroup.getBookings()
-                            .stream()
-                            .map(Booking::getMockTestExam)
-                            .toList(), userId));
+            response.setResults(convertResponse(bookingGroup.getBookings()));
             responses.add(response);
         }
         return JResponse.success(responses);
+    }
+
+    private List<MockExamResponse> convertResponse(List<Booking> bookings) {
+        List<MockExamResponse> responses = new ArrayList<>();
+
+        for (Booking booking : bookings) {
+            MockExamResponse response = new MockExamResponse();
+            MockTestExam exam = booking.getMockTestExam();
+            response.setExamStatus(booking.getStatus());
+            if (exam != null) {
+                ExamScore score = exam.getScore();
+                if (score == null) {
+                    score = new ExamScore();
+                }
+                response.setSpeaking(score.getSpeaking());
+                response.setReading(score.getReading());
+                response.setListening(score.getListening());
+                response.setWriting(score.getWriting());
+                response.setStatus(score.getStatus());
+                response.setStartDate(exam.getStartDate());
+                response.setEndDate(exam.getSubmittedDate());
+                response.setId(exam.getId());
+                response.setType("mock_exam");
+            } else {
+                response.setId(booking.getId());
+                response.setType("booking");
+            }
+            response.setTime(booking.getTestTime());
+            response.setTestDate(booking.getMainTestDate());
+            responses.add(response);
+        }
+        responses.sort(Comparator.comparing(
+                MockExamResponse::getTestDate,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        ));
+        return responses;
     }
 }

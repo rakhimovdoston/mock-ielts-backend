@@ -5,8 +5,8 @@ import com.search.teacher.model.entities.MockPackages;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -14,6 +14,6 @@ import java.util.List;
 public class BookingGroupResponse {
     private Long id;
     private MockPackages mockPackages;
-    private LocalDate date;
+    private Date date;
     private List<MockExamResponse> results = new ArrayList<>();
 }

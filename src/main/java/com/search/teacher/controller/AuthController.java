@@ -3,15 +3,13 @@ package com.search.teacher.controller;
 import com.search.teacher.dto.AuthenticationRequest;
 import com.search.teacher.dto.request.RefreshTokenReq;
 import com.search.teacher.model.response.JResponse;
+import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.service.user.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -19,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final UserService userService;
+
 
     public AuthController(UserService userService) {
         this.userService = userService;

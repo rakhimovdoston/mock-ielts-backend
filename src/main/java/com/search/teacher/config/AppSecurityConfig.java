@@ -59,6 +59,7 @@ public class AppSecurityConfig {
                         authorize ->
                                 authorize
                                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+                                        .requestMatchers(HttpMethod.GET, "/mock-exam-result/**").permitAll()
                                         .requestMatchers(SWAGGER_URL).permitAll()
                                         .anyRequest().authenticated()
                 )

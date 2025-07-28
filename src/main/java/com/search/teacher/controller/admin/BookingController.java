@@ -38,7 +38,7 @@ public class BookingController {
         return bookingService.getAllBookingData(date, time, branchId, page, size, type);
     }
 
-    @GetMapping("bookings")
+    @GetMapping("by-user")
     public JResponse getBookingsByUser(@RequestParam(value = "userId", required = false) Long userId) {
         return bookingService.getAllBookingsByUser(securityUtils.getCurrentUser(), userId);
     }

@@ -27,14 +27,14 @@ public class EmailService {
         this.htmlFileService = htmlFileService;
     }
 
-    public String sendMockExamResult(User user, Date testDate, ExamScore score) {
+    public String sendMockExamResult(User user, Date testDate, ExamScore score, String pdfDownloadUrl) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(user.getEmail());
             helper.setSubject("Your Mock Exam Results - Everest CDI");
-            String htmlContent = htmlFileService.generateMockResultHtml(testDate, score, user.getFirstname() + " " + user.getLastname());
+            String htmlContent = htmlFileService.generateMockResultHtml(testDate, score, user.getFirstname() + " " + user.getLastname(), pdfDownloadUrl);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);

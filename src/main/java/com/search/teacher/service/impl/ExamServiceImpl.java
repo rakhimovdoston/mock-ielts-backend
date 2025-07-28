@@ -37,22 +37,32 @@ import com.search.teacher.model.response.ErrorMessages;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.*;
 import com.search.teacher.service.EmailService;
+import com.search.teacher.service.EskizSmsService;
 import com.search.teacher.service.ai.AIService;
-import com.search.teacher.service.exam.BookingService;
 import com.search.teacher.service.exam.ExamService;
+import com.search.teacher.service.html.HtmlFileService;
 import com.search.teacher.utils.Constants;
+import com.search.teacher.utils.DateUtils;
 import com.search.teacher.utils.ExamUtils;
 import com.search.teacher.utils.Utils;
-import jdk.jshell.execution.Util;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 
@@ -60,6 +70,8 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class ExamServiceImpl implements ExamService {
 
+    @Value("${sms.pdf.url}")
+    private String downloadUrl;
     private final Logger logger = LoggerFactory.getLogger(ExamServiceImpl.class);
     private final MockTestExamRepository mockTestExamRepository;
     private final ReadingRepository readingRepository;
@@ -72,10 +84,13 @@ public class ExamServiceImpl implements ExamService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final ScoreRepository scoreRepository;
-    private final BookingService bookingService;
+    private final BookingRepository bookingRepository;
     private final AIService aiService;
     private final CheckWritingRepository checkWritingRepository;
+    private final CheckWritingHistoryRepository checkWritingHistoryRepository;
+    private final EskizSmsService eskizSmsService;
     private final ObjectMapper objectMapper;
+    private final HtmlFileService htmlFileService;
 
     @Override
     public JResponse getExam(User currentUser, String id) {
@@ -100,19 +115,22 @@ public class ExamServiceImpl implements ExamService {
         if (booking == null) {
             booking = new Booking();
             booking.setUserId(currentUser.getId());
+            if (currentUser.getUsername().equals("testUser")) {
+                booking.setMainTestDate(LocalDate.now());
+            }
             booking.setMockTestExam(mockTestExam);
-            booking.setStatus(Status.CREATED.name());
-            bookingService.saveBooking(booking);
+            booking.setStatus(Status.PROCESS.name());
+            bookingRepository.save(booking);
         }
         if (listening && reading && writing) {
             mockTestExam.setSubmittedDate(new Date());
             mockTestExam.setStatus(Status.closed.name());
             booking.setStatus(Status.COMPLETED.name());
-            bookingService.saveBooking(booking);
+            bookingRepository.save(booking);
         } else {
-            if (!booking.getStatus().equals(Status.IN_COMPLETED.name()) && !booking.getStatus().equals(Status.COMPLETED.name())) {
-                booking.setStatus(Status.IN_COMPLETED.name());
-                bookingService.saveBooking(booking);
+            if (!booking.getStatus().equals(Status.PROCESS.name()) && !booking.getStatus().equals(Status.COMPLETED.name())) {
+                booking.setStatus(Status.PROCESS.name());
+                bookingRepository.save(booking);
             }
         }
         mockTestExamRepository.save(mockTestExam);
@@ -155,10 +173,10 @@ public class ExamServiceImpl implements ExamService {
         }
 
         MockTestExam mockTestExam = new MockTestExam();
-        Booking booking = bookingService.getUserExistBooking(user);
+        Booking booking = bookingRepository.findFirstByUserIdAndMainTestDate(user.getId(), LocalDate.now());
         if (booking != null && booking.getStatus().equals(Status.CREATED.name())) {
             booking.setStatus(Status.PROCESS.name());
-            bookingService.saveBooking(booking);
+            bookingRepository.save(booking);
         }
         mockTestExam.setStatus(Status.opened.name());
         mockTestExam.setExamUniqueId(UUID.randomUUID().toString().replaceAll("-", ""));
@@ -204,7 +222,7 @@ public class ExamServiceImpl implements ExamService {
             saveUserAnswers(answer.answers(), userExamAnswers);
             userExamAnswerRepository.save(userExamAnswers);
         }
-
+        setScoreType(mockTestExam, currentUser, request.type());
         return JResponse.success();
     }
 
@@ -222,6 +240,7 @@ public class ExamServiceImpl implements ExamService {
             userWritingAnswer.setWritingId(answer.id());
             userWritingAnswerRepository.save(userWritingAnswer);
         }
+        checkWritingAsync(mockTestExam, currentUser);
         return JResponse.success();
     }
 
@@ -247,7 +266,7 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public JResponse sendAnswerToEmail(User currentUser, EmailAnswerRequest request) {
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new NotfoundException("User not found"));
+                .orElseThrow(() -> new NotfoundException("Student not found"));
 
         if (!user.getUserId().equals(currentUser.getId()))
             return JResponse.error(403, "You can't send answer to that user.");
@@ -259,45 +278,117 @@ public class ExamServiceImpl implements ExamService {
 
         ExamScore score = mockTestExam.getScore();
         Date testDate = mockTestExam.getTestDate() != null ? mockTestExam.getTestDate() : mockTestExam.getSubmittedDate() != null ? mockTestExam.getSubmittedDate() : mockTestExam.getUpdatedDate();
-        String response = emailService.sendMockExamResult(user, testDate, score);
+        String response = emailService.sendMockExamResult(user, testDate, score, downloadUrl + mockTestExam.getExamUniqueId());
+        sendSmsTo(user, mockTestExam, testDate);
         score.setStatus(response);
         examScoreRepository.save(score);
         return JResponse.success();
     }
 
     @Override
-    public JResponse checkWriting(User currentUser, AICheckerRequest request) {
-        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(request.examId(), currentUser);
-        if (mockTestExam == null) {
-            return JResponse.error(404, "This exam not found.");
-        }
-        List<UserWritingAnswer> writingsAnswers = mockTestExam.getWritingAnswers();
+    public JResponse refreshUserAnswer(User currentUser, EmailAnswerRequest request) {
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new NotfoundException("Student not found"));
 
+        if (!user.getUserId().equals(currentUser.getId()))
+            return JResponse.error(403, "You can't refresh answer to that user.");
+        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(request.examId(), user);
+
+        if (mockTestExam == null) {
+            return JResponse.error(404, "No such exam was found.");
+        }
+        setScore(mockTestExam, user);
         return JResponse.success();
     }
 
     @Override
-    public List<MockExamResponse> getAllMockExams(List<MockTestExam> exams, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotfoundException("User not found"));
+    public ResponseEntity<byte[]> downloadPdfFile(String id) {
+        MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueId(id);
+        if (mockTestExam == null) {
+            return ResponseEntity.notFound().build();
+        }
+        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
+        List<UserWritingAnswer> answers = mockTestExam.getWritingAnswers();
+
+        String htmlContent = htmlFileService.generateResultHtmlPdf(writings, answers);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try (OutputStream os = outputStream) {
+            ITextRenderer renderer = new ITextRenderer();
+            renderer.setDocumentFromString(htmlContent);
+            renderer.layout();
+            renderer.createPDF(os);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "MockExam.pdf");
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(outputStream.toByteArray());
+
+        } catch (Exception e) {
+            logger.error("PDF generation failed: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @Override
+    public JResponse checkWriting(User currentUser, AICheckerRequest request) {
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new NotfoundException("Student not found"));
+
+        MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(request.examId(), user);
+        if (mockTestExam == null) {
+            return JResponse.error(404, "This exam not found.");
+        }
+        List<UserWritingAnswer> answers = mockTestExam.getWritingAnswers();
+        List<CheckWriting> checkWritings = answers.stream().map(ans -> ans.getCheckWriting() != null ? ans.getCheckWriting() : null)
+                .filter(Objects::nonNull).toList();
+        if (!checkWritings.isEmpty()) {
+            List<CheckWritingHistory> histories = new ArrayList<>();
+            for (CheckWriting checkWriting : checkWritings) {
+                CheckWritingHistory history = new CheckWritingHistory();
+                history.setScore(checkWriting.getScore());
+                history.setSummary(checkWriting.getSummary());
+                history.setResponse(checkWriting.getResponse());
+                history.setUserWritingAnswer(checkWriting.getUserWritingAnswer());
+                history.setDeleteByUserId(currentUser.getId());
+                histories.add(history);
+                checkWriting.getUserWritingAnswer().setCheckWriting(null);
+            }
+
+            checkWritingRepository.deleteAll(checkWritings);
+            checkWritingHistoryRepository.saveAll(histories);
+        }
+
+        Double score = checkWritingWithAI(mockTestExam);
+        ExamScore examScore = mockTestExam.getScore();
+        if (examScore == null) {
+            examScore = new ExamScore();
+            examScore.setMockTestExam(mockTestExam);
+        }
+        examScore.setWriting(String.valueOf(score));
+        examScoreRepository.save(examScore);
+        return JResponse.success();
+    }
+
+    @Override
+    public List<MockExamResponse> getAllMockExams(List<MockTestExam> exams) {
         List<MockExamResponse> responses = new ArrayList<>();
         for (MockTestExam exam : exams) {
             MockExamResponse response = new MockExamResponse();
             ExamScore score = exam.getScore();
+            if (score == null) {
+                score = new ExamScore();
+            }
+            response.setSpeaking(score.getSpeaking());
+            response.setReading(score.getReading());
+            response.setListening(score.getListening());
+            response.setWriting(score.getWriting());
+            response.setStatus(score.getStatus());
+
             Booking booking = exam.getBooking();
-            if (booking != null && booking.getStatus().equals(Status.COMPLETED.name())) {
-                if (score == null) {
-                    score = setScore(exam, user);
-                }
-                response.setSpeaking(score.getSpeaking());
-
-                Double writingScore = checkWritingWithAI(exam);
-                response.setWriting(String.valueOf(writingScore));
-
-                response.setReading(score.getReading());
-                response.setListening(score.getListening());
-                response.setStatus(score.getStatus());
-                response.setExamStatus(getExamStatus(booking.getStatus()));
+            if (booking != null) {
+                response.setExamStatus(booking.getStatus());
             }
             response.setStartDate(exam.getStartDate());
             response.setEndDate(exam.getSubmittedDate());
@@ -317,7 +408,7 @@ public class ExamServiceImpl implements ExamService {
             return JResponse.error(404, "No exams found.");
         }
 
-        return JResponse.success(getAllMockExams(exams.getContent(), user.getUserId()));
+        return JResponse.success(getAllMockExams(exams.getContent()));
     }
 
     private Double checkWritingWithAI(MockTestExam mockTestExam) {
@@ -358,9 +449,13 @@ public class ExamServiceImpl implements ExamService {
             JsonNode data = aiResponse.getData();
             WritingAIResponse writingAIResponse = null;
             try {
-                writingAIResponse = objectMapper.treeToValue(data, WritingAIResponse.class);
+                if (data.isTextual()) {
+                    writingAIResponse = objectMapper.readValue(data.asText(), WritingAIResponse.class);
+                } else {
+                    writingAIResponse = objectMapper.treeToValue(data, WritingAIResponse.class);
+                }
             } catch (JsonProcessingException e) {
-                logger.warn("AI Response could not be parsed into WritingAIResponse for exam id {}", mockTestExam.getId());
+                logger.warn("AI Response could not be parsed into WritingAIResponse for exam id {}, Error: {}", mockTestExam.getId(), e.getMessage());
             }
             if (writingAIResponse == null) return 0.0;
 
@@ -385,25 +480,97 @@ public class ExamServiceImpl implements ExamService {
         return feedback.getOverallScore();
     }
 
-    private String getExamStatus(String status) {
-        return switch (status) {
-            case "COMPLETED" -> "Completed";
-            case "IN_COMPLETED" -> "Processing";
-            case "CREATED" -> "Created";
-            default -> "Unknown";
-        };
-    }
-
     private ExamScore setScore(MockTestExam mockTestExam, User currentUser) {
-        ExamScore score = new ExamScore();
+        ExamScore score = mockTestExam.getScore();
+        if (score == null) {
+            score = new ExamScore();
+            score.setMockTestExam(mockTestExam);
+        }
         int reading = checkAnswers(mockTestExam.getReadings(), "reading", mockTestExam.getUserExamAnswers());
         int listening = checkAnswers(mockTestExam.getListening(), "listening", mockTestExam.getUserExamAnswers());
         score.setReading(getBall("reading", reading, scoreRepository.findAll()));
         score.setListening(getBall("listening", listening, scoreRepository.findAll()));
+        Double writingScore = checkWritingWithAI(mockTestExam);
+        score.setWriting(String.valueOf(writingScore));
         score.setReadingCount(reading);
         score.setListeningCount(listening);
         score.setAssessmentByUserId(currentUser.getId());
-        score.setMockTestExam(mockTestExam);
+        examScoreRepository.save(score);
+        return score;
+    }
+
+    private void sendSmsTo(User user, MockTestExam exam, Date testDate) {
+        if (user.getPhone() == null) {
+            return;
+        }
+
+        ExamScore score = exam.getScore();
+        String messageTemplate = """
+                %s
+                Thank you for choosing EVEREST CDI MOCK , here are the provisional results of the mock exam you sat on %s
+                
+                Overall: %s
+                Listening: %s (%s/40)
+                Reading: %s (%s/40)
+                Writing: %s
+                Speaking: %s
+                Download the mock exam result here: %s
+                """;
+        String url = downloadUrl + exam.getExamUniqueId();
+        String fullName = user.getFirstname() + " " + user.getLastname();
+        String message = String.format(messageTemplate,
+                fullName.toUpperCase(), // full name
+                DateUtils.formatMockResult(testDate), // test date
+                Utils.countOverall(score), // overall
+                score.getListening(), // listening score
+                score.getListeningCount(), // listening count
+                score.getReading(), // reading score
+                score.getReadingCount(), // reading count
+                score.getWriting(), // writing score
+                score.getSpeaking(), // speaking score
+                url
+        );
+        String phoneNumber = user.getPhone().replaceAll("[^\\d]", "");
+        if (!phoneNumber.startsWith("+"))
+            phoneNumber = "+" + phoneNumber;
+//        eskizSmsService.sendSms(phoneNumber, message);
+        logger.info("SMS sent to {} for exam {} message: {}", phoneNumber, exam.getExamUniqueId(), message);
+    }
+
+    @Async("writingExecutor")
+    public void checkWritingAsync(MockTestExam mockTestExam, User currentUser) {
+        ExamScore score = mockTestExam.getScore();
+        if (score == null) {
+            score = new ExamScore();
+            score.setMockTestExam(mockTestExam);
+        }
+        Double writingScore = checkWritingWithAI(mockTestExam);
+        score.setWriting(String.valueOf(writingScore));
+        score.setAssessmentByUserId(currentUser.getId());
+        examScoreRepository.save(score);
+        logger.info("Writing score for exam {} is {} userId: {}", mockTestExam.getId(), writingScore, currentUser.getId());
+    }
+
+    private ExamScore setScoreType(MockTestExam mockTestExam, User user, String type) {
+        ExamScore score = mockTestExam.getScore();
+        if (score == null) {
+            score = new ExamScore();
+            score.setMockTestExam(mockTestExam);
+        }
+        if (type.equals("writing")) {
+            Double writingScore = checkWritingWithAI(mockTestExam);
+            score.setWriting(String.valueOf(writingScore));
+        } else {
+            int count = checkAnswers(mockTestExam.getReadings(), type, mockTestExam.getUserExamAnswers());
+            if (type.equals("listening")) {
+                score.setListening(getBall(type, count, scoreRepository.findAll()));
+                score.setListeningCount(count);
+            } else if (type.equals("reading")) {
+                score.setReading(getBall(type, count, scoreRepository.findAll()));
+                score.setReadingCount(count);
+            }
+        }
+        score.setAssessmentByUserId(user.getId());
         examScoreRepository.save(score);
         return score;
     }
@@ -412,7 +579,8 @@ public class ExamServiceImpl implements ExamService {
         for (Score score : scores) {
             if (type.equals("reading")) {
                 String reading = score.getReading();
-                if (checkBall(count, reading)) return score.getBand();
+                if (checkBall(count, reading))
+                    return score.getBand();
             } else if (type.equals("listening")) {
                 String listening = score.getListening();
                 if (checkBall(count, listening)) return score.getBand();
@@ -626,6 +794,10 @@ public class ExamServiceImpl implements ExamService {
         List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
         List<WritingResponse> questions = WritingMapper.INSTANCE.toList(writings);
         WritingHistoryResponse response = getWritingHistoryResponse(writingAnswers, questions);
+        ExamScore score = mockTestExam.getScore();
+        if (score != null) {
+            response.setScore(score.getWriting());
+        }
         return JResponse.success(response);
     }
 
@@ -637,6 +809,7 @@ public class ExamServiceImpl implements ExamService {
             response.setId(answer.getId());
             response.setAnswer(answer.getAnswer());
             response.setWritingId(answer.getWritingId());
+            response.setFeedback(answer.getCheckWriting() != null ? answer.getCheckWriting().getResponse() : null);
             answers.add(response);
         }
 

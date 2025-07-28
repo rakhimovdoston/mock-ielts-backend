@@ -24,7 +24,7 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public ClassLoaderTemplateResolver htmlTemplateResolver(){
+    public ClassLoaderTemplateResolver htmlTemplateResolver() {
         ClassLoaderTemplateResolver emailTemplateResolver = new ClassLoaderTemplateResolver();
         emailTemplateResolver.setPrefix("/templates/");
         emailTemplateResolver.setSuffix(".html");
@@ -33,33 +33,27 @@ public class ApplicationConfig {
         return emailTemplateResolver;
     }
 
-    @Bean(name = "readingExecutor")
-    public Executor readingExecutor() {
-        return buildExecutor("Reading-");
-    }
-
-    @Bean(name = "listeningExecutor")
-    public Executor listeningExecutor() {
-        return buildExecutor("Listening-");
-    }
-
     @Bean(name = "writingExecutor")
-    public Executor writingExecutor() {
-        return buildExecutor("Writing-");
-    }
-
-    private ThreadPoolTaskExecutor buildExecutor(String prefix) {
+    public ThreadPoolTaskExecutor buildExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
+        executor.setCorePoolSize(5);
         executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix(prefix);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("WritingTaskExecutor-");
         executor.initialize();
         return executor;
     }
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(30))
+                .setReadTimeout(Duration.ofSeconds(30))
+                .build();
+    }
+
+    @Bean("smsTemplate")
+    public RestTemplate restSmsTemplate(RestTemplateBuilder builder) {
         return builder
                 .setConnectTimeout(Duration.ofSeconds(30))
                 .setReadTimeout(Duration.ofSeconds(30))

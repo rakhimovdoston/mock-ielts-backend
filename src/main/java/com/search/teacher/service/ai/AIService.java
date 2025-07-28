@@ -94,7 +94,7 @@ public class AIService {
             log.error("Error with AI service: error: {}, AI URL: {}", e.getMessage(), url);
         } finally {
             long duration = System.currentTimeMillis() - start;
-            requestLogRepository.save(new RequestLog(url, "POST", userRequest, response != null ? response.asText() : errorJson != null ? errorJson.asText() : "", duration, status, errorMessage));
+            requestLogRepository.save(new RequestLog(url, "POST", userRequest, response != null ? response.asText() : errorJson != null ? errorJson.asText() : "", duration, status, errorMessage, code));
         }
         return new AIResponse<>(response, errorMessage, status, code, errorJson);
     }

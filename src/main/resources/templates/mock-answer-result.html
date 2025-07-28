@@ -43,6 +43,20 @@
     <p class="score"><span class="highlight">Reading (R):</span> <span th:text="${reading}"></span> (<span th:text="${readingCount}"></span>/40)</p>
     <p class="score"><span class="highlight">Writing (W):</span> <span th:text="${writing}"></span></p>
     <p class="score"><span class="highlight">Speaking (S):</span> <span th:text="${speaking}"></span></p>
+    <p style="text-align: center; margin-top: 30px;">
+        <a th:href="@{${pdfDownloadUrl}}"
+           style="
+                background-color: #2980b9;
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+                display: inline-block;
+           ">
+            Check Writing Feedback
+        </a>
+    </p>
 </div>
 </body>
 </html>

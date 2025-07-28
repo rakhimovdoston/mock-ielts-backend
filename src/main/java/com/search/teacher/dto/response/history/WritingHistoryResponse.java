@@ -12,4 +12,5 @@ import java.util.List;
 public class WritingHistoryResponse {
     private List<WritingResponse> questions = new ArrayList<>();
     private List<WritingUserAnswerResponse> answers = new ArrayList<>();
+    private String score;
 }

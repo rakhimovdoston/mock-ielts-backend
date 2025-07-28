@@ -11,4 +11,6 @@ import java.util.List;
 public interface UserWritingAnswerRepository extends JpaRepository<UserWritingAnswer, Long> {
 
     boolean existsByMockTestExamAndWritingIdIn(MockTestExam mockTestExam, List<Long> writingId);
+
+    List<UserWritingAnswer> findAllByMockTestExam(MockTestExam mockTestExam);
 }

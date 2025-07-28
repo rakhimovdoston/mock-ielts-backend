@@ -41,6 +41,11 @@ public class MockExamController {
         return examService.allExams(securityUtils.getCurrentUser(), filter, userId);
     }
 
+    @PostMapping("refresh-answer")
+    public JResponse refreshAnswer(@RequestBody EmailAnswerRequest request) {
+        return examService.refreshUserAnswer(securityUtils.getCurrentUser(), request);
+    }
+
     @PostMapping("send-answer")
     public JResponse sendAnswer(@RequestBody EmailAnswerRequest request) {
         return examService.sendAnswerToEmail(securityUtils.getCurrentUser(), request);
