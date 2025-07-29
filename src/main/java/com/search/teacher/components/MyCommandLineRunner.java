@@ -6,6 +6,7 @@ import com.search.teacher.model.entities.*;
 import com.search.teacher.model.enums.RoleType;
 import com.search.teacher.model.response.AIResponse;
 import com.search.teacher.repository.*;
+import com.search.teacher.service.EskizSmsService;
 import com.search.teacher.service.ai.AIService;
 import com.search.teacher.service.FileUploadService;
 import com.search.teacher.service.exam.BookingService;
@@ -40,6 +41,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
     private final MockTestExamRepository mockTestExamRepository;
     private final WritingRepository writingRepository;
     private final UserWritingAnswerRepository userWritingAnswerRepository;
+    private final EskizSmsService eskizSmsService;
 
     @Override
     public void run(String... args) throws Exception {

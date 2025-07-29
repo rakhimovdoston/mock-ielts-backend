@@ -507,7 +507,7 @@ public class ExamServiceImpl implements ExamService {
         ExamScore score = exam.getScore();
         String messageTemplate = """
                 %s
-                Thank you for choosing EVEREST CDI MOCK , here are the provisional results of the mock exam you sat on %s
+                Thank you for choosing EVEREST CDI MOCK , here are the results of %s
                 
                 Overall: %s
                 Listening: %s (%s/40)
