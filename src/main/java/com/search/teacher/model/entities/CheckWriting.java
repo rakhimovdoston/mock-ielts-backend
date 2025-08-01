@@ -19,6 +19,7 @@ public class CheckWriting extends BaseEntity {
     private WritingAIFeedback response;
 
     private Double score;
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
     @OneToOne

@@ -24,10 +24,11 @@ public class RequestLog extends BaseEntity {
     private Long duration;
     private String status;
     private String error;
+    private String type;
 
     public RequestLog() {}
 
-    public RequestLog(String url, String method, String requestBody, String responseBody, Long duration, String status, String error, int code) {
+    public RequestLog(String url, String method, String requestBody, String responseBody, Long duration, String status, String error, int code, String type) {
         this.url = url;
         this.method = method;
         this.requestBody = requestBody;
@@ -36,5 +37,6 @@ public class RequestLog extends BaseEntity {
         this.status = status;
         this.error = error;
         this.code = code;
+        this.type = type;
     }
 }

@@ -41,10 +41,7 @@ import com.search.teacher.service.EskizSmsService;
 import com.search.teacher.service.ai.AIService;
 import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.service.html.HtmlFileService;
-import com.search.teacher.utils.Constants;
-import com.search.teacher.utils.DateUtils;
-import com.search.teacher.utils.ExamUtils;
-import com.search.teacher.utils.Utils;
+import com.search.teacher.utils.*;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -62,9 +59,13 @@ import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -91,6 +92,7 @@ public class ExamServiceImpl implements ExamService {
     private final EskizSmsService eskizSmsService;
     private final ObjectMapper objectMapper;
     private final HtmlFileService htmlFileService;
+    private final SmsInfoRepository smsInfoRepository;
 
     @Override
     public JResponse getExam(User currentUser, String id) {
@@ -240,7 +242,7 @@ public class ExamServiceImpl implements ExamService {
             userWritingAnswer.setWritingId(answer.id());
             userWritingAnswerRepository.save(userWritingAnswer);
         }
-        checkWritingAsync(mockTestExam, currentUser);
+//        checkWritingAsync(mockTestExam, currentUser);
         return JResponse.success();
     }
 
@@ -260,6 +262,9 @@ public class ExamServiceImpl implements ExamService {
             score.setSpeaking(request.score());
         }
         examScoreRepository.save(score);
+        if (request.type().equals("speaking") && score.getWriting() != null) {
+            sendAnswerToEmail(currentUser, new EmailAnswerRequest(user.getId(), mockTestExam.getId()));
+        }
         return JResponse.success();
     }
 
@@ -279,7 +284,7 @@ public class ExamServiceImpl implements ExamService {
         ExamScore score = mockTestExam.getScore();
         Date testDate = mockTestExam.getTestDate() != null ? mockTestExam.getTestDate() : mockTestExam.getSubmittedDate() != null ? mockTestExam.getSubmittedDate() : mockTestExam.getUpdatedDate();
         String response = emailService.sendMockExamResult(user, testDate, score, downloadUrl + mockTestExam.getExamUniqueId());
-        sendSmsTo(user, mockTestExam, testDate);
+        sendSmsTo(user, mockTestExam, testDate, response);
         score.setStatus(response);
         examScoreRepository.save(score);
         return JResponse.success();
@@ -307,13 +312,17 @@ public class ExamServiceImpl implements ExamService {
         if (mockTestExam == null) {
             return ResponseEntity.notFound().build();
         }
-        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
+        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings())
+                .stream()
+                .sorted(Comparator.comparing(Writing::isTask).reversed())
+                .collect(Collectors.toList());
         List<UserWritingAnswer> answers = mockTestExam.getWritingAnswers();
 
         String htmlContent = htmlFileService.generateResultHtmlPdf(writings, answers);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try (OutputStream os = outputStream) {
+            Files.writeString(Paths.get("output.html"), htmlContent, StandardCharsets.UTF_8);
             ITextRenderer renderer = new ITextRenderer();
             renderer.setDocumentFromString(htmlContent);
             renderer.layout();
@@ -415,59 +424,71 @@ public class ExamServiceImpl implements ExamService {
         List<UserWritingAnswer> userWritingAnswer = mockTestExam.getWritingAnswers();
         List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
 
-        Writing taskOne = null;
-        Writing taskTwo = null;
+        double taskOneScore = 0.0;
+        double taskTwoScore = 0.0;
 
-        for (Writing writing : writings) {
-            if (writing.isTask()) {
-                taskOne = writing;
-            } else {
-                taskTwo = writing;
+        Writing taskOne = writings.stream().filter(Writing::isTask).findFirst().orElse(null);
+
+        if (taskOne != null) {
+            UserWritingAnswer answerOne = userWritingAnswer.stream().filter(ans -> ans.getWritingId().equals(taskOne.getId())).findFirst().orElse(null);
+            if (answerOne != null) {
+                taskOneScore = checkWritingModule(answerOne, taskOne);
             }
         }
 
-        if (taskTwo == null || taskOne == null) return 0.0;
+        Writing taskTwo = writings.stream().filter(writing -> !writing.isTask()).findFirst().orElse(null);
 
-        UserWritingAnswer answerOne = null;
-        UserWritingAnswer answerTwo = null;
+        if (taskTwo != null) {
+            UserWritingAnswer answerTwo = userWritingAnswer.stream().filter(ans -> ans.getWritingId().equals(taskTwo.getId())).findFirst().orElse(null);
+            if (answerTwo != null) {
+                taskTwoScore = checkWritingModule(answerTwo, taskTwo);
+            }
+        }
+        double totalScore = taskOneScore + taskTwoScore;
+        return Utils.roundToNearestHalfBand(totalScore / 2);
+    }
 
-        for (UserWritingAnswer answer : userWritingAnswer) {
-            if (answer.getWritingId().equals(taskOne.getId()))
-                answerOne = answer;
-            if (answer.getWritingId().equals(taskTwo.getId()))
-                answerTwo = answer;
+    private Double checkWritingModule(UserWritingAnswer answer, Writing writing) {
+        if (answer.getCheckWriting() != null) {
+            return answer.getCheckWriting().getScore();
         }
 
-        if (answerOne == null || answerTwo == null) return 0.0;
+        if (StringUtils.isNullOrEmpty(answer.getAnswer())) {
+            return 0.0;
+        }
 
-        if (answerOne.getCheckWriting() == null && answerTwo.getCheckWriting() == null) {
-            AIResponse<JsonNode> aiResponse = aiService.getOverallReply(taskOne.getTitle(), taskTwo.getTitle(), answerOne.getAnswer(), answerTwo.getAnswer(), taskOne.getImage());
-            if (!aiResponse.isSuccess()) {
-                logger.error("Check Writing Method: {}", aiResponse.getMessage());
+        String imageDescription = "";
+        if (writing.isTask() && writing.getImage() != null && writing.getImageDescription() == null) {
+            imageDescription = aiService.getDescriptionImage(writing.getImage());
+            if (imageDescription == null) {
+                logger.warn("AI could not get image description for writing id {}", writing.getId());
                 return 0.0;
             }
-            JsonNode data = aiResponse.getData();
-            WritingAIResponse writingAIResponse = null;
-            try {
-                if (data.isTextual()) {
-                    writingAIResponse = objectMapper.readValue(data.asText(), WritingAIResponse.class);
-                } else {
-                    writingAIResponse = objectMapper.treeToValue(data, WritingAIResponse.class);
-                }
-            } catch (JsonProcessingException e) {
-                logger.warn("AI Response could not be parsed into WritingAIResponse for exam id {}, Error: {}", mockTestExam.getId(), e.getMessage());
-            }
-            if (writingAIResponse == null) return 0.0;
-
-            double totalScore = 0;
-            totalScore += saveCheckWriting(answerOne, writingAIResponse.getTaskOne());
-            totalScore += saveCheckWriting(answerTwo, writingAIResponse.getTaskTwo());
-            return Utils.roundToNearestHalfBand(totalScore / 2);
+            writing.setImageDescription(imageDescription);
+            writingRepository.save(writing);
+        } else {
+            imageDescription = writing.getImageDescription();
         }
-        CheckWriting writingOne = answerOne.getCheckWriting();
-        CheckWriting writingTwo = answerTwo.getCheckWriting();
-        double totalScore = writingOne.getScore() + writingTwo.getScore();
-        return Utils.roundToNearestHalfBand(totalScore / 2);
+
+        AIResponse<JsonNode> taskOneResponse = aiService.checkWriting(answer.getAnswer(), writing.getTitle(), imageDescription, writing.isTask());
+        if (!taskOneResponse.isSuccess()) {
+            logger.error("Check Writing {} Method: {}", writing.isTask(), taskOneResponse.getMessage());
+            return 0.0;
+        }
+        JsonNode data = taskOneResponse.getData();
+        WritingAIFeedback aiFeedback = null;
+        try {
+            if (data.isTextual()) {
+                aiFeedback = objectMapper.readValue(data.asText(), WritingAIFeedback.class);
+            } else {
+                aiFeedback = objectMapper.treeToValue(data, WritingAIFeedback.class);
+            }
+        } catch (JsonProcessingException e) {
+            logger.warn("AI Response could not be parsed into WritingAIResponse for Writing id {}, UserWriting id {} Error: {}", writing.getId(), answer.getId(), e.getMessage());
+        }
+
+        if (aiFeedback == null) return 0.0;
+        return saveCheckWriting(answer, aiFeedback);
     }
 
     private double saveCheckWriting(UserWritingAnswer answer, WritingAIFeedback feedback) {
@@ -499,11 +520,27 @@ public class ExamServiceImpl implements ExamService {
         return score;
     }
 
-    private void sendSmsTo(User user, MockTestExam exam, Date testDate) {
+    private void sendSmsTo(User user, MockTestExam exam, Date testDate, String emailResponse) {
         if (user.getPhone() == null) {
+            logger.warn("User {} has no phone number, skipping SMS sending", user.getId());
             return;
         }
-
+        String phoneNumber = user.getPhone().replaceAll("[^\\d]", "");
+        if (!phoneNumber.startsWith("+"))
+            phoneNumber = "+" + phoneNumber;
+        SmsInfo smsInfo = smsInfoRepository.findByPhoneNumberAndMockTestId(phoneNumber, exam.getId());
+        if (smsInfo != null) {
+            logger.info("SMS already sent for user {} for exam {}", user.getId(), exam.getId());
+            return;
+        } else {
+            smsInfo = new SmsInfo();
+            smsInfo.setEmailStatus(emailResponse);
+            smsInfo.setMockTestId(exam.getId());
+            smsInfo.setPhoneNumber(phoneNumber);
+            smsInfo.setUserId(user.getId());
+            smsInfo.setSmsStatus("error");
+            smsInfoRepository.save(smsInfo);
+        }
         ExamScore score = exam.getScore();
         String messageTemplate = """
                 %s
@@ -530,11 +567,12 @@ public class ExamServiceImpl implements ExamService {
                 score.getSpeaking(), // speaking score
                 url
         );
-        String phoneNumber = user.getPhone().replaceAll("[^\\d]", "");
-        if (!phoneNumber.startsWith("+"))
-            phoneNumber = "+" + phoneNumber;
-//        eskizSmsService.sendSms(phoneNumber, message);
-        logger.info("SMS sent to {} for exam {} message: {}", phoneNumber, exam.getExamUniqueId(), message);
+
+        String response = eskizSmsService.sendSms(phoneNumber, message);
+        smsInfo.setSmsStatus(response);
+        smsInfo.setSmsMessage(message);
+        smsInfoRepository.save(smsInfo);
+        logger.info("SMS sent to {} for exam {}, response SMS: {}", phoneNumber, exam.getExamUniqueId(), response);
     }
 
     @Async("writingExecutor")
@@ -791,7 +829,10 @@ public class ExamServiceImpl implements ExamService {
 
     private JResponse getWritingHistory(MockTestExam mockTestExam) {
         List<UserWritingAnswer> writingAnswers = mockTestExam.getWritingAnswers();
-        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
+        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings())
+                .stream()
+                .sorted(Comparator.comparing(Writing::isTask).reversed())
+                .collect(Collectors.toList());
         List<WritingResponse> questions = WritingMapper.INSTANCE.toList(writings);
         WritingHistoryResponse response = getWritingHistoryResponse(writingAnswers, questions);
         ExamScore score = mockTestExam.getScore();

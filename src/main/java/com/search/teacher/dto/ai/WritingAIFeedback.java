@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 public class WritingAIFeedback {
@@ -28,4 +31,10 @@ public class WritingAIFeedback {
 
     @JsonProperty("summary")
     private String summary;
+
+    @JsonProperty("encouragement")
+    private String encouragement;
+
+    @JsonProperty("stickers")
+    private List<String> stickers = new ArrayList<>();
 }

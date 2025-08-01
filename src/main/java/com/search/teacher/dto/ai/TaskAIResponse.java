@@ -14,6 +14,14 @@ public class TaskAIResponse {
     private Double score;
     @JsonProperty("reason")
     private String reason;
+    @JsonProperty("suggestion")
+    private String suggestion;
+
+    @JsonProperty("strength")
+    private String strength;
+    @JsonProperty("sticker")
+    private String sticker;
+
     @JsonProperty("mistakes")
     private List<TaskAIMistakes> mistakes = new ArrayList<>();
 }

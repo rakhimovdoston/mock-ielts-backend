@@ -8,6 +8,7 @@ import lombok.Setter;
 public class BranchResponse {
     private Long id;
     private String name;
+    private boolean active;
     private String description;
     private String location;
     private int maxStudents;

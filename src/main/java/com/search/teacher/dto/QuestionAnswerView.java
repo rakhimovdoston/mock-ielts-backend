@@ -6,6 +6,9 @@ import com.search.teacher.model.entities.Writing;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 public class QuestionAnswerView {
@@ -14,4 +17,6 @@ public class QuestionAnswerView {
     private WritingAIFeedback feedback;
     private String score;
     private String summary;
+    private String encouragement;
+    private List<String> stickers = new ArrayList<>();
 }

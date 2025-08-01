@@ -51,6 +51,33 @@
             border-radius: 8px;
             margin-top: 10px;
         }
+
+        /* Stickers style */
+        .stickers-list {
+            list-style-type: disc;
+            margin-left: 20px;
+            margin-top: 8px;
+            color: #0f5132;
+            font-weight: 600;
+        }
+
+        /* Mistakes style */
+        .mistakes-list {
+            list-style-type: decimal;
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .mistakes-list li {
+            margin-bottom: 16px;
+        }
+
+        /* Strength style */
+        .strength {
+            color: #055160;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -79,51 +106,75 @@
         <div class="section-title">Feedback:</div>
 
         <div>
-            <strong>Overall: </strong>
+            <strong>Overall Score: </strong>
             <span th:text="${view.score}"></span>
         </div>
-        <div th:text="${view.summary}"></div>
+        <div th:text="${view.summary}" style="margin-top:8px;"></div>
+
+        <div th:if="${view.encouragement != null}" style="margin-top:12px;">
+            <strong>Encouragement: </strong>
+            <span th:text="${view.encouragement}"></span>
+        </div>
+
+<!--        <div th:if="${view.stickers != null}">-->
+<!--            <strong>Stickers:</strong>-->
+<!--            <ul class="stickers-list">-->
+<!--                <li th:each="stic : ${view.stickers}" th:text="${stic}"></li>-->
+<!--            </ul>-->
+<!--        </div>-->
 
         <!-- Feedback Sections -->
         <div th:if="${view.feedback.taskResponse != null}">
             <div class="sub-title">Task Response</div>
-            <div th:insert="~{::feedbackFragment(${view.feedback.taskResponse})}"></div>
+            <div th:insert="~{::criterionFragment(${view.feedback.taskResponse})}"></div>
         </div>
+
         <div th:if="${view.feedback.taskAchievement != null}">
             <div class="sub-title">Task Achievement</div>
-            <div th:insert="~{::feedbackFragment(${view.feedback.taskAchievement})}"></div>
+            <div th:insert="~{::criterionFragment(${view.feedback.taskAchievement})}"></div>
         </div>
-        <div th:if="${view.feedback.coherenceAndCohesion}">
+
+        <div th:if="${view.feedback.coherenceAndCohesion != null}">
             <div class="sub-title">Coherence and Cohesion</div>
-            <div th:insert="~{::feedbackFragment(${view.feedback.coherenceAndCohesion})}"></div>
+            <div th:insert="~{::criterionFragment(${view.feedback.coherenceAndCohesion})}"></div>
         </div>
-        <div th:if="${view.feedback.lexicalResource}">
+
+        <div th:if="${view.feedback.lexicalResource != null}">
             <div class="sub-title">Lexical Resource</div>
-            <div th:insert="~{::feedbackFragment(${view.feedback.lexicalResource})}"></div>
+            <div th:insert="~{::criterionFragment(${view.feedback.lexicalResource})}"></div>
         </div>
-        <div th:if="${view.feedback.grammaticalRangeAndAccuracy}">
+
+        <div th:if="${view.feedback.grammaticalRangeAndAccuracy != null}">
             <div class="sub-title">Grammatical Range and Accuracy</div>
-            <div th:insert="~{::feedbackFragment(${view.feedback.grammaticalRangeAndAccuracy})}"></div>
+            <div th:insert="~{::criterionFragment(${view.feedback.grammaticalRangeAndAccuracy})}"></div>
         </div>
     </div>
 </div>
 
-<!-- Feedback Fragment -->
-<th:block th:fragment="feedbackFragment(feedback)">
-    <div th:if="${feedback != null}">
-        <div><strong>Score:</strong> <span th:text="${feedback.score}"></span></div>
-        <div><strong>Reason:</strong> <span th:text="${feedback.reason}"></span></div>
+<!-- Criterion Fragment for each feedback criterion -->
+<th:block th:fragment="criterionFragment(criterion)">
+    <div th:if="${criterion != null}">
+        <p class="strength" th:if="${criterion.strength != null}">
+            <strong>Strength:</strong> <span th:text="${criterion.strength}"></span>
+            <span th:if="${criterion.sticker != null}" class="sticker" th:text="${criterion.sticker}"></span>
+        </p>
 
-        <div th:each="mistake : ${feedback.mistakes}">
-            <div style="margin-top: 8px;">
-                <div><strong>Mistake:</strong> <span th:text="${mistake.mistake}"></span></div>
-                <div><strong>Explanation:</strong> <span th:text="${mistake.explanation}"></span></div>
-                <div><strong>Improved Version:</strong> <span th:text="${mistake.improvedVersion}"></span></div>
-            </div>
-        </div>
+        <p><strong>Score:</strong> <span th:text="${criterion.score}"></span></p>
+        <p><strong>Reason:</strong> <span th:text="${criterion.reason}"></span></p>
+        <p th:if="${criterion.suggestion != null}"><strong>Suggestion:</strong> <span th:text="${criterion.suggestion}"></span></p>
+
+        <ul class="mistakes-list">
+            <li th:each="mistake, iterStat : ${criterion.mistakes}" th:if="${iterStat.index < 3}">
+                <p><strong>Mistake:</strong> <span th:text="${mistake.mistake}"></span></p>
+                <p><strong>Explanation:</strong> <span th:text="${mistake.explanation}"></span></p>
+                <p><strong>Improved Version:</strong> <span th:text="${mistake.improvedVersion}"></span></p>
+            </li>
+        </ul>
+
         <div class="divider"></div>
     </div>
 </th:block>
+
 
 </body>
 </html>

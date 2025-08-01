@@ -93,6 +93,7 @@ public class EskizSmsService {
             logEntry.setStatus(String.valueOf(statusCode));
             logEntry.setError(errorMessage);
             logEntry.setCode(statusCode);
+            logEntry.setType("sms_send");
             requestLogRepository.save(logEntry);
         }
 
