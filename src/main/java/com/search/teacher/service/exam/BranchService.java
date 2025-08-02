@@ -1,5 +1,6 @@
 package com.search.teacher.service.exam;
 
+import com.search.teacher.dto.request.BranchRequest;
 import com.search.teacher.dto.response.session.BranchResponse;
 import com.search.teacher.dto.response.session.InfoResponse;
 import com.search.teacher.exception.NotfoundException;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -30,9 +32,10 @@ public class BranchService {
         List<BranchResponse> responses = getBranchResponses(branches);
         InfoResponse response = new InfoResponse();
         response.setBranches(responses);
-        response.setPackages(mockPackagesRepository.findAllByActiveIsTrueOrderByOrdersAsc());
+        List<MockPackages> packages = active ? mockPackagesRepository.findAllByActiveIsTrueOrderByOrdersAsc() : mockPackagesRepository.findAll();
+        packages.sort(Comparator.comparing(MockPackages::getOrders));
+        response.setPackages(packages);
         response.setTestTimes(List.of(TestTime.morning.name(), TestTime.afternoon.name(), TestTime.evening.name()));
-
         return JResponse.success(response);
     }
 
@@ -49,6 +52,7 @@ public class BranchService {
             response.setMaxStudents(branch.getMaxStudents());
             responses.add(response);
         }
+        responses.sort(Comparator.comparing(BranchResponse::getId));
         return responses;
     }
 
@@ -61,6 +65,21 @@ public class BranchService {
         Branch branch = branchRepository.findById(id).orElseThrow(() -> new NotfoundException("Branch not found."));
         branch.setActive(active);
         branchRepository.save(branch);
+        return JResponse.success();
+    }
+
+    public JResponse activePackage(Long id, boolean active) {
+        MockPackages mockPackages = mockPackagesRepository.findById(id).orElseThrow(() -> new NotfoundException("Mock package not found."));
+        mockPackages.setActive(active);
+        mockPackagesRepository.save(mockPackages);
+        return JResponse.success();
+    }
+
+    public JResponse updateBranch(Long id, BranchRequest branch) {
+        Branch branchEntity = branchRepository.findById(id).orElseThrow(() -> new NotfoundException("Branch not found."));
+        branchEntity.setName(branch.name());
+        branchEntity.setMaxStudents(branch.maxStudents());
+        branchRepository.save(branchEntity);
         return JResponse.success();
     }
 }

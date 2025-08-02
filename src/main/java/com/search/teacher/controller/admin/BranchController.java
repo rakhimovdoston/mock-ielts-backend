@@ -1,5 +1,6 @@
 package com.search.teacher.controller.admin;
 
+import com.search.teacher.dto.request.BranchRequest;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.service.exam.BranchService;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,11 @@ public class BranchController {
     @GetMapping("all")
     public JResponse getAllBranches(@RequestParam(required = false, defaultValue = "true") boolean active) {
         return branchService.getAllBranches(active);
+    }
+
+    @PutMapping("update/{id}")
+    public JResponse updateBranch(@PathVariable Long id, @RequestBody BranchRequest branch) {
+        return branchService.updateBranch(id, branch);
     }
 
     @GetMapping("active/{id}")
