@@ -51,7 +51,7 @@ public class MockTestExam extends BaseEntity {
     @OneToMany(mappedBy = "mockTestExam")
     private List<UserExamAnswers> userExamAnswers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "mockTestExam", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "mockTestExam", fetch = FetchType.EAGER)
     private List<UserWritingAnswer> writingAnswers = new ArrayList<>();
 
 }

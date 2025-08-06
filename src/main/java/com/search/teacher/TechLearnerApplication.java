@@ -9,11 +9,13 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Optional;
 
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @Slf4j
 @EnableScheduling
+@EnableAsync
 public class TechLearnerApplication {
 
 

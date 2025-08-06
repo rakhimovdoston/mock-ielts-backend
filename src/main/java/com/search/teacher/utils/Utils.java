@@ -115,9 +115,20 @@ public class Utils {
         if (decimal < 0.25) {
             return floor; // 7.1 → 7.0
         } else if (decimal < 0.75) {
-            return floor + 0.5; // 7.4 → 7.5
+            return floor + 0.5;
         } else {
             return floor + 1.0; // 7.8 → 8.0
         }
+    }
+
+    public static double roundToNearestWriting(double score) {
+        double floor = Math.floor(score);
+        double decimal = score - floor;
+        if (decimal < 0.5) {
+            return floor;
+        } else if (decimal >= 0.5 &&  decimal < 1.0) {
+            return floor + 0.5;
+        }
+        return floor;
     }
 }

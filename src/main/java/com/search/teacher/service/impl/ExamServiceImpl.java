@@ -1,10 +1,5 @@
 package com.search.teacher.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.search.teacher.dto.ai.WritingAIFeedback;
-import com.search.teacher.dto.ai.WritingAIResponse;
 import com.search.teacher.dto.filter.UserFilter;
 import com.search.teacher.dto.request.history.EmailAnswerRequest;
 import com.search.teacher.dto.request.history.ScoreRequest;
@@ -32,13 +27,12 @@ import com.search.teacher.mapper.ModuleAnswerMapper;
 import com.search.teacher.mapper.WritingMapper;
 import com.search.teacher.model.entities.*;
 import com.search.teacher.model.enums.Status;
-import com.search.teacher.model.response.AIResponse;
 import com.search.teacher.model.response.ErrorMessages;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.*;
 import com.search.teacher.service.EmailService;
 import com.search.teacher.service.EskizSmsService;
-import com.search.teacher.service.ai.AIService;
+import com.search.teacher.service.ai.WritingCheckingService;
 import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.service.html.HtmlFileService;
 import com.search.teacher.utils.*;
@@ -46,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -53,7 +48,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
@@ -74,6 +68,10 @@ public class ExamServiceImpl implements ExamService {
     @Value("${sms.pdf.url}")
     private String downloadUrl;
     private final Logger logger = LoggerFactory.getLogger(ExamServiceImpl.class);
+
+    @Autowired
+    private WritingCheckingService writingCheckingService;
+
     private final MockTestExamRepository mockTestExamRepository;
     private final ReadingRepository readingRepository;
     private final ListeningRepository listeningRepository;
@@ -86,11 +84,9 @@ public class ExamServiceImpl implements ExamService {
     private final EmailService emailService;
     private final ScoreRepository scoreRepository;
     private final BookingRepository bookingRepository;
-    private final AIService aiService;
     private final CheckWritingRepository checkWritingRepository;
     private final CheckWritingHistoryRepository checkWritingHistoryRepository;
     private final EskizSmsService eskizSmsService;
-    private final ObjectMapper objectMapper;
     private final HtmlFileService htmlFileService;
     private final SmsInfoRepository smsInfoRepository;
 
@@ -242,7 +238,7 @@ public class ExamServiceImpl implements ExamService {
             userWritingAnswer.setWritingId(answer.id());
             userWritingAnswerRepository.save(userWritingAnswer);
         }
-//        checkWritingAsync(mockTestExam, currentUser);
+        writingCheckingService.checkWritingAsync(mockTestExam.getId(), currentUser.getId());
         return JResponse.success();
     }
 
@@ -256,6 +252,10 @@ public class ExamServiceImpl implements ExamService {
 
         MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(request.examId(), user);
         ExamScore score = mockTestExam.getScore();
+        if (score == null) {
+            score = new ExamScore();
+            score.setMockTestExam(mockTestExam);
+        }
         if (request.type().equals("writing")) {
             score.setWriting(request.score());
         } else if (request.type().equals("speaking")) {
@@ -369,7 +369,7 @@ public class ExamServiceImpl implements ExamService {
             checkWritingHistoryRepository.saveAll(histories);
         }
 
-        Double score = checkWritingWithAI(mockTestExam);
+        Double score = writingCheckingService.checkWritingWithAI(mockTestExam);
         ExamScore examScore = mockTestExam.getScore();
         if (examScore == null) {
             examScore = new ExamScore();
@@ -420,87 +420,6 @@ public class ExamServiceImpl implements ExamService {
         return JResponse.success(getAllMockExams(exams.getContent()));
     }
 
-    private Double checkWritingWithAI(MockTestExam mockTestExam) {
-        List<UserWritingAnswer> userWritingAnswer = mockTestExam.getWritingAnswers();
-        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
-
-        double taskOneScore = 0.0;
-        double taskTwoScore = 0.0;
-
-        Writing taskOne = writings.stream().filter(Writing::isTask).findFirst().orElse(null);
-
-        if (taskOne != null) {
-            UserWritingAnswer answerOne = userWritingAnswer.stream().filter(ans -> ans.getWritingId().equals(taskOne.getId())).findFirst().orElse(null);
-            if (answerOne != null) {
-                taskOneScore = checkWritingModule(answerOne, taskOne);
-            }
-        }
-
-        Writing taskTwo = writings.stream().filter(writing -> !writing.isTask()).findFirst().orElse(null);
-
-        if (taskTwo != null) {
-            UserWritingAnswer answerTwo = userWritingAnswer.stream().filter(ans -> ans.getWritingId().equals(taskTwo.getId())).findFirst().orElse(null);
-            if (answerTwo != null) {
-                taskTwoScore = checkWritingModule(answerTwo, taskTwo);
-            }
-        }
-        double totalScore = taskOneScore + taskTwoScore;
-        return Utils.roundToNearestHalfBand(totalScore / 2);
-    }
-
-    private Double checkWritingModule(UserWritingAnswer answer, Writing writing) {
-        if (answer.getCheckWriting() != null) {
-            return answer.getCheckWriting().getScore();
-        }
-
-        if (StringUtils.isNullOrEmpty(answer.getAnswer())) {
-            return 0.0;
-        }
-
-        String imageDescription = "";
-        if (writing.isTask() && writing.getImage() != null && writing.getImageDescription() == null) {
-            imageDescription = aiService.getDescriptionImage(writing.getImage());
-            if (imageDescription == null) {
-                logger.warn("AI could not get image description for writing id {}", writing.getId());
-                return 0.0;
-            }
-            writing.setImageDescription(imageDescription);
-            writingRepository.save(writing);
-        } else {
-            imageDescription = writing.getImageDescription();
-        }
-
-        AIResponse<JsonNode> taskOneResponse = aiService.checkWriting(answer.getAnswer(), writing.getTitle(), imageDescription, writing.isTask());
-        if (!taskOneResponse.isSuccess()) {
-            logger.error("Check Writing {} Method: {}", writing.isTask(), taskOneResponse.getMessage());
-            return 0.0;
-        }
-        JsonNode data = taskOneResponse.getData();
-        WritingAIFeedback aiFeedback = null;
-        try {
-            if (data.isTextual()) {
-                aiFeedback = objectMapper.readValue(data.asText(), WritingAIFeedback.class);
-            } else {
-                aiFeedback = objectMapper.treeToValue(data, WritingAIFeedback.class);
-            }
-        } catch (JsonProcessingException e) {
-            logger.warn("AI Response could not be parsed into WritingAIResponse for Writing id {}, UserWriting id {} Error: {}", writing.getId(), answer.getId(), e.getMessage());
-        }
-
-        if (aiFeedback == null) return 0.0;
-        return saveCheckWriting(answer, aiFeedback);
-    }
-
-    private double saveCheckWriting(UserWritingAnswer answer, WritingAIFeedback feedback) {
-        CheckWriting checkWriting = new CheckWriting();
-        checkWriting.setUserWritingAnswer(answer);
-        checkWriting.setResponse(feedback);
-        checkWriting.setScore(feedback.getOverallScore());
-        checkWriting.setSummary(feedback.getSummary());
-        checkWritingRepository.save(checkWriting);
-        return feedback.getOverallScore();
-    }
-
     private ExamScore setScore(MockTestExam mockTestExam, User currentUser) {
         ExamScore score = mockTestExam.getScore();
         if (score == null) {
@@ -511,7 +430,7 @@ public class ExamServiceImpl implements ExamService {
         int listening = checkAnswers(mockTestExam.getListening(), "listening", mockTestExam.getUserExamAnswers());
         score.setReading(getBall("reading", reading, scoreRepository.findAll()));
         score.setListening(getBall("listening", listening, scoreRepository.findAll()));
-        Double writingScore = checkWritingWithAI(mockTestExam);
+        Double writingScore = writingCheckingService.checkWritingWithAI(mockTestExam);
         score.setWriting(String.valueOf(writingScore));
         score.setReadingCount(reading);
         score.setListeningCount(listening);
@@ -575,20 +494,6 @@ public class ExamServiceImpl implements ExamService {
         logger.info("SMS sent to {} for exam {}, response SMS: {}", phoneNumber, exam.getExamUniqueId(), response);
     }
 
-    @Async("writingExecutor")
-    public void checkWritingAsync(MockTestExam mockTestExam, User currentUser) {
-        ExamScore score = mockTestExam.getScore();
-        if (score == null) {
-            score = new ExamScore();
-            score.setMockTestExam(mockTestExam);
-        }
-        Double writingScore = checkWritingWithAI(mockTestExam);
-        score.setWriting(String.valueOf(writingScore));
-        score.setAssessmentByUserId(currentUser.getId());
-        examScoreRepository.save(score);
-        logger.info("Writing score for exam {} is {} userId: {}", mockTestExam.getId(), writingScore, currentUser.getId());
-    }
-
     private ExamScore setScoreType(MockTestExam mockTestExam, User user, String type) {
         ExamScore score = mockTestExam.getScore();
         if (score == null) {
@@ -596,7 +501,7 @@ public class ExamServiceImpl implements ExamService {
             score.setMockTestExam(mockTestExam);
         }
         if (type.equals("writing")) {
-            Double writingScore = checkWritingWithAI(mockTestExam);
+            Double writingScore = writingCheckingService.checkWritingWithAI(mockTestExam);
             score.setWriting(String.valueOf(writingScore));
         } else {
             int count = checkAnswers(mockTestExam.getReadings(), type, mockTestExam.getUserExamAnswers());

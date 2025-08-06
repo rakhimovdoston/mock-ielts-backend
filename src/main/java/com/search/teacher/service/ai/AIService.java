@@ -425,6 +425,7 @@ public class AIService {
     }
 
     private String getPromptTaskOne(String answer, String image) {
+
         return """
                 Please assess the following Writing Task 1 essay based on the official IELTS Band Descriptors.
                 
@@ -477,21 +478,23 @@ public class AIService {
                 }
                 
                 💡 Evaluation rules:
-                - Provide **a whole band score (1–9)** per criterion.
-                - `overall_band` must be the **average** of the 4 scores, rounded to the **nearest 0.5**.
-                - You must identify **at least one mistake per category**, and **at least 3 total mistakes**.
-                - If possible, return **up to 2 or 3 mistakes per category**, not just 1.
+                - Provide a whole band score (1–9) per criterion.
+                - overall_band must be the average of the 4 scores, rounded to the nearest 0.5.
+                - You must identify at least one mistake per category, and at least 3 total mistakes.
+                - If possible, return up to 2 or 3 mistakes per category, not just 1.\s
                 - Each mistake must include:
-                  - The original sentence.
-                  - An explanation of the error.
-                  - A corrected version.
-                - Mistakes should be **meaningful**, affecting clarity, accuracy, or appropriateness.
+                    - The original sentence.
+                    - An explanation of the error.
+                    - A corrected version.
+                - Mistakes should be meaningful, affecting clarity, accuracy, or appropriateness.
                 - In **each of the 4 criteria**, also include:
                   - `"strength"`: A sentence describing what the student did well.
                   - `"sticker"`: A supportive emoji that reflects performance (e.g., 🔥, 📚, 💪, ✍️, 🚀, 🔧, ⏳).
                 - Also include:
                   - `"encouragement"`: A kind, uplifting message tailored to the student’s current performance.
                   - `"stickers"`: A list of 1–3 emojis representing the tone of the full review. These should feel motivational and sincere.
+                - Before showing mistakes for each criterion, highlight areas at which the candidate succeeds.
+                - Do NOT be overly harsh OR overly generous in your assessment—remember, your assessment must indicate the mistakes, but at the same time should not discourage candidates.
                 
                 📝 Task:
                 You will now assess a student's Task 1 essay, based on the provided visual chart description (image analysis) and their response.
