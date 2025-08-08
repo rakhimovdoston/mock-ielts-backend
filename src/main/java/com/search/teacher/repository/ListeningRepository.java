@@ -4,11 +4,13 @@ import com.search.teacher.model.entities.Listening;
 import com.search.teacher.model.entities.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,4 +33,7 @@ public interface ListeningRepository extends JpaRepository<Listening, Long> {
 
     @Query(value = "select distinct on (type) * from listening where deleted is false and active is true and type in (:types) ORDER BY type, random() limit 4", nativeQuery = true)
     List<Listening> findAllByTypeIn(List<String> types);
+
+    @EntityGraph(attributePaths = {"answers"})
+    List<Listening> findAllByIdIn(Collection<Long> ids);
 }

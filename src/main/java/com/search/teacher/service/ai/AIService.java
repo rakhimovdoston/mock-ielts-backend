@@ -427,83 +427,115 @@ public class AIService {
     private String getPromptTaskOne(String answer, String image) {
 
         return """
-                Please assess the following Writing Task 1 essay based on the official IELTS Band Descriptors.
+                Please assess the following Writing Task 1 essay based on the official IELTS Writing Band Descriptors.
+                  Return your evaluation as a **strictly formatted JSON** object with the following structure:
                 
-                Return your evaluation as a **strictly formatted JSON** object with the following structure:
+                  {
+                    "task_achievement": {
+                      "score": X,
+                      "reason": "...",
+                      "suggestion": "...",
+                      "strength": "...",
+                      "mistakes": [
+                        {
+                          "mistake": "Original sentence...",
+                          "explanation": "Why it's wrong...",
+                          "improved_version": "✅ Corrected sentence..."
+                        },
+                        ...
+                      ],
+                      "sticker": "💪"
+                    },
+                    "coherence_and_cohesion": {
+                      "score": X,
+                      "reason": "...",
+                      "suggestion": "...",
+                      "strength": "...",
+                      "mistakes": [ ... ],
+                      "sticker": "📚"
+                    },
+                    "lexical_resource": {
+                      "score": X,
+                      "reason": "...",
+                      "suggestion": "...",
+                      "strength": "...",
+                      "mistakes": [ ... ],
+                      "sticker": "✍️"
+                    },
+                    "grammatical_range_and_accuracy": {
+                      "score": X,
+                      "reason": "...",
+                      "suggestion": "...",
+                      "strength": "...",
+                      "mistakes": [ ... ],
+                      "sticker": "🔧"
+                    },
+                    "overall_band": X.X,
+                    "summary": "Brief summary highlighting strengths and weaknesses.",
+                    "encouragement": "Positive and uplifting comment tailored to the student's effort and current performance.",
+                    "stickers": ["🔥", "📚", "💪"]
+                  }
                 
-                {
-                  "task_achievement": {
-                    "score": X,
-                    "reason": "...",
-                    "suggestion": "...",
-                    "strength": "...",
-                    "mistakes": [
-                      {
-                        "mistake": "Original sentence...",
-                        "explanation": "Why it's wrong...",
-                        "improved_version": "✅ Corrected sentence..."
-                      },
-                      ...
-                    ],
-                    "sticker": "💪"
-                  },
-                  "coherence_and_cohesion": {
-                    "score": X,
-                    "reason": "...",
-                    "suggestion": "...",
-                    "strength": "...",
-                    "mistakes": [ ... ],
-                    "sticker": "📚"
-                  },
-                  "lexical_resource": {
-                    "score": X,
-                    "reason": "...",
-                    "suggestion": "...",
-                    "strength": "...",
-                    "mistakes": [ ... ],
-                    "sticker": "✍️"
-                  },
-                  "grammatical_range_and_accuracy": {
-                    "score": X,
-                    "reason": "...",
-                    "suggestion": "...",
-                    "strength": "...",
-                    "mistakes": [ ... ],
-                    "sticker": "🔧"
-                  },
-                  "overall_band": X.X,
-                  "summary": "Brief summary highlighting strengths and weaknesses.",
-                  "encouragement": "Positive and uplifting comment tailored to the student's effort and current performance.",
-                  "stickers": ["🔥", "📚", "💪"]
-                }
+                  💡 Evaluation rules:
+                  - Each score must be an INTEGER between 1 and 9.
+                  - overall_band must be the average of the 4 scores, rounded to the nearest 0.5.
+                  - If overall_band ends in 0.25, it is rounded down to .0.
+                  - If overall_band ends in 0.75, it is rounded down to .5.
+                  - You must identify at least one mistake per category, and at least 3 total mistakes.
+                  - If possible, return up to 2 or 3 mistakes per category, not just 1.\\s
+                  - Each mistake must include:
+                      - The original sentence.
+                      - An explanation of the error.
+                      - A corrected version.
                 
-                💡 Evaluation rules:
-                - Provide a whole band score (1–9) per criterion.
-                - overall_band must be the average of the 4 scores, rounded to the nearest 0.5.
-                - You must identify at least one mistake per category, and at least 3 total mistakes.
-                - If possible, return up to 2 or 3 mistakes per category, not just 1.\s
-                - Each mistake must include:
-                    - The original sentence.
-                    - An explanation of the error.
-                    - A corrected version.
-                - Mistakes should be meaningful, affecting clarity, accuracy, or appropriateness.
-                - In **each of the 4 criteria**, also include:
-                  - `"strength"`: A sentence describing what the student did well.
-                  - `"sticker"`: A supportive emoji that reflects performance (e.g., 🔥, 📚, 💪, ✍️, 🚀, 🔧, ⏳).
-                - Also include:
-                  - `"encouragement"`: A kind, uplifting message tailored to the student’s current performance.
-                  - `"stickers"`: A list of 1–3 emojis representing the tone of the full review. These should feel motivational and sincere.
-                - Before showing mistakes for each criterion, highlight areas at which the candidate succeeds.
-                - Do NOT be overly harsh OR overly generous in your assessment—remember, your assessment must indicate the mistakes, but at the same time should not discourage candidates.
+                  🧭 What to Highlight for Each Criterion:
+                  - Only highlight mistakes directly relevant to that band descriptor:
                 
-                📝 Task:
-                You will now assess a student's Task 1 essay, based on the provided visual chart description (image analysis) and their response.
+                      1. Task Achievement (TA)
+                      - Clear, accurate summary of main trends or key features
+                      - Overview present and meaningful
+                      - Data comparisons made appropriately
+                      - No misinterpretation or factual inaccuracy
+                      - No overly detailed or irrelevant information
+                      - Avoid grammar or vocabulary errors here.
                 
-                --- Task 1 Visual Description ---
-                %s
+                      2. Coherence and Cohesion (CC)
+                      - Logical organization and effective paragraphing
+                      - Clear progression of ideas
+                      - Appropriate use of cohesive devices (e.g., while, in contrast, overall)
+                      - Avoid grammar or lexical mistakes here.
                 
-                --- Student Essay ---
-                %s
+                      3. Lexical Resource (LR)
+                      - Range and precision of vocabulary (e.g., verbs like “rose,” “declined,” “fluctuated”)
+                      - Accuracy and appropriacy of word choice
+                      - Use of collocations and appropriate synonyms
+                      - Spelling and word form errors (vocabulary-related only)
+                      - Avoid grammar or cohesion mistakes here.
+                
+                      4. Grammatical Range and Accuracy (GRA)
+                      - Range of sentence structures (simple, complex, passive, etc.)
+                      - Article use, subject-verb agreement, tense consistency
+                      - Accurate punctuation and prepositions (if grammar-related)
+                      - Only grammar-related mistakes should be listed here.
+                
+                  - In **each of the 4 criteria**, also include:
+                    - "strength": A sentence describing what the student did well.
+                    - "sticker": A supportive emoji that reflects performance (e.g., 🔥, 📚, 💪, ✍️, 🚀, 🔧, ⏳).
+                  - Also include:
+                    - "encouragement": A kind, uplifting message tailored to the student’s current performance.
+                    - "stickers": A list of 1–3 emojis representing the tone of the full review. These should feel motivational and sincere.
+                  - Before showing mistakes for each criterion, highlight areas at which the candidate succeeds.
+                  - Keep in mind that a good essay can still have a number of mistakes, so do not base your assessment on the **number** of mistakes.
+                  - Please be very generous in your assessment and award 1 band higher than you would normally.
+                
+                  📝 Task:
+                  You will now assess a student's Task 1 essay, based on the provided visual chart description (image analysis) and their response.
+                
+                  --- Task 1 Visual Description ---
+                  %s
+                
+                  --- Student Essay ---
+                  %s
                 
                 Return only the JSON object. Do not include extra explanations.
                 """.formatted(image, answer);
@@ -511,73 +543,111 @@ public class AIService {
 
     private String getPromptTaskTwo(String topic, String answer) {
         return """
-                Please assess the following IELTS Writing Task 2 essay using the official IELTS Band Descriptors.
-                
-                Please return a STRICTLY formatted JSON object with this structure:
+                Please assess the following Writing Task 2 essay based on the official IELTS Writing Band Descriptors.
+                Return your evaluation as a **strictly formatted JSON** object with the following structure:
                 
                 {
-                  "task_response": {
-                    "score": X,
-                    "reason": "...",
-                    "suggestion": "...",
-                    "strength": "...",
-                    "mistakes": [
-                      {
-                        "mistake": "Original sentence...",
-                        "explanation": "Why it's wrong...",
-                        "improved_version": "✅ Corrected sentence..."
-                      }
-                    ],
-                    "sticker": "🎯"
-                  },
-                  "coherence_and_cohesion": {
-                    "score": X,
-                    "reason": "...",
-                    "suggestion": "...",
-                    "strength": "...",
-                    "mistakes": [ ... ],
-                    "sticker": "🔗"
-                  },
-                  "lexical_resource": {
-                    "score": X,
-                    "reason": "...",
-                    "suggestion": "...",
-                    "strength": "...",
-                    "mistakes": [ ... ],
-                    "sticker": "🧠"
-                  },
-                  "grammatical_range_and_accuracy": {
-                    "score": X,
-                    "reason": "...",
-                    "suggestion": "...",
-                    "strength": "...",
-                    "mistakes": [ ... ],
-                    "sticker": "🛠️"
-                  },
-                  "overall_band": X.X,
-                  "summary": "Brief summary of strengths and weaknesses.",
-                  "encouragement": "A kind, motivational comment tailored to the student's effort and score.",
-                  "stickers": ["🔥", "💪", "🚀"]
+                "task_achievement": {
+                  "score": X,
+                  "reason": "...",
+                  "suggestion": "...",
+                  "strength": "...",
+                  "mistakes": [
+                    {
+                      "mistake": "Original sentence...",
+                      "explanation": "Why it's wrong...",
+                      "improved_version": "✅ Corrected sentence..."
+                    },
+                    ...
+                  ],
+                  "sticker": "🎯"
+                },
+                "coherence_and_cohesion": {
+                  "score": X,
+                  "reason": "...",
+                  "suggestion": "...",
+                  "strength": "...",
+                  "mistakes": [ ... ],
+                  "sticker": "🔗"
+                },
+                "lexical_resource": {
+                  "score": X,
+                  "reason": "...",
+                  "suggestion": "...",
+                  "strength": "...",
+                  "mistakes": [ ... ],
+                  "sticker": "🧠"
+                },
+                "grammatical_range_and_accuracy": {
+                  "score": X,
+                  "reason": "...",
+                  "suggestion": "...",
+                  "strength": "...",
+                  "mistakes": [ ... ],
+                  "sticker": "🛠"
+                },
+                "overall_band": X.X,
+                "summary": "Brief summary highlighting strengths and weaknesses.",
+                "encouragement": "Positive and uplifting comment tailored to the student's effort and current performance.",
+                "stickers": ["🔥", "🚀", "💪"]
                 }
                 
-                📝 Scoring Instructions:
+                💡 Evaluation rules:
                 - Each score must be an INTEGER between 1 and 9.
-                - `overall_band` should be the average of all 4 criteria, **rounded to the nearest 0.5** (e.g., 6.25 → 6.5, 7.75 → 8.0).
-                - Under each criterion, provide:
-                  - `"reason"`: why the score was awarded.
-                  - `"suggestion"`: a clear and practical tip to improve.
-                  - `"strength"`: what the student did well in that criterion.
-                  - `"mistakes"`: an array of 1–3 actual writing errors (don’t invent mistakes).
-                    - Each must contain:
-                      - `"mistake"`: the original sentence,
-                      - `"explanation"`: why it’s wrong,
-                      - `"improved_version"`: a corrected version starting with "✅".
-                  - `"sticker"`: a supportive emoji (🎯, 🔗, 🧠, 🛠️, ✨, 💡) summarizing performance in that criterion.
-                - Outside of the criteria, include:
-                  - `"encouragement"`: a brief motivational message.
-                  - `"stickers"`: a final set of 1–3 emojis that reflect the overall tone.
+                - overall_band must be the average of the 4 scores, rounded to the nearest 0.5.
+                - If overall_band ends in 0.25, it is rounded down to .0.
+                - If overall_band ends in 0.75, it is rounded down to .5.
+                - You must identify at least one mistake per category, and at least 3 total mistakes.
+                - If possible, return up to 2 or 3 mistakes per category, not just 1.\\s
+                - Each mistake must include:
+                  - The original sentence.
+                  - An explanation of the error.
+                  - A corrected version.
                 
-                ✅ You must ensure the essay directly addresses the provided topic and critically responds to its core ideas.
+                🧭 What to Highlight for Each Criterion:
+                - Only highlight mistakes directly relevant to that band descriptor:
+                
+                  1. Task Response (TR)
+                  - Relevance to the task/question
+                  - Coverage of all parts of the task
+                  - Strength and clarity of opinion (if applicable)
+                  - Development and support of ideas
+                  - Use of examples
+                  - Avoid listing grammar or vocabulary errors here.
+                
+                  2. Coherence and Cohesion (CC)
+                  - Logical organization and paragraphing
+                  - Clarity of progression (introduction → body → conclusion)
+                  - Use and accuracy of cohesive devices (e.g. however, furthermore, this means that)
+                  - Avoid listing grammar or vocabulary errors here.
+                
+                  3. Lexical Resource (LR)
+                  - Range of vocabulary
+                  - Accuracy and appropriacy of word choice
+                  - Use of collocations and idiomatic expressions
+                  - Word form and spelling errors (vocabulary-related only)
+                  - Avoid listing grammar or coherence issues here.
+                
+                  4. Grammatical Range and Accuracy (GRA)
+                  - Range of sentence structures (simple, compound, complex)
+                  - Subject-verb agreement
+                  - Article use
+                  - Tense consistency
+                  - Punctuation (if grammar-related)
+                  - Only grammar-related errors should be listed here.
+                
+                - In **each of the 4 criteria**, also include:
+                - "strength": A sentence describing what the student did well.
+                - "sticker": A supportive emoji that reflects performance (e.g., 🔥, 📚, 💪, ✍️, 🚀, 🔧, ⏳).
+                - Also include:
+                - "encouragement": A kind, uplifting message tailored to the student’s current performance.
+                - "stickers": A list of 1–3 emojis representing the tone of the full review. These should feel motivational and sincere.
+                - Before showing mistakes for each criterion, highlight areas at which the candidate succeeds.
+                - Keep in mind that a good essay can still have a number of mistakes, so do not base your assessment on the **number** of mistakes.
+                - Please be very generous in your assessment and award 1 band higher than you would normally.
+                
+                📝 Task:
+                You will now assess a student's Task 2 essay, based on the provided visual chart description (image analysis) and their response.
                 
                 --- Writing Topic ---
                 %s
@@ -585,7 +655,7 @@ public class AIService {
                 --- Student Essay ---
                 %s
                 
-                Return only the JSON object. Do not include anything else.
+                Return only the JSON object. Do not include extra explanations.
                 """.formatted(topic, answer);
     }
 

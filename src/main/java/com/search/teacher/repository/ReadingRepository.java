@@ -4,6 +4,7 @@ import com.search.teacher.model.entities.Reading;
 import com.search.teacher.model.entities.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,4 +30,7 @@ public interface ReadingRepository extends JpaRepository<Reading, Long> {
 
     @Query(value = "select distinct on (type) * from readings where deleted is false and active is true and type in (:types) ORDER BY type, random() limit 3", nativeQuery = true)
     List<Reading> findAllByTypeIn(List<String> types);
+
+    @EntityGraph(attributePaths = {"answers"})
+    List<Reading> findAllByIdIn(List<Long> ids);
 }

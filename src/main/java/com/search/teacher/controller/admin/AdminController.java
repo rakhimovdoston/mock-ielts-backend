@@ -1,10 +1,12 @@
 package com.search.teacher.controller.admin;
 
 import com.search.teacher.dto.filter.UserFilter;
+import com.search.teacher.dto.request.RefreshAnswerRequest;
 import com.search.teacher.dto.request.test.TestDateRequest;
 import com.search.teacher.dto.request.user.UserRequest;
 import com.search.teacher.dto.request.user.UsernameRequest;
 import com.search.teacher.model.response.JResponse;
+import com.search.teacher.service.exam.SendAnswerServices;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.utils.SecurityUtils;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,10 +19,12 @@ import java.util.Date;
 public class AdminController {
 
     private final UserService userService;
+    private final SendAnswerServices services;
     private final SecurityUtils securityUtils;
 
-    public AdminController(UserService userService, SecurityUtils securityUtils) {
+    public AdminController(UserService userService, SendAnswerServices services, SecurityUtils securityUtils) {
         this.userService = userService;
+        this.services = services;
         this.securityUtils = securityUtils;
     }
 
@@ -59,6 +63,11 @@ public class AdminController {
     @GetMapping("by/{id}")
     public JResponse getUserById(@PathVariable(name = "id") Long id) {
         return userService.getUserBydId(id);
+    }
+
+    @PostMapping("refresh-answers")
+    public JResponse checkAllAnswers(@RequestBody RefreshAnswerRequest request) {
+        return services.refreshAnswer(request);
     }
 
     @GetMapping("all")

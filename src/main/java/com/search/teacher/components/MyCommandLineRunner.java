@@ -8,6 +8,7 @@ import com.search.teacher.service.EskizSmsService;
 import com.search.teacher.service.ai.AIService;
 import com.search.teacher.service.FileUploadService;
 import com.search.teacher.service.exam.BookingService;
+import com.search.teacher.service.exam.SendAnswerServices;
 import com.search.teacher.service.html.HtmlFileService;
 import com.search.teacher.service.impl.ExamServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,8 @@ public class MyCommandLineRunner implements CommandLineRunner {
     private final WritingRepository writingRepository;
     private final UserWritingAnswerRepository userWritingAnswerRepository;
     private final EskizSmsService eskizSmsService;
+    private final ExamServiceImpl examServiceImpl;
+    private final SendAnswerServices sendAnswerServices;
 
     @Override
     public void run(String... args) throws Exception {

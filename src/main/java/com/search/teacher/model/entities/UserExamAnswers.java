@@ -23,6 +23,6 @@ public class UserExamAnswers extends BaseEntity {
     @JoinColumn(name = "mock_test_exam_id", referencedColumnName = "id")
     private MockTestExam mockTestExam;
 
-    @OneToMany(mappedBy = "userExamAnswers")
+    @OneToMany(mappedBy = "userExamAnswers", fetch = FetchType.EAGER)
     private List<UserAnswers> answers = new ArrayList<>();
 }

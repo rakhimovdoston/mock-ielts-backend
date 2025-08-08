@@ -1,5 +1,6 @@
 package com.search.teacher.repository;
 
+import com.search.teacher.model.entities.ExamScore;
 import com.search.teacher.model.entities.MockTestExam;
 import com.search.teacher.model.entities.User;
 import org.springframework.data.domain.Page;
@@ -25,4 +26,6 @@ public interface MockTestExamRepository extends JpaRepository<MockTestExam, Long
     MockTestExam findByExamUniqueId(String examUniqueId);
 
     MockTestExam findFirstByUser_IdOrderByCreatedDate(Long userId);
+
+    MockTestExam findByScore(ExamScore score);
 }

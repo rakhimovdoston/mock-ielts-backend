@@ -20,6 +20,6 @@ public class UserWritingAnswer extends BaseEntity {
     @JoinColumn(name = "mock_test_exam_id", referencedColumnName = "id")
     private MockTestExam mockTestExam;
 
-    @OneToOne(mappedBy = "userWritingAnswer")
+    @OneToOne(mappedBy = "userWritingAnswer", fetch = FetchType.EAGER)
     private CheckWriting checkWriting;
 }

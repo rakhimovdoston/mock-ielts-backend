@@ -18,6 +18,8 @@ public class CheckWritingHistory extends BaseEntity {
     private WritingAIFeedback response;
 
     private Double score;
+
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
     @ManyToOne

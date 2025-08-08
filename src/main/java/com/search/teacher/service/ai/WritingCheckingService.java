@@ -28,8 +28,9 @@ public class WritingCheckingService {
     private final AIService aiService;
     private final MockTestExamRepository mockTestExamRepository;
     private final UserRepository userRepository;
+    private final UserWritingAnswerRepository userWritingAnswerRepository;
 
-    public WritingCheckingService(ExamScoreRepository examScoreRepository, WritingRepository writingRepository, ObjectMapper objectMapper, CheckWritingRepository checkWritingRepository, AIService aiService, MockTestExamRepository mockTestExamRepository, UserRepository userRepository) {
+    public WritingCheckingService(ExamScoreRepository examScoreRepository, WritingRepository writingRepository, ObjectMapper objectMapper, CheckWritingRepository checkWritingRepository, AIService aiService, MockTestExamRepository mockTestExamRepository, UserRepository userRepository, UserWritingAnswerRepository userWritingAnswerRepository) {
         this.examScoreRepository = examScoreRepository;
         this.writingRepository = writingRepository;
         this.objectMapper = objectMapper;
@@ -37,6 +38,7 @@ public class WritingCheckingService {
         this.aiService = aiService;
         this.mockTestExamRepository = mockTestExamRepository;
         this.userRepository = userRepository;
+        this.userWritingAnswerRepository = userWritingAnswerRepository;
     }
 
     @Async("writingExecutor")
@@ -65,7 +67,7 @@ public class WritingCheckingService {
     }
 
     public Double checkWritingWithAI(MockTestExam mockTestExam) {
-        List<UserWritingAnswer> userWritingAnswer = mockTestExam.getWritingAnswers();
+        List<UserWritingAnswer> userWritingAnswer = userWritingAnswerRepository.findAllByMockTestExam(mockTestExam);
         List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
 
         double taskOneScore = 0.0;

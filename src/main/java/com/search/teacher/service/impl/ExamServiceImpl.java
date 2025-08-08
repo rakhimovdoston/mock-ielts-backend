@@ -89,6 +89,7 @@ public class ExamServiceImpl implements ExamService {
     private final EskizSmsService eskizSmsService;
     private final HtmlFileService htmlFileService;
     private final SmsInfoRepository smsInfoRepository;
+    private final SendAnswerRepository sendAnswerRepository;
 
     @Override
     public JResponse getExam(User currentUser, String id) {
@@ -220,7 +221,13 @@ public class ExamServiceImpl implements ExamService {
             saveUserAnswers(answer.answers(), userExamAnswers);
             userExamAnswerRepository.save(userExamAnswers);
         }
-        setScoreType(mockTestExam, currentUser, request.type());
+
+        MockTestExam updatedMockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
+        if (updatedMockTestExam != null) {
+            setScoreType(updatedMockTestExam, currentUser, request.type());
+        } else {
+            logger.error("MockTestExam not found for user {} and exam `{}`", currentUser.getId(), id);
+        }
         return JResponse.success();
     }
 
@@ -263,7 +270,11 @@ public class ExamServiceImpl implements ExamService {
         }
         examScoreRepository.save(score);
         if (request.type().equals("speaking") && score.getWriting() != null) {
-            sendAnswerToEmail(currentUser, new EmailAnswerRequest(user.getId(), mockTestExam.getId()));
+            checkSpeakingSetup(mockTestExamRepository.findByExamUniqueId(mockTestExam.getExamUniqueId()));
+            Booking booking = mockTestExam.getBooking();
+            if (booking != null && booking.getStatus().equals(Status.COMPLETED.name())) {
+                sendAnswerRepository.save(new SendAnswers(booking.getMainTestDate(), mockTestExam.getExamUniqueId(), "error", "error", "waiting", userId));
+            }
         }
         return JResponse.success();
     }
@@ -282,11 +293,22 @@ public class ExamServiceImpl implements ExamService {
         }
 
         ExamScore score = mockTestExam.getScore();
+        SendAnswers sendAnswers = sendAnswerRepository.findByExamUniqueIdAndUserId(mockTestExam.getExamUniqueId(), user.getId());
+        if (sendAnswers == null) {
+            sendAnswers = new SendAnswers();
+            sendAnswers.setDate(mockTestExam.getBooking().getMainTestDate());
+            sendAnswers.setExamUniqueId(mockTestExam.getExamUniqueId());
+            sendAnswers.setUserId(user.getId());
+        }
         Date testDate = mockTestExam.getTestDate() != null ? mockTestExam.getTestDate() : mockTestExam.getSubmittedDate() != null ? mockTestExam.getSubmittedDate() : mockTestExam.getUpdatedDate();
         String response = emailService.sendMockExamResult(user, testDate, score, downloadUrl + mockTestExam.getExamUniqueId());
-        sendSmsTo(user, mockTestExam, testDate, response);
+        String smsResponse = sendSmsTo(user, mockTestExam, testDate, response);
         score.setStatus(response);
         examScoreRepository.save(score);
+        sendAnswers.setEmailResponse(response);
+        sendAnswers.setSmsResponse(smsResponse);
+        sendAnswers.setStatus("success");
+        sendAnswerRepository.save(sendAnswers);
         return JResponse.success();
     }
 
@@ -295,13 +317,14 @@ public class ExamServiceImpl implements ExamService {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new NotfoundException("Student not found"));
 
-        if (!user.getUserId().equals(currentUser.getId()))
+        if (!currentUser.getId().equals(user.getUserId()))
             return JResponse.error(403, "You can't refresh answer to that user.");
         MockTestExam mockTestExam = mockTestExamRepository.findByIdAndUser(request.examId(), user);
 
         if (mockTestExam == null) {
             return JResponse.error(404, "No such exam was found.");
         }
+        logger.info("Refreshing answers for user {} for exam {}", user.getId(), mockTestExam.getId());
         setScore(mockTestExam, user);
         return JResponse.success();
     }
@@ -322,7 +345,6 @@ public class ExamServiceImpl implements ExamService {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try (OutputStream os = outputStream) {
-            Files.writeString(Paths.get("output.html"), htmlContent, StandardCharsets.UTF_8);
             ITextRenderer renderer = new ITextRenderer();
             renderer.setDocumentFromString(htmlContent);
             renderer.layout();
@@ -424,12 +446,18 @@ public class ExamServiceImpl implements ExamService {
         ExamScore score = mockTestExam.getScore();
         if (score == null) {
             score = new ExamScore();
+            score.setAssessmentByUserId(currentUser.getUserId());
             score.setMockTestExam(mockTestExam);
         }
-        int reading = checkAnswers(mockTestExam.getReadings(), "reading", mockTestExam.getUserExamAnswers());
-        int listening = checkAnswers(mockTestExam.getListening(), "listening", mockTestExam.getUserExamAnswers());
-        score.setReading(getBall("reading", reading, scoreRepository.findAll()));
-        score.setListening(getBall("listening", listening, scoreRepository.findAll()));
+        List<UserExamAnswers> userExamAnswers = userExamAnswerRepository.findByMockTestExam(mockTestExam);
+        if (userExamAnswers.isEmpty()) {
+            return score;
+        }
+        int reading = checkAnswers(mockTestExam.getReadings(), "reading", userExamAnswers);
+        int listening = checkAnswers(mockTestExam.getListening(), "listening", userExamAnswers);
+        List<Score> scores = scoreRepository.findAll();
+        score.setReading(getBall("reading", reading, scores));
+        score.setListening(getBall("listening", listening, scores));
         Double writingScore = writingCheckingService.checkWritingWithAI(mockTestExam);
         score.setWriting(String.valueOf(writingScore));
         score.setReadingCount(reading);
@@ -439,10 +467,10 @@ public class ExamServiceImpl implements ExamService {
         return score;
     }
 
-    private void sendSmsTo(User user, MockTestExam exam, Date testDate, String emailResponse) {
+    private String sendSmsTo(User user, MockTestExam exam, Date testDate, String emailResponse) {
         if (user.getPhone() == null) {
             logger.warn("User {} has no phone number, skipping SMS sending", user.getId());
-            return;
+            return "error";
         }
         String phoneNumber = user.getPhone().replaceAll("[^\\d]", "");
         if (!phoneNumber.startsWith("+"))
@@ -450,7 +478,7 @@ public class ExamServiceImpl implements ExamService {
         SmsInfo smsInfo = smsInfoRepository.findByPhoneNumberAndMockTestId(phoneNumber, exam.getId());
         if (smsInfo != null) {
             logger.info("SMS already sent for user {} for exam {}", user.getId(), exam.getId());
-            return;
+            return "error";
         } else {
             smsInfo = new SmsInfo();
             smsInfo.setEmailStatus(emailResponse);
@@ -492,6 +520,7 @@ public class ExamServiceImpl implements ExamService {
         smsInfo.setSmsMessage(message);
         smsInfoRepository.save(smsInfo);
         logger.info("SMS sent to {} for exam {}, response SMS: {}", phoneNumber, exam.getExamUniqueId(), response);
+        return "success";
     }
 
     private ExamScore setScoreType(MockTestExam mockTestExam, User user, String type) {
@@ -515,8 +544,65 @@ public class ExamServiceImpl implements ExamService {
         }
         score.setAssessmentByUserId(user.getId());
         examScoreRepository.save(score);
+        checkSpeakingSetup(mockTestExam);
         return score;
     }
+
+    public void checkSpeakingSetup(MockTestExam mockTestExam) {
+        Booking currentBooking = bookingRepository.findByMockTestExam(mockTestExam);
+        if (currentBooking == null) {
+            logger.warn("Booking not found for mock test exam {}", mockTestExam.getId());
+            return;
+        }
+        BookingGroup bookingGroup = currentBooking.getBookingGroup();
+        if (bookingGroup == null) {
+            logger.warn("Booking group not found for mock test exam {}", mockTestExam.getId());
+            return;
+        }
+
+        List<Booking> bookings = bookingGroup.getBookings();
+        List<SpeakingBooking> speakingBookings = bookingGroup.getSpeakingBookings();
+
+        bookings.sort(Comparator.comparing(Booking::getMainTestDate));
+        speakingBookings.sort(Comparator.comparing(SpeakingBooking::getMainTestDate));
+
+        int bookingCount = bookings.size();
+        int groupSize = 3;
+        int totalGroups = (int) Math.ceil((double) bookingCount / groupSize);
+
+        for (int groupIndex = 0; groupIndex < totalGroups; groupIndex++) {
+            int start = groupIndex * groupSize;
+            int end = Math.min(start + groupSize, bookingCount);
+            List<Booking> group = bookings.subList(start, end);
+
+            String speakingScore = null;
+
+            for (Booking booking : group) {
+                MockTestExam exam = booking.getMockTestExam();
+                if (exam != null) {
+                    ExamScore examScore = exam.getScore();
+                    if (examScore != null && examScore.getSpeaking() != null) {
+                        speakingScore = examScore.getSpeaking();
+                        break;
+                    }
+                }
+            }
+
+            if (speakingScore != null) {
+                for (Booking booking : group) {
+                    MockTestExam exam = booking.getMockTestExam();
+                    if (exam != null) {
+                        ExamScore examScore = exam.getScore();
+                        if (examScore != null) {
+                            examScore.setSpeaking(speakingScore);
+                            examScoreRepository.save(examScore);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     private String getBall(String type, int count, List<Score> scores) {
         for (Score score : scores) {
@@ -548,7 +634,7 @@ public class ExamServiceImpl implements ExamService {
         List<ModuleAnswer> answers;
         List<UserAnswers> userAnswers;
         if (type.equals("reading")) {
-            List<Reading> readings = readingRepository.findAllById(moduleIds);
+            List<Reading> readings = readingRepository.findAllByIdIn(moduleIds);
             answers = readings.stream().map(Reading::getAnswers).flatMap(List::stream).toList();
             userAnswers = userExamAnswers.stream()
                     .filter(answer -> answer.getReadingId() != null)
@@ -556,7 +642,7 @@ public class ExamServiceImpl implements ExamService {
                     .flatMap(List::stream)
                     .toList();
         } else {
-            List<Listening> listenings = listeningRepository.findAllById(moduleIds);
+            List<Listening> listenings = listeningRepository.findAllByIdIn(moduleIds);
             answers = listenings.stream().map(Listening::getAnswers).flatMap(List::stream).toList();
             userAnswers = userExamAnswers.stream()
                     .filter(answer -> answer.getListeningId() != null)

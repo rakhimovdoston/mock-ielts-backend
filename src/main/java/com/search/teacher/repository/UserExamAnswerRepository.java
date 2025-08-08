@@ -13,4 +13,6 @@ public interface UserExamAnswerRepository extends JpaRepository<UserExamAnswers,
     boolean existsByMockTestExamAndListeningIdIn(MockTestExam mockTestExam, List<Long> listeningId);
 
     boolean existsByMockTestExamAndReadingIdIn(MockTestExam mockTestExam, List<Long> readingId);
+
+    List<UserExamAnswers> findByMockTestExam(MockTestExam mockTestExam);
 }
