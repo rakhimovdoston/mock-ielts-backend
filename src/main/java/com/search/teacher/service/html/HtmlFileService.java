@@ -2,6 +2,7 @@ package com.search.teacher.service.html;
 
 import com.search.teacher.dto.QuestionAnswerView;
 import com.search.teacher.dto.ai.WritingAIFeedback;
+import com.search.teacher.model.entities.CheckWriting;
 import com.search.teacher.model.entities.ExamScore;
 import com.search.teacher.model.entities.UserWritingAnswer;
 import com.search.teacher.model.entities.Writing;
@@ -50,12 +51,16 @@ public class HtmlFileService {
             QuestionAnswerView view = new QuestionAnswerView();
             view.setQuestion(question);
             assert answer != null;
-            WritingAIFeedback feedback = answer.getCheckWriting().getResponse();
+            var checkWriting = answer.getCheckWriting();
+            if (checkWriting == null) {
+                checkWriting = new CheckWriting();
+            }
+            WritingAIFeedback feedback = checkWriting.getResponse();
             view.setFeedback(feedback);
             view.setAnswer(answer);
             view.setEncouragement(feedback.getEncouragement());
-            view.setScore(String.valueOf(answer.getCheckWriting().getScore()));
-            view.setSummary(answer.getCheckWriting().getSummary());
+            view.setScore(String.valueOf(checkWriting.getScore()));
+            view.setSummary(checkWriting.getSummary());
             view.setStickers(feedback.getStickers());
             questionViews.add(view);
         }
