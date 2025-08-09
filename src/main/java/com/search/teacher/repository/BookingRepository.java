@@ -1,6 +1,7 @@
 package com.search.teacher.repository;
 
 import com.search.teacher.model.entities.Booking;
+import com.search.teacher.model.entities.BookingGroup;
 import com.search.teacher.model.entities.MockTestExam;
 import com.search.teacher.model.entities.TestSession;
 import com.search.teacher.repository.custom.CustomBookingRepository;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long>, CustomBookingRepository {
@@ -22,4 +24,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, CustomB
     Booking findFirstByUserIdAndMainTestDate(Long userId, LocalDate mainTestDate);
 
     Booking findByMockTestExam(MockTestExam mockTestExam);
+
+    List<Booking> findAllByBookingGroup(BookingGroup bookingGroup);
 }

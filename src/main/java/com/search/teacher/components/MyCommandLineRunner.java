@@ -1,8 +1,11 @@
 package com.search.teacher.components;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.search.teacher.model.entities.*;
 import com.search.teacher.model.enums.RoleType;
+import com.search.teacher.model.response.AIResponse;
+import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.*;
 import com.search.teacher.service.EskizSmsService;
 import com.search.teacher.service.ai.AIService;

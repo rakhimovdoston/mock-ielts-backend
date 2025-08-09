@@ -34,11 +34,13 @@ public class EmailService {
 
             helper.setTo(user.getEmail());
             helper.setSubject("Your Mock Exam Results - Everest CDI");
+            logger.info("Sending email to: {}, {}, {}", user.getEmail(), user.getUsername(), user.getFirstname() + " " + user.getLastname());
             String htmlContent = htmlFileService.generateMockResultHtml(testDate, score, user.getFirstname() + " " + user.getLastname(), pdfDownloadUrl);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
             return "success";
+
         } catch (MessagingException e) {
             logger.error("Error sending email: {}", e.getMessage());
         } catch (Exception e) {

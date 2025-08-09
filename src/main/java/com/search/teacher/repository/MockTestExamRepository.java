@@ -28,4 +28,6 @@ public interface MockTestExamRepository extends JpaRepository<MockTestExam, Long
     MockTestExam findFirstByUser_IdOrderByCreatedDate(Long userId);
 
     MockTestExam findByScore(ExamScore score);
+
+    Page<MockTestExam> findAllByStatus(String status, Pageable pageable);
 }

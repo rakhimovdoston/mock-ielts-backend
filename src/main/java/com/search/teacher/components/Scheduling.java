@@ -23,9 +23,9 @@ public class Scheduling {
         logger.info("Sending answers to messaging");
     }
 
-    @Scheduled(cron = "0 0 5 * * *")
-    public void checkAllExamScoreRecalculated() {
-        logger.info("Checking all exam score recalculated");
-        services.refreshAnswer();
-    }
+//    @Scheduled(cron = "0 0 5 * * *")
+//    public void checkAllExamScoreRecalculated() {
+//        logger.info("Checking all exam score recalculated");
+//        services.refreshAnswer();
+//    }
 }

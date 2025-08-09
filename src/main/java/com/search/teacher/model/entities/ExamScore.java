@@ -28,6 +28,7 @@ public class ExamScore extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
     private String status;
+    private String smsStatus;
 
     private String pdfId;
 }

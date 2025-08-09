@@ -43,4 +43,6 @@ public interface ExamService {
     JResponse refreshUserAnswer(User currentUser, EmailAnswerRequest request);
 
     ResponseEntity<byte[]> downloadPdfFile(String id);
+
+    void checkSpeakingSetup(MockTestExam mockTestExam);
 }

@@ -23,7 +23,7 @@ public class MockTestExam extends BaseEntity {
     @Column(name = "exam_unique_id")
     private String examUniqueId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
@@ -51,7 +51,7 @@ public class MockTestExam extends BaseEntity {
     @OneToMany(mappedBy = "mockTestExam")
     private List<UserExamAnswers> userExamAnswers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "mockTestExam", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "mockTestExam")
     private List<UserWritingAnswer> writingAnswers = new ArrayList<>();
 
 }

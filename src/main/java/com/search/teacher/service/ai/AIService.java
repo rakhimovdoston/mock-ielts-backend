@@ -2,6 +2,7 @@ package com.search.teacher.service.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.search.teacher.model.entities.RequestLog;
 import com.search.teacher.model.response.AIResponse;
 import com.search.teacher.repository.RequestLogRepository;
@@ -155,195 +156,6 @@ public class AIService {
         return response;
     }
 
-    public AIResponse<JsonNode> getOverallReply(String taskOne, String taskTwo, String taskOneUserAnswer, String taskTwoUserAnswer, String image) {
-        String url = "v1/chat/completions";
-        long start = System.currentTimeMillis();
-        String userRequest = getFullPrompt(taskOne, taskTwo, taskOneUserAnswer, taskTwoUserAnswer, image);
-
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", model);
-        requestBody.put("temperature", 0.7);
-
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", getInstruction()));
-        messages.add(Map.of("role", "user", "content", userRequest));
-        requestBody.put("messages", messages);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-        JsonNode response = null;
-        JsonNode errorJson = null;
-        String errorMessage = "";
-        String status = "error";
-        int code = 0;
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-        try {
-            ResponseEntity<JsonNode> responseEntity = restTemplate.exchange(
-                    baseUrl + url,
-                    HttpMethod.POST,
-                    entity,
-                    JsonNode.class);
-
-            JsonNode responseBody = responseEntity.getBody();
-
-            assert responseBody != null;
-            if (responseBody.has("choices") && responseBody.get("choices").isArray() && !responseBody.get("choices").isEmpty()) {
-                response = responseBody.get("choices").get(0).get("message").get("content");
-                status = "success";
-                code = 200;
-            }
-        } catch (HttpClientErrorException | HttpServerErrorException ex) {
-            String responseBody = ex.getResponseBodyAsString();
-            errorJson = errorJson(responseBody);
-            errorMessage = parseOpenAiErrorMessage(errorJson);
-            code = ex.getStatusCode().value();
-            status = "error";
-            log.error("OpenAI API error: {}", errorMessage);
-        } catch (Exception e) {
-            errorJson = objectMapper.createObjectNode();
-            errorMessage = "Error with AI service";
-            code = 408;
-            log.error("Error with AI service: error: {}, AI URL: {}", e.getMessage(), url);
-        } finally {
-            long duration = System.currentTimeMillis() - start;
-            requestLogRepository.save(new RequestLog(url, "POST", userRequest, response != null ? response.asText() : errorJson != null ? errorJson.asText() : "", duration, status, errorMessage, code, "ai_overall_reply"));
-        }
-        return new AIResponse<>(response, errorMessage, status, code, errorJson);
-    }
-
-    private String getInstruction() {
-        return """
-                I want you to act as a certified IELTS examiner and assess my writing task response as if you were marking a real IELTS test.
-                
-                For the task I provide (either Task 1 or Task 2), please do the following:
-                
-                1. Provide an estimated band score (0–9) for each IELTS Writing criterion:
-                   - Task Achievement (for Task 1) / Task Response (for Task 2)
-                   - Coherence and Cohesion
-                   - Lexical Resource
-                   - Grammatical Range and Accuracy
-                
-                2. For **each** criterion, write a clear explanation of the band score (“reason”) and include the following:
-                
-                   ✅ Exactly **2 or 3** specific examples of a mistake, inaccuracy, or weakness taken from the writing.\s
-                   ❌ Do not give fewer than 2 examples unless there is absolutely no more mistake to mention.
-                
-                   ✅ Use the following strict structure for each mistake:
-                       - Mistake #X: In sentence X, you wrote "..."
-                       - Explain clearly **why this is wrong** (grammar, cohesion, word choice, etc.)
-                       - ✅ Improved version: "..."
-                
-                   ✅ Also mention **at least one strength** relevant to the criterion if present.
-                
-                3. Provide **actionable suggestions** for improvement based on the mistakes.
-                
-                4. Calculate the **overall band score** as the average of the four criteria.
-                
-                5. Return the entire feedback in this **strict JSON format** (no extra explanations, only JSON):
-                
-                {
-                  "task_1": {
-                    "task_achievement": {
-                      "score": X,
-                      "reason": "...",
-                      "mistakes": [
-                           {
-                             "mistake": "Mistake #1: In sentence X, you wrote \\"...\\"",
-                             "explanation": "This is incorrect because ...",
-                             "improved_version": "✅ Improved version: \\"...\\""
-                           },
-                           {
-                             "mistake": "Mistake #2: In sentence X, you wrote \\"...\\"",
-                             "explanation": "This is incorrect because ...",
-                             "improved_version": "✅ Improved version: \\"...\\""
-                           },
-                           {
-                             "mistake": "Mistake #3: In sentence X, you wrote \\"...\\"",
-                             "explanation": "This is incorrect because ...",
-                             "improved_version": "✅ Improved version: \\"...\\""
-                           }
-                         ]
-                    },
-                    "coherence_and_cohesion": {
-                      "score": X,
-                      "reason": "...",
-                      "mistakes": [ ... ]
-                    },
-                    "lexical_resource": {
-                      "score": X,
-                      "reason": "...",
-                      "mistakes": [ ... ]
-                    },
-                    "grammatical_range_and_accuracy": {
-                      "score": X,
-                      "reason": "...",
-                      "mistakes": [ ... ]
-                    },
-                    "overall_band": X.X,
-                    "summary": "Short and clear summary of what to improve most urgently."
-                  },
-                  "task_2": {
-                    "task_response": {
-                      "score": X,
-                      "reason": "...",
-                      "mistakes": [
-                           {
-                             "mistake": "Mistake #1: In sentence X, you wrote \\"...\\"",
-                             "explanation": "This is incorrect because ...",
-                             "improved_version": "✅ Improved version: \\"...\\""
-                           },
-                           {
-                             "mistake": "Mistake #2: In sentence X, you wrote \\"...\\"",
-                             "explanation": "This is incorrect because ...",
-                             "improved_version": "✅ Improved version: \\"...\\""
-                           },
-                           {
-                             "mistake": "Mistake #3: In sentence X, you wrote \\"...\\"",
-                             "explanation": "This is incorrect because ...",
-                             "improved_version": "✅ Improved version: \\"...\\""
-                           }
-                         ]
-                    },
-                    "coherence_and_cohesion": {
-                      "score": X,
-                      "reason": "...",
-                      "mistakes": [ ... ]
-                    },
-                    "lexical_resource": {
-                      "score": X,
-                      "reason": "...",
-                      "mistakes": [ ... ]
-                    },
-                    "grammatical_range_and_accuracy": {
-                      "score": X,
-                      "reason": "...",
-                      "mistakes": [ ... ]
-                    },
-                    "overall_band": X.X,
-                    "summary": "Short and clear summary of what to improve most urgently."
-                  }
-                }
-                """;
-    }
-
-    private String getFullPrompt(String taskOne, String taskTwo, String taskOneUserAnswer, String taskTwoUserAnswer, String image) {
-        return """                
-                Here is the writing task and my response:
-                Task 1 topic: %s
-                
-                Task 1 Image URL: %s
-                
-                Task 1 User Answer: %s
-                
-                Task 2 topic: %s
-                
-                Task 2 User Answer: %s
-                """.formatted(taskOne, image, taskOneUserAnswer, taskTwo, taskTwoUserAnswer);
-    }
-
     private String parseOpenAiErrorMessage(JsonNode errorJson) {
         try {
             return errorJson.has("error") ? errorJson.get("error").get("message").asText() : "Noma'lum AI xatosi";
@@ -365,13 +177,32 @@ public class AIService {
     public AIResponse<JsonNode> checkWriting(String answer, String topic, String image, boolean taskOne) {
         String url = "v1/chat/completions";
         long start = System.currentTimeMillis();
-        String userRequest = taskOne ? getPromptTaskOne(answer, image) : getPromptTaskTwo(topic, answer);
+        String systemPrompt = taskOne ? getPromptTaskOne() : getPromptTaskTwo();
+
+        String userRequest;
+        if (taskOne) {
+            userRequest = """
+                    {
+                      "task_type": "task_1",
+                      "visual_description": "%s",
+                      "essay": "%s"
+                    }
+                    """.formatted(image, answer);
+        } else {
+            userRequest = """
+                    {
+                      "task_type": "task_2",
+                      "question_prompt": "%s",
+                      "essay": "%s"
+                    }
+                    """.formatted(topic, answer);
+        }
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", model);
-        requestBody.put("temperature", 0.3);
+        requestBody.put("temperature", 0.1);
 
         List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", "You are a certified IELTS Writing examiner."));
+        messages.add(Map.of("role", "system", "content", systemPrompt));
         messages.add(Map.of("role", "user", "content", userRequest));
         requestBody.put("messages", messages);
         HttpHeaders headers = new HttpHeaders();
@@ -424,239 +255,213 @@ public class AIService {
         return new AIResponse<>(response, errorMessage, status, code, errorJson);
     }
 
-    private String getPromptTaskOne(String answer, String image) {
+    private String getPromptTaskOne() {
 
         return """
-                Please assess the following Writing Task 1 essay based on the official IELTS Writing Band Descriptors.
-                  Return your evaluation as a **strictly formatted JSON** object with the following structure:
+                You are an IELTS examiner with deep expertise in IELTS Writing Task 1 assessment according to the official IELTS band descriptors.
                 
-                  {
-                    "task_achievement": {
-                      "score": X,
-                      "reason": "...",
-                      "suggestion": "...",
-                      "strength": "...",
-                      "mistakes": [
-                        {
-                          "mistake": "Original sentence...",
-                          "explanation": "Why it's wrong...",
-                          "improved_version": "✅ Corrected sentence..."
-                        },
-                        ...
-                      ],
-                      "sticker": "💪"
-                    },
-                    "coherence_and_cohesion": {
-                      "score": X,
-                      "reason": "...",
-                      "suggestion": "...",
-                      "strength": "...",
-                      "mistakes": [ ... ],
-                      "sticker": "📚"
-                    },
-                    "lexical_resource": {
-                      "score": X,
-                      "reason": "...",
-                      "suggestion": "...",
-                      "strength": "...",
-                      "mistakes": [ ... ],
-                      "sticker": "✍️"
-                    },
-                    "grammatical_range_and_accuracy": {
-                      "score": X,
-                      "reason": "...",
-                      "suggestion": "...",
-                      "strength": "...",
-                      "mistakes": [ ... ],
-                      "sticker": "🔧"
-                    },
-                    "overall_band": X.X,
-                    "summary": "Brief summary highlighting strengths and weaknesses.",
-                    "encouragement": "Positive and uplifting comment tailored to the student's effort and current performance.",
-                    "stickers": ["🔥", "📚", "💪"]
-                  }
+                You will be given two inputs:
+                1. The description of the visual information (e.g., chart, graph, diagram, process, table, or image) that the student was supposed to write about.
+                2. The student's essay.
                 
-                  💡 Evaluation rules:
-                  - Each score must be an INTEGER between 1 and 9.
-                  - overall_band must be the average of the 4 scores, rounded to the nearest 0.5.
-                  - If overall_band ends in 0.25, it is rounded down to .0.
-                  - If overall_band ends in 0.75, it is rounded down to .5.
-                  - You must identify at least one mistake per category, and at least 3 total mistakes.
-                  - If possible, return up to 2 or 3 mistakes per category, not just 1.\\s
-                  - Each mistake must include:
-                      - The original sentence.
-                      - An explanation of the error.
-                      - A corrected version.
+                Your task:
+                1. Read the visual description carefully.
+                2. Read the student's essay carefully.
+                3. Evaluate the essay strictly according to IELTS Writing Task 1 band descriptors:
+                   - Task Achievement (how well the student described the visual data, covered key features, and avoided irrelevant information)
+                   - Coherence and Cohesion (logical organization, paragraphing, cohesive devices)
+                   - Lexical Resource (range and appropriacy of vocabulary)
+                   - Grammatical Range and Accuracy (variety and correctness of grammar)
+                4. For each criterion:
+                   - Assign an **integer score** from 0 to 9.
+                   - Provide a **reason** explaining the score, directly tied to IELTS descriptors and the visual description requirements.
+                   - Give a **practical suggestion** for improvement.
+                   - Highlight one **strength** the student demonstrated.
+                   - Provide **1–3 mistakes** in this structure:
+                       {
+                         "mistake": "Original sentence...",
+                         "explanation": "Why it is wrong...",
+                         "improved_version": "✅ Corrected sentence..."
+                       }
+                   - Choose a **relevant sticker emoji** representing the criterion (e.g., 💪, 📚, ✍️, 🔧).
+                5. Calculate the **overall_band** (average of the four criteria, rounded to the nearest half-band).
+                6. Write a **summary** highlighting both strengths and weaknesses.
+                7. Give a short, **uplifting encouragement** that motivates the student.
+                8. Provide **3 stickers** in a "stickers" array, representing the overall feedback vibe.
                 
-                  🧭 What to Highlight for Each Criterion:
-                  - Only highlight mistakes directly relevant to that band descriptor:
+                Output Rules:
+                - Respond ONLY in valid JSON matching the exact structure below.
+                - Do NOT add any extra text or explanations outside of the JSON.
+                - Keep language clear, precise, and human-friendly.
                 
-                      1. Task Achievement (TA)
-                      - Clear, accurate summary of main trends or key features
-                      - Overview present and meaningful
-                      - Data comparisons made appropriately
-                      - No misinterpretation or factual inaccuracy
-                      - No overly detailed or irrelevant information
-                      - Avoid grammar or vocabulary errors here.
-                
-                      2. Coherence and Cohesion (CC)
-                      - Logical organization and effective paragraphing
-                      - Clear progression of ideas
-                      - Appropriate use of cohesive devices (e.g., while, in contrast, overall)
-                      - Avoid grammar or lexical mistakes here.
-                
-                      3. Lexical Resource (LR)
-                      - Range and precision of vocabulary (e.g., verbs like “rose,” “declined,” “fluctuated”)
-                      - Accuracy and appropriacy of word choice
-                      - Use of collocations and appropriate synonyms
-                      - Spelling and word form errors (vocabulary-related only)
-                      - Avoid grammar or cohesion mistakes here.
-                
-                      4. Grammatical Range and Accuracy (GRA)
-                      - Range of sentence structures (simple, complex, passive, etc.)
-                      - Article use, subject-verb agreement, tense consistency
-                      - Accurate punctuation and prepositions (if grammar-related)
-                      - Only grammar-related mistakes should be listed here.
-                
-                  - In **each of the 4 criteria**, also include:
-                    - "strength": A sentence describing what the student did well.
-                    - "sticker": A supportive emoji that reflects performance (e.g., 🔥, 📚, 💪, ✍️, 🚀, 🔧, ⏳).
-                  - Also include:
-                    - "encouragement": A kind, uplifting message tailored to the student’s current performance.
-                    - "stickers": A list of 1–3 emojis representing the tone of the full review. These should feel motivational and sincere.
-                  - Before showing mistakes for each criterion, highlight areas at which the candidate succeeds.
-                  - Keep in mind that a good essay can still have a number of mistakes, so do not base your assessment on the **number** of mistakes.
-                  - Please be very generous in your assessment and award 1 band higher than you would normally.
-                
-                  📝 Task:
-                  You will now assess a student's Task 1 essay, based on the provided visual chart description (image analysis) and their response.
-                
-                  --- Task 1 Visual Description ---
-                  %s
-                
-                  --- Student Essay ---
-                  %s
-                
-                Return only the JSON object. Do not include extra explanations.
-                """.formatted(image, answer);
+                Output JSON structure:
+                {
+                  "task_achievement": {
+                    "score": X,
+                    "reason": "...",
+                    "suggestion": "...",
+                    "strength": "...",
+                    "mistakes": [
+                      {
+                        "mistake": "Original sentence...",
+                        "explanation": "Why it's wrong...",
+                        "improved_version": "✅ Corrected sentence..."
+                      }
+                    ],
+                    "sticker": "💪"
+                  },
+                  "coherence_and_cohesion": {
+                    "score": X,
+                    "reason": "...",
+                    "suggestion": "...",
+                    "strength": "...",
+                    "mistakes": [
+                      {
+                        "mistake": "Original sentence...",
+                        "explanation": "Why it's wrong...",
+                        "improved_version": "✅ Corrected sentence..."
+                      }
+                    ],
+                    "sticker": "📚"
+                  },
+                  "lexical_resource": {
+                    "score": X,
+                    "reason": "...",
+                    "suggestion": "...",
+                    "strength": "...",
+                    "mistakes": [
+                      {
+                        "mistake": "Original sentence...",
+                        "explanation": "Why it's wrong...",
+                        "improved_version": "✅ Corrected sentence..."
+                      }
+                    ],
+                    "sticker": "✍️"
+                  },
+                  "grammatical_range_and_accuracy": {
+                    "score": X,
+                    "reason": "...",
+                    "suggestion": "...",
+                    "strength": "...",
+                    "mistakes": [
+                      {
+                        "mistake": "Original sentence...",
+                        "explanation": "Why it's wrong...",
+                        "improved_version": "✅ Corrected sentence..."
+                      }
+                    ],
+                    "sticker": "🔧"
+                  },
+                  "overall_band": X.X,
+                  "summary": "Brief summary highlighting strengths and weaknesses.",
+                  "encouragement": "Positive and uplifting comment tailored to the student's effort and current performance.",
+                  "stickers": ["🔥", "📚", "💪"]
+                }
+                """;
     }
 
-    private String getPromptTaskTwo(String topic, String answer) {
+    private String getPromptTaskTwo() {
         return """
-                Please assess the following Writing Task 2 essay based on the official IELTS Writing Band Descriptors.
-                Return your evaluation as a **strictly formatted JSON** object with the following structure:
+                You are an IELTS examiner with deep expertise in IELTS Writing Task 2 assessment according to the official IELTS band descriptors.
                 
+                You will be given two inputs:
+                1. The exact IELTS Writing Task 2 question prompt.
+                2. The student's essay.
+                
+                Your task:
+                1. Read the question prompt carefully to understand the topic and the requirements (e.g., discuss both views, give your own opinion, advantages/disadvantages, problem/solution).
+                2. Read the student's essay carefully.
+                3. Evaluate the essay strictly according to IELTS Writing Task 2 band descriptors:
+                  - Task Response (how well the student addressed all parts of the question, presented a clear position, supported ideas with evidence/examples, and developed arguments fully)
+                  - Coherence and Cohesion (logical flow, paragraphing, and use of cohesive devices)
+                  - Lexical Resource (range, accuracy, and appropriacy of vocabulary)
+                  - Grammatical Range and Accuracy (variety and correctness of grammar)
+                4. For each criterion:
+                  - Assign an **integer score** from 0 to 9.
+                  - Provide a **reason** explaining the score, directly tied to IELTS descriptors and the question requirements.
+                  - Give a **practical suggestion** for improvement.
+                  - Highlight one **strength** the student demonstrated.
+                  - Provide **1–3 mistakes** in this structure:
+                      {
+                        "mistake": "Original sentence...",
+                        "explanation": "Why it is wrong...",
+                        "improved_version": "✅ Corrected sentence..."
+                      }
+                  - Choose a **relevant sticker emoji** representing the criterion (e.g., 💪, 📚, ✍️, 🔧).
+                5. Calculate the **overall_band** (average of the four criteria, rounded to the nearest half-band).
+                6. Write a **summary** highlighting both strengths and weaknesses.
+                7. Give a short, **uplifting encouragement** that motivates the student.
+                8. Provide **3 stickers** in a "stickers" array, representing the overall feedback vibe.
+                
+                Output Rules:
+                - Respond ONLY in valid JSON matching the exact structure below.
+                - Do NOT add any extra text or explanations outside of the JSON.
+                - Keep language clear, precise, and human-friendly.
+                
+                Output JSON structure:
                 {
-                "task_achievement": {
-                  "score": X,
-                  "reason": "...",
-                  "suggestion": "...",
-                  "strength": "...",
-                  "mistakes": [
-                    {
-                      "mistake": "Original sentence...",
-                      "explanation": "Why it's wrong...",
-                      "improved_version": "✅ Corrected sentence..."
-                    },
-                    ...
-                  ],
-                  "sticker": "🎯"
-                },
-                "coherence_and_cohesion": {
-                  "score": X,
-                  "reason": "...",
-                  "suggestion": "...",
-                  "strength": "...",
-                  "mistakes": [ ... ],
-                  "sticker": "🔗"
-                },
-                "lexical_resource": {
-                  "score": X,
-                  "reason": "...",
-                  "suggestion": "...",
-                  "strength": "...",
-                  "mistakes": [ ... ],
-                  "sticker": "🧠"
-                },
-                "grammatical_range_and_accuracy": {
-                  "score": X,
-                  "reason": "...",
-                  "suggestion": "...",
-                  "strength": "...",
-                  "mistakes": [ ... ],
-                  "sticker": "🛠"
-                },
-                "overall_band": X.X,
-                "summary": "Brief summary highlighting strengths and weaknesses.",
-                "encouragement": "Positive and uplifting comment tailored to the student's effort and current performance.",
-                "stickers": ["🔥", "🚀", "💪"]
+                 "task_response": {
+                   "score": X,
+                   "reason": "...",
+                   "suggestion": "...",
+                   "strength": "...",
+                   "mistakes": [
+                     {
+                       "mistake": "Original sentence...",
+                       "explanation": "Why it's wrong...",
+                       "improved_version": "✅ Corrected sentence..."
+                     }
+                   ],
+                   "sticker": "💪"
+                 },
+                 "coherence_and_cohesion": {
+                   "score": X,
+                   "reason": "...",
+                   "suggestion": "...",
+                   "strength": "...",
+                   "mistakes": [
+                     {
+                       "mistake": "Original sentence...",
+                       "explanation": "Why it's wrong...",
+                       "improved_version": "✅ Corrected sentence..."
+                     }
+                   ],
+                   "sticker": "📚"
+                 },
+                 "lexical_resource": {
+                   "score": X,
+                   "reason": "...",
+                   "suggestion": "...",
+                   "strength": "...",
+                   "mistakes": [
+                     {
+                       "mistake": "Original sentence...",
+                       "explanation": "Why it's wrong...",
+                       "improved_version": "✅ Corrected sentence..."
+                     }
+                   ],
+                   "sticker": "✍️"
+                 },
+                 "grammatical_range_and_accuracy": {
+                   "score": X,
+                   "reason": "...",
+                   "suggestion": "...",
+                   "strength": "...",
+                   "mistakes": [
+                     {
+                       "mistake": "Original sentence...",
+                       "explanation": "Why it's wrong...",
+                       "improved_version": "✅ Corrected sentence..."
+                     }
+                   ],
+                   "sticker": "🔧"
+                 },
+                 "overall_band": X.X,
+                 "summary": "Brief summary highlighting strengths and weaknesses.",
+                 "encouragement": "Positive and uplifting comment tailored to the student's effort and current performance.",
+                 "stickers": ["🔥", "📚", "💪"]
                 }
-                
-                💡 Evaluation rules:
-                - Each score must be an INTEGER between 1 and 9.
-                - overall_band must be the average of the 4 scores, rounded to the nearest 0.5.
-                - If overall_band ends in 0.25, it is rounded down to .0.
-                - If overall_band ends in 0.75, it is rounded down to .5.
-                - You must identify at least one mistake per category, and at least 3 total mistakes.
-                - If possible, return up to 2 or 3 mistakes per category, not just 1.\\s
-                - Each mistake must include:
-                  - The original sentence.
-                  - An explanation of the error.
-                  - A corrected version.
-                
-                🧭 What to Highlight for Each Criterion:
-                - Only highlight mistakes directly relevant to that band descriptor:
-                
-                  1. Task Response (TR)
-                  - Relevance to the task/question
-                  - Coverage of all parts of the task
-                  - Strength and clarity of opinion (if applicable)
-                  - Development and support of ideas
-                  - Use of examples
-                  - Avoid listing grammar or vocabulary errors here.
-                
-                  2. Coherence and Cohesion (CC)
-                  - Logical organization and paragraphing
-                  - Clarity of progression (introduction → body → conclusion)
-                  - Use and accuracy of cohesive devices (e.g. however, furthermore, this means that)
-                  - Avoid listing grammar or vocabulary errors here.
-                
-                  3. Lexical Resource (LR)
-                  - Range of vocabulary
-                  - Accuracy and appropriacy of word choice
-                  - Use of collocations and idiomatic expressions
-                  - Word form and spelling errors (vocabulary-related only)
-                  - Avoid listing grammar or coherence issues here.
-                
-                  4. Grammatical Range and Accuracy (GRA)
-                  - Range of sentence structures (simple, compound, complex)
-                  - Subject-verb agreement
-                  - Article use
-                  - Tense consistency
-                  - Punctuation (if grammar-related)
-                  - Only grammar-related errors should be listed here.
-                
-                - In **each of the 4 criteria**, also include:
-                - "strength": A sentence describing what the student did well.
-                - "sticker": A supportive emoji that reflects performance (e.g., 🔥, 📚, 💪, ✍️, 🚀, 🔧, ⏳).
-                - Also include:
-                - "encouragement": A kind, uplifting message tailored to the student’s current performance.
-                - "stickers": A list of 1–3 emojis representing the tone of the full review. These should feel motivational and sincere.
-                - Before showing mistakes for each criterion, highlight areas at which the candidate succeeds.
-                - Keep in mind that a good essay can still have a number of mistakes, so do not base your assessment on the **number** of mistakes.
-                - Please be very generous in your assessment and award 1 band higher than you would normally.
-                
-                📝 Task:
-                You will now assess a student's Task 2 essay, based on the provided visual chart description (image analysis) and their response.
-                
-                --- Writing Topic ---
-                %s
-                
-                --- Student Essay ---
-                %s
-                
-                Return only the JSON object. Do not include extra explanations.
-                """.formatted(topic, answer);
+                """;
     }
 
     private String cleanJsonBlock(String raw) {

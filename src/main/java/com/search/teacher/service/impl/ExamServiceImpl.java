@@ -84,6 +84,7 @@ public class ExamServiceImpl implements ExamService {
     private final EmailService emailService;
     private final ScoreRepository scoreRepository;
     private final BookingRepository bookingRepository;
+    private final SpeakingBookingRepository speakingBookingRepository;
     private final CheckWritingRepository checkWritingRepository;
     private final CheckWritingHistoryRepository checkWritingHistoryRepository;
     private final EskizSmsService eskizSmsService;
@@ -371,7 +372,7 @@ public class ExamServiceImpl implements ExamService {
         if (mockTestExam == null) {
             return JResponse.error(404, "This exam not found.");
         }
-        List<UserWritingAnswer> answers = mockTestExam.getWritingAnswers();
+        List<UserWritingAnswer> answers = userWritingAnswerRepository.findAllByMockTestExam(mockTestExam);
         List<CheckWriting> checkWritings = answers.stream().map(ans -> ans.getCheckWriting() != null ? ans.getCheckWriting() : null)
                 .filter(Objects::nonNull).toList();
         if (!checkWritings.isEmpty()) {
@@ -533,7 +534,8 @@ public class ExamServiceImpl implements ExamService {
             Double writingScore = writingCheckingService.checkWritingWithAI(mockTestExam);
             score.setWriting(String.valueOf(writingScore));
         } else {
-            int count = checkAnswers(mockTestExam.getReadings(), type, mockTestExam.getUserExamAnswers());
+            List<UserExamAnswers> userExamAnswers = userExamAnswerRepository.findByMockTestExam(mockTestExam);
+            int count = checkAnswers(type.equals("reading") ? mockTestExam.getReadings() : mockTestExam.getListening(), type, userExamAnswers);
             if (type.equals("listening")) {
                 score.setListening(getBall(type, count, scoreRepository.findAll()));
                 score.setListeningCount(count);
@@ -548,6 +550,7 @@ public class ExamServiceImpl implements ExamService {
         return score;
     }
 
+    @Override
     public void checkSpeakingSetup(MockTestExam mockTestExam) {
         Booking currentBooking = bookingRepository.findByMockTestExam(mockTestExam);
         if (currentBooking == null) {
@@ -560,8 +563,8 @@ public class ExamServiceImpl implements ExamService {
             return;
         }
 
-        List<Booking> bookings = bookingGroup.getBookings();
-        List<SpeakingBooking> speakingBookings = bookingGroup.getSpeakingBookings();
+        List<Booking> bookings = bookingRepository.findAllByBookingGroup(bookingGroup);
+        List<SpeakingBooking> speakingBookings = speakingBookingRepository.findAllByBookingGroup(bookingGroup);
 
         bookings.sort(Comparator.comparing(Booking::getMainTestDate));
         speakingBookings.sort(Comparator.comparing(SpeakingBooking::getMainTestDate));
@@ -638,7 +641,7 @@ public class ExamServiceImpl implements ExamService {
             answers = readings.stream().map(Reading::getAnswers).flatMap(List::stream).toList();
             userAnswers = userExamAnswers.stream()
                     .filter(answer -> answer.getReadingId() != null)
-                    .map(UserExamAnswers::getAnswers)
+                    .map(userAnswerRepository::findAllByUserExamAnswers)
                     .flatMap(List::stream)
                     .toList();
         } else {
@@ -646,7 +649,7 @@ public class ExamServiceImpl implements ExamService {
             answers = listenings.stream().map(Listening::getAnswers).flatMap(List::stream).toList();
             userAnswers = userExamAnswers.stream()
                     .filter(answer -> answer.getListeningId() != null)
-                    .map(UserExamAnswers::getAnswers)
+                    .map(userAnswerRepository::findAllByUserExamAnswers)
                     .flatMap(List::stream)
                     .toList();
         }

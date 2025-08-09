@@ -1,6 +1,7 @@
 package com.search.teacher.repository;
 
 import com.search.teacher.model.entities.ExamScore;
+import com.search.teacher.model.entities.MockTestExam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,4 +16,6 @@ public interface ExamScoreRepository extends JpaRepository<ExamScore, Long> {
 
     @Query("select e from ExamScore e where (e.listeningCount =0 and e.readingCount = 0 and e.writing is not null)")
     Page<ExamScore> findAllByListeningAndReading(Pageable pageable);
+
+    ExamScore findByMockTestExam(MockTestExam mockTestExam);
 }

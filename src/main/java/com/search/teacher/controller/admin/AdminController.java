@@ -6,6 +6,7 @@ import com.search.teacher.dto.request.test.TestDateRequest;
 import com.search.teacher.dto.request.user.UserRequest;
 import com.search.teacher.dto.request.user.UsernameRequest;
 import com.search.teacher.model.response.JResponse;
+import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.service.exam.SendAnswerServices;
 import com.search.teacher.service.user.UserService;
 import com.search.teacher.utils.SecurityUtils;
@@ -68,6 +69,11 @@ public class AdminController {
     @PostMapping("refresh-answers")
     public JResponse checkAllAnswers(@RequestBody RefreshAnswerRequest request) {
         return services.refreshAnswer(request);
+    }
+
+    @PostMapping("check-essay")
+    public JResponse checkEssay(@RequestParam(name = "userId", required = false) Long userId) {
+        return services.checkEssayAgainAndSendSms(userId);
     }
 
     @GetMapping("all")

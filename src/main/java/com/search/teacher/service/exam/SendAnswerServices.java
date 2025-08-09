@@ -2,6 +2,7 @@ package com.search.teacher.service.exam;
 
 import com.search.teacher.dto.request.RefreshAnswerRequest;
 import com.search.teacher.dto.request.history.EmailAnswerRequest;
+import com.search.teacher.dto.request.module.AICheckerRequest;
 import com.search.teacher.exception.NotfoundException;
 import com.search.teacher.model.entities.*;
 import com.search.teacher.model.response.JResponse;
@@ -96,7 +97,7 @@ public class SendAnswerServices {
         if (!phoneNumber.startsWith("+"))
             phoneNumber = "+" + phoneNumber;
         SmsInfo smsInfo = smsInfoRepository.findByPhoneNumberAndMockTestId(phoneNumber, exam.getId());
-        if (smsInfo != null) {
+        if (smsInfo != null && smsInfo.getSmsStatus() != null && smsInfo.getSmsStatus().equals("success")) {
             logger.info("SMS already sent for user {} for exam {}", user.getId(), exam.getId());
             return "error";
         } else {
@@ -108,7 +109,7 @@ public class SendAnswerServices {
             smsInfo.setSmsStatus("error");
             smsInfoRepository.save(smsInfo);
         }
-        ExamScore score = exam.getScore();
+        ExamScore score = examScoreRepository.findByMockTestExam(exam);
         String messageTemplate = """
                 %s
                 Thank you for choosing EVEREST CDI MOCK , here are the results of %s
@@ -199,5 +200,92 @@ public class SendAnswerServices {
             return JResponse.error(400, "Ids not found");
         }
         return JResponse.success("Refreshing answers success");
+    }
+
+    public JResponse checkEssayAgainAndSendSms(Long userId) {
+        if (userId != null) {
+            User user = userRepository.findByUsername("sherzodanorkulov");
+            MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueId("16198c58dd304e9ea15f9b309cbc68cd");
+            ExamScore score = mockTestExam.getScore();
+            if (score == null) {
+                logger.warn("Score not found for mock test exam {}", mockTestExam.getId());
+                return JResponse.error(404, "Score not found");
+            }
+
+            if (score.getSpeaking() == null) {
+                examService.checkSpeakingSetup(mockTestExam);
+                logger.info("Speaking score recalculated found for mock test exam {}, checking again", mockTestExam.getId());
+            }
+
+            score = examScoreRepository.findByMockTestExam(mockTestExam);
+            if (score.getSpeaking() == null) {
+                logger.warn("Score not set up for speaking {}", mockTestExam.getId());
+                return JResponse.error(404, "Score not set up for speaking");
+            }
+
+            Date testDate = mockTestExam.getTestDate() != null ? mockTestExam.getTestDate() : mockTestExam.getSubmittedDate() != null ? mockTestExam.getSubmittedDate() : mockTestExam.getUpdatedDate();
+            String response = emailService.sendMockExamResult(user, testDate, score, downloadUrl + mockTestExam.getExamUniqueId());
+            String smsResponse = sendSmsTo(user, mockTestExam, testDate, response);
+
+            logger.info("Success sending email answer: {} for user {} sms status {}: ", response, user.getUsername(), smsResponse);
+            return JResponse.success("Success sending answer " + userId);
+        }
+        int pageSize = 50;
+        int pageNumber = 0;
+        Page<MockTestExam> page;
+        do {
+            page = mockTestExamRepository.findAllByStatus("closed", PageRequest.of(pageNumber, pageSize));
+            logger.info("Mock exam pages: {}, Number: {}, NumbersElements: {}", page, pageNumber, page.getNumberOfElements());
+            if (page.isEmpty()) {
+                logger.info("No mock exams found");
+                continue;
+            }
+
+            List<MockTestExam> mockTestExams = page.getContent();
+            for (MockTestExam mockTestExam : mockTestExams) {
+                User user = mockTestExam.getUser();
+                JResponse writingResponse = examService.checkWriting(new User(), new AICheckerRequest(mockTestExam.getId(), user.getId()));
+                if (!writingResponse.isSuccess()) {
+                    logger.warn("Writing checker failed for mock test exam {}", mockTestExam.getId());
+                    continue;
+                }
+
+                ExamScore score = examScoreRepository.findByMockTestExam(mockTestExam);
+                if (score == null) {
+                    logger.warn("Score not found for mock test exam {}", mockTestExam.getId());
+                    continue;
+                }
+                if (score.getWriting() == null) {
+                    logger.warn("Writing or speaking score not found for mock test exam {}", mockTestExam.getId());
+                    continue;
+                }
+                if (score.getSpeaking() == null) {
+                    examService.checkSpeakingSetup(mockTestExam);
+                    logger.info("Speaking score not found for mock test exam {}, checking again", mockTestExam.getId());
+                }
+                score = examScoreRepository.findByMockTestExam(mockTestExam);
+                if (score.getSpeaking() == null) {
+                    logger.warn("Score not set up for speaking {}", mockTestExam.getId());
+                    continue;
+                }
+                Date testDate = mockTestExam.getTestDate() != null ? mockTestExam.getTestDate() : mockTestExam.getSubmittedDate() != null ? mockTestExam.getSubmittedDate() : mockTestExam.getUpdatedDate();
+                String response = emailService.sendMockExamResult(user, testDate, score, downloadUrl + mockTestExam.getExamUniqueId());
+                score.setStatus(response);
+                examScoreRepository.save(score);
+                String smsResponse = sendSmsTo(user, mockTestExam, testDate, response);
+                score.setSmsStatus(smsResponse);
+                examScoreRepository.save(score);
+                logger.info("Success sending email answer: {} for user {} sms status {}: ", response, user.getUsername(), smsResponse);
+            }
+
+            try {
+                logger.info("Waiting next mock setups");
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            pageNumber++;
+        } while (!page.isLast());
+        return JResponse.success("Success sending answers");
     }
 }
