@@ -197,9 +197,9 @@ public class ExamServiceImpl implements ExamService {
             return JResponse.error(404, "This exam not found.");
         }
         return switch (type.toLowerCase()) {
-            case "reading" -> getReadingQuestionList(mockTestExam);
-            case "writing" -> getWritingQuestions(mockTestExam);
-            default -> getListeningQuestionList(mockTestExam);
+            case "reading" -> JResponse.success(getReadingQuestionList(mockTestExam));
+            case "writing" -> JResponse.success(getWritingQuestions(mockTestExam));
+            default -> JResponse.success(getListeningQuestionList(mockTestExam));
         };
     }
 
@@ -246,7 +246,7 @@ public class ExamServiceImpl implements ExamService {
             userWritingAnswer.setWritingId(answer.id());
             userWritingAnswerRepository.save(userWritingAnswer);
         }
-        writingCheckingService.checkWritingAsync(mockTestExam.getId(), currentUser.getId());
+//        writingCheckingService.checkWritingAsync(mockTestExam.getId(), currentUser.getId());
         return JResponse.success();
     }
 
@@ -823,10 +823,10 @@ public class ExamServiceImpl implements ExamService {
 
     private JResponse getWritingHistory(MockTestExam mockTestExam) {
         List<UserWritingAnswer> writingAnswers = mockTestExam.getWritingAnswers();
-        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings())
-                .stream()
-                .sorted(Comparator.comparing(Writing::isTask).reversed())
-                .collect(Collectors.toList());
+        List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
+
+        writings.sort(Comparator.comparing(Writing::isTask).reversed());
+
         List<WritingResponse> questions = WritingMapper.INSTANCE.toList(writings);
         WritingHistoryResponse response = getWritingHistoryResponse(writingAnswers, questions);
         ExamScore score = mockTestExam.getScore();
@@ -867,10 +867,10 @@ public class ExamServiceImpl implements ExamService {
         }
     }
 
-    private JResponse getListeningQuestionList(MockTestExam mockTestExam) {
+    public List<ListeningTestResponse> getListeningQuestionList(MockTestExam mockTestExam) {
         List<Listening> listenings = listeningRepository.findAllById(mockTestExam.getListening());
         if (listenings.isEmpty()) {
-            return JResponse.error(404, "No listening questions found.");
+            return List.of();
         }
         List<ListeningTestResponse> responses = new ArrayList<>();
         var part1 = listenings.stream().filter(l -> l.getType().equals("part_1")).findFirst().orElse(new Listening());
@@ -881,7 +881,7 @@ public class ExamServiceImpl implements ExamService {
         partToResponse(responses, part2);
         partToResponse(responses, part3);
         partToResponse(responses, part4);
-        return JResponse.success(responses);
+        return responses;
     }
 
     private void partToResponse(List<ListeningTestResponse> responses, Listening part1) {
@@ -893,10 +893,10 @@ public class ExamServiceImpl implements ExamService {
         responses.add(response);
     }
 
-    private JResponse getReadingQuestionList(MockTestExam mockTestExam) {
+    public List<ReadingTestResponse> getReadingQuestionList(MockTestExam mockTestExam) {
         List<Reading> readings = readingRepository.findAllById(mockTestExam.getReadings());
         if (readings.isEmpty()) {
-            return JResponse.error(404, "No reading questions found.");
+            return List.of();
         }
         var easy = readings.stream().filter(l -> l.getType().equals("easy")).findFirst().orElse(new Reading());
         var medium = readings.stream().filter(l -> l.getType().equals("medium")).findFirst().orElse(new Reading());
@@ -905,7 +905,7 @@ public class ExamServiceImpl implements ExamService {
         partToResponse(responses, easy);
         partToResponse(responses, medium);
         partToResponse(responses, hard);
-        return JResponse.success(responses);
+        return responses;
     }
 
     private void partToResponse(List<ReadingTestResponse> responses, Reading reading) {
@@ -917,17 +917,17 @@ public class ExamServiceImpl implements ExamService {
         responses.add(response);
     }
 
-    private JResponse getWritingQuestions(MockTestExam mockTestExam) {
+    public List<WritingResponse> getWritingQuestions(MockTestExam mockTestExam) {
         List<Writing> writings = writingRepository.findAllById(mockTestExam.getWritings());
         if (writings.isEmpty()) {
-            return JResponse.error(404, "No writing questions found.");
+            return List.of();
         }
         List<WritingResponse> responses = new ArrayList<>();
         var taskOne = writings.stream().filter(Writing::isTask).findFirst().orElse(new Writing());
         var taskTwo = writings.stream().filter(w -> !w.isTask()).findFirst().orElse(new Writing());
         responses.add(WritingMapper.INSTANCE.toResponse(taskOne));
         responses.add(WritingMapper.INSTANCE.toResponse(taskTwo));
-        return JResponse.success(responses);
+        return responses;
     }
 
     private List<QuestionResponse> questionList(List<ModuleQuestions> questions) {

@@ -1,15 +1,20 @@
 package com.search.teacher.service.exam;
 
 import com.search.teacher.dto.filter.PaginationResponse;
+import com.search.teacher.dto.message.UserResponse;
 import com.search.teacher.dto.request.session.BookGroupRequest;
 import com.search.teacher.dto.response.history.MockExamResponse;
 import com.search.teacher.dto.response.session.BookingGroupResponse;
 import com.search.teacher.dto.response.session.BookingResponse;
+import com.search.teacher.dto.response.session.BookingViewResponse;
+import com.search.teacher.dto.response.session.SpeakingSessionView;
 import com.search.teacher.exception.NotfoundException;
+import com.search.teacher.mapper.UserMapper;
 import com.search.teacher.model.entities.*;
 import com.search.teacher.model.enums.Status;
 import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.*;
+import com.search.teacher.service.impl.ExamServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
@@ -20,10 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -38,7 +41,8 @@ public class BookingService {
     private final SpeakingBookingRepository speakingBookingRepository;
     private final BranchRepository branchRepository;
     private final UserRepository userRepository;
-    private final ExamService examService;
+    private final ExamServiceImpl examServiceImpl;
+    private final MockTestExamRepository mockTestExamRepository;
 
     @Transactional
     public JResponse setupBooking(User currentUser, BookGroupRequest request) {
@@ -136,15 +140,51 @@ public class BookingService {
         return JResponse.success(response);
     }
 
-    public JResponse getBookingId(Long id) {
+    public JResponse getBookingId(Long id, String type) {
+        if (type.equals("SPEAKING")) {
+            SpeakingBooking speakingBooking = speakingBookingRepository.findById(id)
+                    .orElseThrow(() -> new NotfoundException("Speaking booking not found."));
+            if (speakingBooking.getMainTestDate().isBefore(LocalDate.now()) && speakingBooking.getStatus().equals(Status.CREATED.name())) {
+                speakingBooking.setStatus(Status.FAILED.name());
+                speakingBookingRepository.save(speakingBooking);
+            }
+            BookingViewResponse response = new BookingViewResponse();
+            User user = speakingBooking.getBookingGroup() != null ? speakingBooking.getBookingGroup().getUser() : userRepository.findById(speakingBooking.getUserId()).orElse(new User());
+            UserResponse userResponse = UserMapper.INSTANCE.toResponse(user);
+            userResponse.setPassword(user.getShowPassword());
+            response.setUser(userResponse);
+            response.setType("SPEAKING");
+            SpeakingSessionView view = new SpeakingSessionView();
+            view.setId(speakingBooking.getSpeakingSession().getId());
+            view.setTime(speakingBooking.getTestTime());
+            view.setDate(speakingBooking.getMainTestDate());
+            view.setBranchName(speakingBooking.getBranchName());
+            view.setSpeakerName(speakingBooking.getSpeakingFullName());
+            response.setSpeaking(view);
+            return JResponse.success(response);
+        }
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new NotfoundException("Booking not found."));
 
-        if (booking.getStatus().equals(Status.CREATED.name())) {
-            booking.setStatus(Status.IN_COMPLETED.name());
+        if (!booking.getStatus().equals(Status.COMPLETED.name()) && booking.getMainTestDate().isBefore(LocalDate.now())) {
+            booking.setStatus(Status.FAILED.name());
             bookingRepository.save(booking);
         }
-        return JResponse.success();
+        BookingViewResponse response = new BookingViewResponse();
+        response.setBooking(toDto(booking));
+        response.setType("TEST");
+        User user = booking.getBookingGroup() != null ? booking.getBookingGroup().getUser() : userRepository.findById(booking.getUserId()).orElse(new User());
+        UserResponse userResponse = UserMapper.INSTANCE.toResponse(user);
+        userResponse.setPassword(user.getShowPassword());
+        response.setUser(userResponse);
+        MockTestExam exam = mockTestExamRepository.findByBooking(booking);
+        if (exam != null) {
+            response.setExamId(exam.getId());
+            response.setWritings(examServiceImpl.getWritingQuestions(exam));
+            response.setReadings(examServiceImpl.getReadingQuestionList(exam));
+            response.setListening(examServiceImpl.getListeningQuestionList(exam));
+        }
+        return JResponse.success(response);
     }
 
     public Booking getUserExistBooking(User user) {
@@ -174,7 +214,7 @@ public class BookingService {
     private BookingResponse toDto(Booking booking) {
         BookingResponse response = new BookingResponse();
         response.setId(booking.getId());
-        User user = booking.getBookingGroup().getUser();
+        User user = booking.getBookingGroup() != null ? booking.getBookingGroup().getUser() : userRepository.findById(booking.getUserId()).orElse(new User());
         response.setStudentName(user.getFirstname() + " " + user.getLastname());
         response.setPhoneNumber(user.getPhone());
         response.setTime(booking.getTestTime());

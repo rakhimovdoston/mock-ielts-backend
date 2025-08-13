@@ -43,8 +43,8 @@ public class BookingController {
         return bookingService.getAllBookingsByUser(securityUtils.getCurrentUser(), userId);
     }
 
-    @GetMapping("session/{id}")
-    public JResponse getBookingId(@PathVariable Long id) {
-        return bookingService.getBookingId(id);
+    @GetMapping("session/{id}/{type}")
+    public JResponse getBookingId(@PathVariable Long id, @PathVariable String type) {
+        return bookingService.getBookingId(id, type);
     }
 }

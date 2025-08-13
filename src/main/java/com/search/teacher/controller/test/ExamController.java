@@ -28,6 +28,11 @@ public class ExamController {
     public JResponse getExam(@PathVariable String id) {
         return examService.getExam(securityUtils.getCurrentUser(), id);
     }
+//
+//    @PostMapping("reset-section")
+//    public JResponse resetSection(@RequestBody String ids) {
+//        return JResponse.success();
+//    }
 
     @GetMapping("module/{id}")
     public JResponse getExamQuestionByModule(@PathVariable("id") String id, @RequestParam(name = "moduleType") String moduleType) {

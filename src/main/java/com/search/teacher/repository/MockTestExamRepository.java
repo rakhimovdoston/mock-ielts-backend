@@ -1,5 +1,6 @@
 package com.search.teacher.repository;
 
+import com.search.teacher.model.entities.Booking;
 import com.search.teacher.model.entities.ExamScore;
 import com.search.teacher.model.entities.MockTestExam;
 import com.search.teacher.model.entities.User;
@@ -30,4 +31,6 @@ public interface MockTestExamRepository extends JpaRepository<MockTestExam, Long
     MockTestExam findByScore(ExamScore score);
 
     Page<MockTestExam> findAllByStatus(String status, Pageable pageable);
+
+    MockTestExam findByBooking(Booking booking);
 }
