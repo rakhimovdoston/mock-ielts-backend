@@ -1,6 +1,7 @@
 package com.search.teacher.service.exam;
 
 import com.search.teacher.dto.filter.UserFilter;
+import com.search.teacher.dto.request.ResetSectionRequest;
 import com.search.teacher.dto.request.history.EmailAnswerRequest;
 import com.search.teacher.dto.request.history.ModuleScoreRequest;
 import com.search.teacher.dto.request.history.ScoreRequest;
@@ -45,4 +46,6 @@ public interface ExamService {
     ResponseEntity<byte[]> downloadPdfFile(String id);
 
     void checkSpeakingSetup(MockTestExam mockTestExam);
+
+    JResponse resetSectionExamTest(ResetSectionRequest request);
 }

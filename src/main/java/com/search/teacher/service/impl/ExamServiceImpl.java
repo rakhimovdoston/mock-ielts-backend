@@ -1,6 +1,7 @@
 package com.search.teacher.service.impl;
 
 import com.search.teacher.dto.filter.UserFilter;
+import com.search.teacher.dto.request.ResetSectionRequest;
 import com.search.teacher.dto.request.history.EmailAnswerRequest;
 import com.search.teacher.dto.request.history.ScoreRequest;
 import com.search.teacher.dto.request.module.AICheckerRequest;
@@ -32,6 +33,7 @@ import com.search.teacher.model.response.JResponse;
 import com.search.teacher.repository.*;
 import com.search.teacher.service.EmailService;
 import com.search.teacher.service.EskizSmsService;
+import com.search.teacher.service.SConfigService;
 import com.search.teacher.service.ai.WritingCheckingService;
 import com.search.teacher.service.exam.ExamService;
 import com.search.teacher.service.html.HtmlFileService;
@@ -53,9 +55,6 @@ import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -91,6 +90,7 @@ public class ExamServiceImpl implements ExamService {
     private final HtmlFileService htmlFileService;
     private final SmsInfoRepository smsInfoRepository;
     private final SendAnswerRepository sendAnswerRepository;
+    private final SConfigService sConfigService;
 
     @Override
     public JResponse getExam(User currentUser, String id) {
@@ -191,6 +191,60 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    public JResponse resetSectionExamTest(ResetSectionRequest request) {
+        User user = userRepository.findById(request.userId()).orElseThrow(() -> new NotfoundException("User not found"));
+        if (request.type().equals("exam")) {
+            MockTestExam mockTestExam = mockTestExamRepository.findById(request.examId())
+                    .orElseThrow(() -> new NotfoundException("Mock test exam not found"));
+            switch (request.section()) {
+                case "writing" -> {
+                    List<Writing> writings = writingRepository.findAllByTypeIn(List.of(true, false));
+                    if (writings.size() == 2)
+                        mockTestExam.setWritings(writings.stream().map(Writing::getId).toList());
+                }
+                case "reading" -> {
+                    List<Reading> readings = readingRepository.findAllByTypeIn(List.of("easy", "medium", "hard"));
+                    if (readings.size() == 3)
+                        mockTestExam.setReadings(readings.stream().map(Reading::getId).toList());
+                }
+                case "listening" -> {
+                    List<Listening> listenings = listeningRepository.findAllByTypeIn(List.of("part_1", "part_2", "part_3", "part_4"));
+                    if (listenings.size() == 4)
+                        mockTestExam.setListening(listenings.stream().map(Listening::getId).toList());
+                }
+                default -> {
+                    logger.error("Section {} not found for user {}", request.section(), user.getId());
+                    return JResponse.error(404, "Section not found.");
+                }
+            }
+            mockTestExamRepository.save(mockTestExam);
+        } else if (request.type().equals("booking")) {
+            Booking booking = bookingRepository.findById(request.examId())
+                    .orElseThrow(() -> new NotfoundException("Booking not found"));
+            MockTestExam mockTestExam = mockTestExamRepository.findByBooking(booking);
+            if (mockTestExam == null) {
+                mockTestExam = new MockTestExam();
+                mockTestExam.setBooking(booking);
+                mockTestExam.setStatus(Status.opened.name());
+                mockTestExam.setExamUniqueId(UUID.randomUUID().toString().replaceAll("-", ""));
+                mockTestExam.setActive(true);
+                mockTestExam.setUser(user);
+            }
+            List<Writing> writings = writingRepository.findAllByTypeIn(List.of(true, false));
+            if (writings.size() == 2)
+                mockTestExam.setWritings(writings.stream().map(Writing::getId).toList());
+            List<Reading> readings = readingRepository.findAllByTypeIn(List.of("easy", "medium", "hard"));
+            if (readings.size() == 3)
+                mockTestExam.setReadings(readings.stream().map(Reading::getId).toList());
+            List<Listening> listenings = listeningRepository.findAllByTypeIn(List.of("part_1", "part_2", "part_3", "part_4"));
+            if (listenings.size() == 4)
+                mockTestExam.setListening(listenings.stream().map(Listening::getId).toList());
+            mockTestExamRepository.save(mockTestExam);
+        }
+        return JResponse.success();
+    }
+
+    @Override
     public JResponse getExamQuestionByModule(User currentUser, String id, String type) {
         MockTestExam mockTestExam = mockTestExamRepository.findByExamUniqueIdAndUser(id, currentUser);
         if (mockTestExam == null) {
@@ -246,7 +300,9 @@ public class ExamServiceImpl implements ExamService {
             userWritingAnswer.setWritingId(answer.id());
             userWritingAnswerRepository.save(userWritingAnswer);
         }
-//        writingCheckingService.checkWritingAsync(mockTestExam.getId(), currentUser.getId());
+        if (sConfigService.checkService("AI_AUTO_CHECK_WRITING")) {
+            writingCheckingService.checkWritingAsync(mockTestExam.getId(), currentUser.getId());
+        }
         return JResponse.success();
     }
 
@@ -302,8 +358,8 @@ public class ExamServiceImpl implements ExamService {
             sendAnswers.setUserId(user.getId());
         }
         Date testDate = mockTestExam.getTestDate() != null ? mockTestExam.getTestDate() : mockTestExam.getSubmittedDate() != null ? mockTestExam.getSubmittedDate() : mockTestExam.getUpdatedDate();
-        String response = emailService.sendMockExamResult(user, testDate, score, downloadUrl + mockTestExam.getExamUniqueId());
-        String smsResponse = sendSmsTo(user, mockTestExam, testDate, response);
+        String response = sConfigService.checkService("EMAIL_SERVICE") ? emailService.sendMockExamResult(user, testDate, score, downloadUrl + mockTestExam.getExamUniqueId()) : "error";
+        String smsResponse = sConfigService.checkService("SMS_SERViCE") ? sendSmsTo(user, mockTestExam, testDate, response) : "error";
         score.setStatus(response);
         examScoreRepository.save(score);
         sendAnswers.setEmailResponse(response);
@@ -476,19 +532,17 @@ public class ExamServiceImpl implements ExamService {
         String phoneNumber = user.getPhone().replaceAll("[^\\d]", "");
         if (!phoneNumber.startsWith("+"))
             phoneNumber = "+" + phoneNumber;
-        SmsInfo smsInfo = smsInfoRepository.findByPhoneNumberAndMockTestId(phoneNumber, exam.getId());
-        if (smsInfo != null) {
+        if (!sConfigService.checkService("SMS_RESEND_SERVICE") && smsInfoRepository.existsByPhoneNumberAndMockTestId(phoneNumber, exam.getId())) {
             logger.info("SMS already sent for user {} for exam {}", user.getId(), exam.getId());
             return "error";
-        } else {
-            smsInfo = new SmsInfo();
-            smsInfo.setEmailStatus(emailResponse);
-            smsInfo.setMockTestId(exam.getId());
-            smsInfo.setPhoneNumber(phoneNumber);
-            smsInfo.setUserId(user.getId());
-            smsInfo.setSmsStatus("error");
-            smsInfoRepository.save(smsInfo);
         }
+        SmsInfo smsInfo = new SmsInfo();
+        smsInfo.setEmailStatus(emailResponse);
+        smsInfo.setMockTestId(exam.getId());
+        smsInfo.setPhoneNumber(phoneNumber);
+        smsInfo.setUserId(user.getId());
+        smsInfo.setSmsStatus("error");
+        smsInfoRepository.save(smsInfo);
         ExamScore score = exam.getScore();
         String messageTemplate = """
                 %s

@@ -1,5 +1,6 @@
 package com.search.teacher.controller.test;
 
+import com.search.teacher.dto.request.ResetSectionRequest;
 import com.search.teacher.dto.request.test.TestUserAnswerRequest;
 import com.search.teacher.dto.request.test.WritingTestRequest;
 import com.search.teacher.model.response.JResponse;
@@ -28,11 +29,11 @@ public class ExamController {
     public JResponse getExam(@PathVariable String id) {
         return examService.getExam(securityUtils.getCurrentUser(), id);
     }
-//
-//    @PostMapping("reset-section")
-//    public JResponse resetSection(@RequestBody String ids) {
-//        return JResponse.success();
-//    }
+
+    @PostMapping("reset-section")
+    public JResponse resetSection(@RequestBody ResetSectionRequest request) {
+        return examService.resetSectionExamTest(request);
+    }
 
     @GetMapping("module/{id}")
     public JResponse getExamQuestionByModule(@PathVariable("id") String id, @RequestParam(name = "moduleType") String moduleType) {

@@ -96,19 +96,13 @@ public class SendAnswerServices {
         String phoneNumber = user.getPhone().replaceAll("[^\\d]", "");
         if (!phoneNumber.startsWith("+"))
             phoneNumber = "+" + phoneNumber;
-        SmsInfo smsInfo = smsInfoRepository.findByPhoneNumberAndMockTestId(phoneNumber, exam.getId());
-        if (smsInfo != null && smsInfo.getSmsStatus() != null && smsInfo.getSmsStatus().equals("success")) {
-            logger.info("SMS already sent for user {} for exam {}", user.getId(), exam.getId());
-            return "error";
-        } else {
-            smsInfo = new SmsInfo();
-            smsInfo.setEmailStatus(emailResponse);
-            smsInfo.setMockTestId(exam.getId());
-            smsInfo.setPhoneNumber(phoneNumber);
-            smsInfo.setUserId(user.getId());
-            smsInfo.setSmsStatus("error");
-            smsInfoRepository.save(smsInfo);
-        }
+        SmsInfo smsInfo = new SmsInfo();
+        smsInfo.setEmailStatus(emailResponse);
+        smsInfo.setMockTestId(exam.getId());
+        smsInfo.setPhoneNumber(phoneNumber);
+        smsInfo.setUserId(user.getId());
+        smsInfo.setSmsStatus("error");
+        smsInfoRepository.save(smsInfo);
         ExamScore score = examScoreRepository.findByMockTestExam(exam);
         String messageTemplate = """
                 %s
@@ -140,7 +134,6 @@ public class SendAnswerServices {
         smsInfo.setSmsStatus(response);
         smsInfo.setSmsMessage(message);
         smsInfoRepository.save(smsInfo);
-        logger.info("SMS sent to {} for exam {}, response SMS: {}", phoneNumber, exam.getExamUniqueId(), response);
         return response;
     }
 
@@ -255,15 +248,19 @@ public class SendAnswerServices {
                     logger.warn("Score not found for mock test exam {}", mockTestExam.getId());
                     continue;
                 }
+
+                if (score.getSpeaking() == null) {
+                    logger.info("Speaking score {}, checking booking", mockTestExam.getId());
+                    examService.checkSpeakingSetup(mockTestExam);
+                }
+
+                score = examScoreRepository.findByMockTestExam(mockTestExam);
+
                 if (score.getWriting() == null) {
-                    logger.warn("Writing or speaking score not found for mock test exam {}", mockTestExam.getId());
+                    logger.warn("Writing score not found for mock test exam {}", mockTestExam.getId());
                     continue;
                 }
-                if (score.getSpeaking() == null) {
-                    examService.checkSpeakingSetup(mockTestExam);
-                    logger.info("Speaking score not found for mock test exam {}, checking again", mockTestExam.getId());
-                }
-                score = examScoreRepository.findByMockTestExam(mockTestExam);
+
                 if (score.getSpeaking() == null) {
                     logger.warn("Score not set up for speaking {}", mockTestExam.getId());
                     continue;

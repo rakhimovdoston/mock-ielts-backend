@@ -259,7 +259,7 @@ public class BookingService {
                 response.setReading(score.getReading());
                 response.setListening(score.getListening());
                 response.setWriting(score.getWriting());
-                response.setStatus(score.getStatus());
+                response.setStatus(score.getSmsStatus());
                 response.setStartDate(exam.getStartDate());
                 response.setEndDate(exam.getSubmittedDate());
                 response.setId(exam.getId());

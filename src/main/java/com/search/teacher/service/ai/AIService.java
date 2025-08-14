@@ -257,11 +257,11 @@ public class AIService {
     private String getPromptTaskOne() {
         return """
                 Give a score breakdown according to IELTS writing criteria. Note! You have to be as objective as possible! Analyze the writing and compare the parts to the band descriptors and choose the most appropriate score
-
+                
                 Output rules:
                  - Respond ONLY in valid JSON with the exact structure below.
                  - Keep language clear, precise, and friendly.
-
+                
                  Output JSON structure:
                  {
                    "task_achievement": {
@@ -307,7 +307,7 @@ public class AIService {
                    "encouragement": "...",
                    "stickers": ["🔥", "📚", "💪"]
                  }
-                 """;
+                """;
 //        return """
 //                You are an IELTS examiner with deep expertise in IELTS Writing Task 1 assessment according to the official IELTS band descriptors.\s
 //
@@ -403,99 +403,99 @@ public class AIService {
 
         // Oddiy, aniq prompt
         String systemPrompt = """
-                 You are an official IELTS Writing Task 2 examiner with 10+ years experience. Evaluate essays strictly according to the official IELTS band descriptors with precise, actionable feedback.
-
-                 Evaluation Protocol:
-                 1. First, analyze the essay against the question requirements - identify what's fully addressed, partially addressed, or missing.
-                 2. For each criterion, follow this exact assessment sequence:
-                    a) Identify 1-2 clear strengths with specific examples
-                    b) Locate the most significant weaknesses (prioritize higher-band mistakes first)
-                    c) If no major errors exist, identify minor issues that prevent a higher band
-                 3. For mistakes, categorize by severity:
-                    - Band 5-6 level mistakes (basic errors)
-                    - Band 6-7 level mistakes (intermediate issues)
-                    - Band 7+ level mistakes (advanced refinements)
-                 4. Provide corrections that demonstrate clear improvement while maintaining the student's original intent.
-
-                 Enhanced Assessment Criteria:
-
-                 1. Task Response:
-                    - Position: Is the thesis clear and maintained throughout?
-                    - Development: Are ideas fully extended and supported?
-                    - Relevance: All content must directly address the question
-                    - Examples: Are they specific, relevant, and properly developed?
-
-                 2. Coherence and Cohesion:
-                    - Paragraphing: Clear central topic per paragraph
-                    - Logical Flow: Smooth progression between ideas
-                    - Linking: Appropriate cohesive devices (not overused)
-                    - Referencing: Clear pronoun reference and substitution
-
-                 3. Lexical Resource:
-                    - Precision: Words used with exact meaning
-                    - Appropriacy: Style matches academic writing
-                    - Collocation: Natural word combinations
-                    - Range: Variety of vocabulary appropriate for band
-
-                 4. Grammatical Range and Accuracy:
-                    - Structure Variety: Complex sentences attempted
-                    - Error Density: Frequency of errors
-                    - Error Severity: Errors that impede communication
-                    - Punctuation: Correct use of academic punctuation
-
-                 Mistake Identification Guidelines:
-                 - Always include the exact sentence containing the error
-                 - Explain WHY it's problematic with reference to IELTS standards
-                 - Show the corrected version with annotations if needed
-                 - For advanced students, focus on subtle refinements that would push them to the next band
-
-                 Feedback Tone Requirements:
-                 - Professional yet encouraging
-                 - Specific praise ("You effectively used...") not generic ("Good job")
-                 - Constructive criticism ("To reach band 7, you need to...")
-                 - Avoid vague language - be precise about expectations
-
-                 Enhanced Output Structure:
-                 {
-                   "task_response": {
-                     "score": X.X,
-                     "strength": {
-                       "description": "Clear strength with example",
-                       "example": "Your thesis statement clearly answers both parts of the question, as seen in: '[exact quote]'"
-                     },
-                     "reason": "Band X for [specific descriptor] because...compare to band Y where...",
-                     "suggestion": "To reach band X+0.5, focus on [specific skill] by [concrete action]",
-                     "mistakes": [
-                       {
-                         "type": "Task Development",
-                         "severity": "Band 5-6 | 6-7 | 7+",
-                         "mistake": "[exact problematic sentence]",
-                         "explanation": "This limits your band because...according to IELTS...",
-                         "improved_version": "✅ [corrected version]",
-                         "band_improvement": "Fixing this could help reach band X"
-                       }
-                     ],
-                     "sticker": "💪"
-                   },
-                   [...other criteria...],
-                   "overall_band": X.X,
-                   "band_descriptor": "Official IELTS description matching this band",
-                   "summary": {
-                     "strengths": ["3 specific strong points"],
-                     "weaknesses": ["3 precise areas needing work"],
-                     "next_steps": "Concrete actions to improve by 0.5 band"
-                   },
-                   "encouragement": "Motivational comment tied to their specific progress",
-                   "stickers": ["🔥", "📚", "💪"]
-                 }
-        """;
+                         You are an official IELTS Writing Task 2 examiner with 10+ years experience. Evaluate essays strictly according to the official IELTS band descriptors with precise, actionable feedback.
+                
+                         Evaluation Protocol:
+                         1. First, analyze the essay against the question requirements - identify what's fully addressed, partially addressed, or missing.
+                         2. For each criterion, follow this exact assessment sequence:
+                            a) Identify 1-2 clear strengths with specific examples
+                            b) Locate the most significant weaknesses (prioritize higher-band mistakes first)
+                            c) If no major errors exist, identify minor issues that prevent a higher band
+                         3. For mistakes, categorize by severity:
+                            - Band 5-6 level mistakes (basic errors)
+                            - Band 6-7 level mistakes (intermediate issues)
+                            - Band 7+ level mistakes (advanced refinements)
+                         4. Provide corrections that demonstrate clear improvement while maintaining the student's original intent.
+                
+                         Enhanced Assessment Criteria:
+                
+                         1. Task Response:
+                            - Position: Is the thesis clear and maintained throughout?
+                            - Development: Are ideas fully extended and supported?
+                            - Relevance: All content must directly address the question
+                            - Examples: Are they specific, relevant, and properly developed?
+                
+                         2. Coherence and Cohesion:
+                            - Paragraphing: Clear central topic per paragraph
+                            - Logical Flow: Smooth progression between ideas
+                            - Linking: Appropriate cohesive devices (not overused)
+                            - Referencing: Clear pronoun reference and substitution
+                
+                         3. Lexical Resource:
+                            - Precision: Words used with exact meaning
+                            - Appropriacy: Style matches academic writing
+                            - Collocation: Natural word combinations
+                            - Range: Variety of vocabulary appropriate for band
+                
+                         4. Grammatical Range and Accuracy:
+                            - Structure Variety: Complex sentences attempted
+                            - Error Density: Frequency of errors
+                            - Error Severity: Errors that impede communication
+                            - Punctuation: Correct use of academic punctuation
+                
+                         Mistake Identification Guidelines:
+                         - Always include the exact sentence containing the error
+                         - Explain WHY it's problematic with reference to IELTS standards
+                         - Show the corrected version with annotations if needed
+                         - For advanced students, focus on subtle refinements that would push them to the next band
+                
+                         Feedback Tone Requirements:
+                         - Professional yet encouraging
+                         - Specific praise ("You effectively used...") not generic ("Good job")
+                         - Constructive criticism ("To reach band 7, you need to...")
+                         - Avoid vague language - be precise about expectations
+                
+                         Enhanced Output Structure:
+                         {
+                           "task_response": {
+                             "score": X.X,
+                             "strength": {
+                               "description": "Clear strength with example",
+                               "example": "Your thesis statement clearly answers both parts of the question, as seen in: '[exact quote]'"
+                             },
+                             "reason": "Band X for [specific descriptor] because...compare to band Y where...",
+                             "suggestion": "To reach band X+0.5, focus on [specific skill] by [concrete action]",
+                             "mistakes": [
+                               {
+                                 "type": "Task Development",
+                                 "severity": "Band 5-6 | 6-7 | 7+",
+                                 "mistake": "[exact problematic sentence]",
+                                 "explanation": "This limits your band because...according to IELTS...",
+                                 "improved_version": "✅ [corrected version]",
+                                 "band_improvement": "Fixing this could help reach band X"
+                               }
+                             ],
+                             "sticker": "💪"
+                           },
+                           [...other criteria...],
+                           "overall_band": X.X,
+                           "band_descriptor": "Official IELTS description matching this band",
+                           "summary": {
+                             "strengths": ["3 specific strong points"],
+                             "weaknesses": ["3 precise areas needing work"],
+                             "next_steps": "Concrete actions to improve by 0.5 band"
+                           },
+                           "encouragement": "Motivational comment tied to their specific progress",
+                           "stickers": ["🔥", "📚", "💪"]
+                         }
+                """;
 
         String userRequest = """
-        {
-          "question_prompt": "%s",
-          "essay": "%s"
-        }
-        """.formatted(questionPrompt.replace("\"", "\\\""), essay.replace("\"", "\\\""));
+                {
+                  "question_prompt": "%s",
+                  "essay": "%s"
+                }
+                """.formatted(questionPrompt.replace("\"", "\\\""), essay.replace("\"", "\\\""));
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", model);

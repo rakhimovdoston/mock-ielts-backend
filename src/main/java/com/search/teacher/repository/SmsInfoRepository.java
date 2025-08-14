@@ -9,4 +9,6 @@ public interface SmsInfoRepository extends JpaRepository<SmsInfo, Long> {
     SmsInfo findByPhoneNumber(String phoneNumber);
 
     SmsInfo findByPhoneNumberAndMockTestId(String phoneNumber, Long mockTestId);
+
+    boolean existsByPhoneNumberAndMockTestId(String phoneNumber, Long mockTestId);
 }
